@@ -6,44 +6,51 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { useImplementationRisks } from "@/hooks/useImplementationRisks";
+import { usePDActivities } from "@/hooks/usePDActivities";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
 import { EditActiveIngredientDialog } from "@/components/EditActiveIngredientDialog";
+import { TeamMemberDialog } from "@/components/TeamMemberDialog";
+import { MilestoneDialog } from "@/components/MilestoneDialog";
+import { RiskDialog } from "@/components/RiskDialog";
+import { PDActivityDialog } from "@/components/PDActivityDialog";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
+import type { TeamMember } from "@/hooks/useTeamMembers";
+import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
+import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
+import type { PDActivity } from "@/hooks/usePDActivities";
+import { format } from "date-fns";
 
-const mockActiveIngredients = [
-  { id: "1", name: "Daily 20-min phonics sessions", category: "Instruction", isCore: true },
-  { id: "2", name: "Decodable texts matched to skill", category: "Resources", isCore: true },
-  { id: "3", name: "Weekly progress checks", category: "Assessment", isCore: true },
-  { id: "4", name: "Peer practice pairs", category: "Environment", isCore: false },
-  { id: "5", name: "Home reading logs", category: "Engagement", isCore: false },
-];
-
-const mockTeam = [
-  { id: "1", name: "Sarah Chen", role: "Implementation Lead", avatar: "SC" },
-  { id: "2", name: "James Wilson", role: "Year 3 Lead", avatar: "JW" },
-  { id: "3", name: "Emma Davies", role: "SEN Coordinator", avatar: "ED" },
-  { id: "4", name: "Michael Brown", role: "Teaching Assistant", avatar: "MB" },
-];
-
-const mockTimeline = [
-  { id: "1", phase: "Preparation", date: "Oct 2025", tasks: 3, status: "complete" },
-  { id: "2", phase: "Launch", date: "Nov 2025", tasks: 5, status: "in-progress" },
-  { id: "3", phase: "Early Review", date: "Dec 2025", tasks: 2, status: "upcoming" },
-  { id: "4", phase: "Refinement", date: "Jan 2026", tasks: 4, status: "upcoming" },
-];
 
 export default function Plan() {
   const [searchParams] = useSearchParams();
   const initiativeId = searchParams.get("initiative");
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  
   const { activeIngredients, isLoading } = useActiveIngredients(effectiveInitiativeId);
+  const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
+  const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
+  const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
+  const { activities, isLoading: isLoadingActivities } = usePDActivities(effectiveInitiativeId);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
   const [editingIngredient, setEditingIngredient] = useState<ActiveIngredient | null>(null);
+  const [teamDialogOpen, setTeamDialogOpen] = useState(false);
+  const [editingTeamMember, setEditingTeamMember] = useState<TeamMember | null>(null);
+  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<TimelineMilestone | null>(null);
+  const [riskDialogOpen, setRiskDialogOpen] = useState(false);
+  const [editingRisk, setEditingRisk] = useState<ImplementationRisk | null>(null);
+  const [pdDialogOpen, setPdDialogOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<PDActivity | null>(null);
 
   // Check for template and auto-populate active ingredients
   useEffect(() => {
@@ -175,7 +182,11 @@ export default function Plan() {
                           <p className="text-sm text-muted-foreground">{ingredient.category}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setEditingIngredient(ingredient)}
+                      >
                         Edit
                       </Button>
                     </div>
@@ -232,53 +243,53 @@ export default function Plan() {
                   <Users className="h-5 w-5 text-primary" />
                   <CardTitle>Implementation Team</CardTitle>
                 </div>
-                <Button>
+                <Button onClick={() => setTeamDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Member
                 </Button>
               </div>
               <CardDescription>
-                Who's responsible for driving this forward?
+                Build a diverse team with clear roles and responsibilities
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {mockTeam.map((member) => (
-                  <div key={member.id} className="flex items-center gap-4 rounded-lg border p-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                      {member.avatar}
+              {isLoadingTeam ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading team members...</p>
+              ) : teamMembers.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No team members yet. Add members to get started.</p>
+              ) : (
+                <div className="space-y-3">
+                  {teamMembers.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+                          {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-medium">{member.profiles?.full_name || 'Unknown User'}</p>
+                          <p className="text-sm text-muted-foreground">{member.role_in_initiative}</p>
+                          {member.responsibilities && member.responsibilities.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {member.responsibilities.slice(0, 2).join(', ')}
+                              {member.responsibilities.length > 2 && '...'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingTeamMember(member);
+                          setTeamDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{member.name}</p>
-                      <p className="text-sm text-muted-foreground">{member.role}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Roles & Responsibilities</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border p-4">
-                <h4 className="font-medium mb-2">Implementation Lead</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• Coordinate overall implementation</li>
-                  <li>• Monitor fidelity and provide coaching</li>
-                  <li>• Facilitate team meetings and PDSA cycles</li>
-                </ul>
-              </div>
-              <div className="rounded-lg border p-4">
-                <h4 className="font-medium mb-2">Year Lead</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• Support classroom teachers with planning</li>
-                  <li>• Model effective practices</li>
-                  <li>• Collect weekly progress data</li>
-                </ul>
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -287,47 +298,84 @@ export default function Plan() {
         <TabsContent value="timeline" className="space-y-6">
           <Card>
             <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                <CardTitle>Implementation Timeline</CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <CardTitle>Implementation Timeline</CardTitle>
+                </div>
+                <Button onClick={() => setMilestoneDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Milestone
+                </Button>
               </div>
               <CardDescription>
-                Phased approach with clear milestones
+                Track implementation phases with clear milestones and completion dates
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockTimeline.map((phase, index) => (
-                  <div key={phase.id} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
-                        phase.status === "complete" ? "border-success bg-success text-success-foreground" :
-                        phase.status === "in-progress" ? "border-primary bg-primary text-primary-foreground" :
-                        "border-muted-foreground/25 bg-background text-muted-foreground"
-                      }`}>
-                        {index + 1}
+              {isLoadingMilestones ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading milestones...</p>
+              ) : milestones.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No milestones yet. Add milestones to track progress.</p>
+              ) : (
+                <div className="space-y-4">
+                  {milestones.map((milestone, index) => (
+                    <div key={milestone.id} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${
+                          milestone.status === "completed" ? "border-success bg-success text-success-foreground" :
+                          milestone.status === "in_progress" ? "border-primary bg-primary text-primary-foreground" :
+                          milestone.status === "at_risk" ? "border-destructive bg-destructive text-destructive-foreground" :
+                          "border-muted-foreground/25 bg-background text-muted-foreground"
+                        }`}>
+                          {index + 1}
+                        </div>
+                        {index < milestones.length - 1 && (
+                          <div className="h-full w-[2px] bg-border my-2" />
+                        )}
                       </div>
-                      {index < mockTimeline.length - 1 && (
-                        <div className="h-full w-[2px] bg-border my-2" />
-                      )}
-                    </div>
-                    <div className="flex-1 pb-8">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{phase.phase}</h4>
-                        <Badge variant={
-                          phase.status === "complete" ? "default" :
-                          phase.status === "in-progress" ? "secondary" :
-                          "outline"
-                        }>
-                          {phase.status}
-                        </Badge>
+                      <div className="flex-1 pb-8">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold">{milestone.phase}</h4>
+                            <p className="text-sm text-muted-foreground">{milestone.milestone}</p>
+                          </div>
+                          <Badge variant={
+                            milestone.status === "completed" ? "default" :
+                            milestone.status === "in_progress" ? "secondary" :
+                            milestone.status === "at_risk" ? "destructive" :
+                            "outline"
+                          }>
+                            {milestone.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Target: {format(new Date(milestone.target_date), "MMM dd, yyyy")}
+                        </p>
+                        {milestone.completion_date && (
+                          <p className="text-sm text-success">
+                            Completed: {format(new Date(milestone.completion_date), "MMM dd, yyyy")}
+                          </p>
+                        )}
+                        {milestone.notes && (
+                          <p className="text-xs text-muted-foreground mt-2">{milestone.notes}</p>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => {
+                            setEditingMilestone(milestone);
+                            setMilestoneDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-2">{phase.date}</p>
-                      <p className="text-sm text-muted-foreground">{phase.tasks} tasks</p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -341,33 +389,76 @@ export default function Plan() {
                   <Shield className="h-5 w-5 text-primary" />
                   <CardTitle>Risk Register</CardTitle>
                 </div>
-                <Button>
+                <Button onClick={() => setRiskDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Risk
                 </Button>
               </div>
               <CardDescription>
-                Identify potential barriers and mitigation strategies
+                Proactively identify barriers with mitigation strategies and contingency plans
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { risk: "Staff workload concerns", impact: "High", mitigation: "Restructure timetable, embed in existing practice" },
-                { risk: "Variable buy-in from teachers", impact: "Medium", mitigation: "Early involvement, peer modeling, quick wins" },
-                { risk: "Resource delivery delays", impact: "Low", mitigation: "Order early, identify backup materials" },
-              ].map((item, index) => (
-                <div key={index} className="rounded-lg border p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">{item.risk}</h4>
-                    <Badge variant={item.impact === "High" ? "destructive" : item.impact === "Medium" ? "secondary" : "outline"}>
-                      {item.impact} Impact
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium">Mitigation:</span> {item.mitigation}
-                  </p>
+            <CardContent>
+              {isLoadingRisks ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading risks...</p>
+              ) : risks.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No risks documented yet. Add potential risks to plan ahead.</p>
+              ) : (
+                <div className="space-y-4">
+                  {risks.map((risk) => {
+                    const getRiskScore = () => {
+                      const scores = { low: 1, medium: 2, high: 3 };
+                      return scores[risk.likelihood] * scores[risk.impact];
+                    };
+                    return (
+                      <div key={risk.id} className="rounded-lg border p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{risk.risk_description}</h4>
+                              <Badge variant="outline">{risk.risk_category}</Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span>Likelihood: <span className="capitalize font-medium">{risk.likelihood}</span></span>
+                              <span>Impact: <span className="capitalize font-medium">{risk.impact}</span></span>
+                              <span>Risk Score: <span className="font-semibold">{getRiskScore()}/9</span></span>
+                            </div>
+                          </div>
+                          <Badge variant={
+                            risk.status === "mitigated" ? "default" :
+                            risk.status === "realized" ? "destructive" :
+                            "secondary"
+                          }>
+                            {risk.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <p>
+                            <span className="font-medium text-foreground">Mitigation:</span>{' '}
+                            <span className="text-muted-foreground">{risk.mitigation_strategy}</span>
+                          </p>
+                          {risk.contingency_plan && (
+                            <p>
+                              <span className="font-medium text-foreground">Contingency:</span>{' '}
+                              <span className="text-muted-foreground">{risk.contingency_plan}</span>
+                            </p>
+                          )}
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingRisk(risk);
+                            setRiskDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -376,30 +467,98 @@ export default function Plan() {
         <TabsContent value="pd" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Professional Development Plan</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Professional Development Plan</CardTitle>
+                <Button onClick={() => setPdDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Activity
+                </Button>
+              </div>
               <CardDescription>
-                Training, coaching, and ongoing support schedule
+                Comprehensive training, coaching, and ongoing support aligned to fidelity
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { session: "Initial Training", date: "Oct 15", duration: "3 hours", participants: "All teachers" },
-                { session: "Lesson Planning Workshop", date: "Oct 22", duration: "1.5 hours", participants: "Year 3 team" },
-                { session: "Coaching Observations", date: "Nov onwards", duration: "30 min/week", participants: "Individual" },
-                { session: "Team Reflection Meetings", date: "Monthly", duration: "1 hour", participants: "Implementation team" },
-              ].map((session, index) => (
-                <div key={index} className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{session.session}</h4>
-                    <span className="text-sm text-muted-foreground">{session.date}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <span>Duration: {session.duration}</span>
-                    <span>•</span>
-                    <span>Participants: {session.participants}</span>
-                  </div>
+            <CardContent>
+              {isLoadingActivities ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading activities...</p>
+              ) : activities.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No PD activities yet. Schedule training and support sessions.</p>
+              ) : (
+                <div className="space-y-4">
+                  {activities.map((activity) => (
+                    <div key={activity.id} className="rounded-lg border p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium">{activity.title}</h4>
+                            <Badge variant="outline" className="capitalize">
+                              {activity.activity_type.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          {activity.description && (
+                            <p className="text-sm text-muted-foreground">{activity.description}</p>
+                          )}
+                        </div>
+                        <Badge variant={
+                          activity.completion_status === "completed" ? "default" :
+                          activity.completion_status === "cancelled" ? "destructive" :
+                          "secondary"
+                        }>
+                          {activity.completion_status}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        {activity.scheduled_date && (
+                          <div>
+                            <span className="text-muted-foreground">Date:</span>{' '}
+                            <span className="font-medium">{format(new Date(activity.scheduled_date), "MMM dd, yyyy")}</span>
+                          </div>
+                        )}
+                        {activity.duration_minutes && (
+                          <div>
+                            <span className="text-muted-foreground">Duration:</span>{' '}
+                            <span className="font-medium">{activity.duration_minutes} min</span>
+                          </div>
+                        )}
+                        {activity.facilitator && (
+                          <div>
+                            <span className="text-muted-foreground">Facilitator:</span>{' '}
+                            <span className="font-medium">{activity.facilitator}</span>
+                          </div>
+                        )}
+                        {activity.attendance_count && (
+                          <div>
+                            <span className="text-muted-foreground">Attendance:</span>{' '}
+                            <span className="font-medium">{activity.attendance_count}</span>
+                          </div>
+                        )}
+                      </div>
+                      {activity.target_audience && activity.target_audience.length > 0 && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Audience:</span>{' '}
+                          <span className="font-medium">{activity.target_audience.join(', ')}</span>
+                        </div>
+                      )}
+                      {activity.fidelity_focus && activity.fidelity_focus.length > 0 && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Fidelity Focus:</span>{' '}
+                          <span className="font-medium">{activity.fidelity_focus.join(', ')}</span>
+                        </div>
+                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingActivity(activity);
+                          setPdDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -419,6 +578,50 @@ export default function Plan() {
           onOpenChange={(open) => !open && setEditingIngredient(null)}
           initiativeId={effectiveInitiativeId}
         />
+      )}
+      
+      {effectiveInitiativeId && (
+        <>
+          <TeamMemberDialog
+            member={editingTeamMember || undefined}
+            open={teamDialogOpen}
+            onOpenChange={(open) => {
+              setTeamDialogOpen(open);
+              if (!open) setEditingTeamMember(null);
+            }}
+            initiativeId={effectiveInitiativeId}
+          />
+          
+          <MilestoneDialog
+            milestone={editingMilestone || undefined}
+            open={milestoneDialogOpen}
+            onOpenChange={(open) => {
+              setMilestoneDialogOpen(open);
+              if (!open) setEditingMilestone(null);
+            }}
+            initiativeId={effectiveInitiativeId}
+          />
+          
+          <RiskDialog
+            risk={editingRisk || undefined}
+            open={riskDialogOpen}
+            onOpenChange={(open) => {
+              setRiskDialogOpen(open);
+              if (!open) setEditingRisk(null);
+            }}
+            initiativeId={effectiveInitiativeId}
+          />
+          
+          <PDActivityDialog
+            activity={editingActivity || undefined}
+            open={pdDialogOpen}
+            onOpenChange={(open) => {
+              setPdDialogOpen(open);
+              if (!open) setEditingActivity(null);
+            }}
+            initiativeId={effectiveInitiativeId}
+          />
+        </>
       )}
     </div>
   );
