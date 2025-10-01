@@ -296,6 +296,51 @@ export type Database = {
           },
         ]
       }
+      initiative_templates: {
+        Row: {
+          active_ingredients: Json
+          category: string
+          created_at: string
+          decision_brief_template: Json | null
+          description: string | null
+          evidence_base: string | null
+          id: string
+          name: string
+          resources_needed: string[] | null
+          target_outcomes: string[]
+          typical_timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_ingredients?: Json
+          category: string
+          created_at?: string
+          decision_brief_template?: Json | null
+          description?: string | null
+          evidence_base?: string | null
+          id?: string
+          name: string
+          resources_needed?: string[] | null
+          target_outcomes?: string[]
+          typical_timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_ingredients?: Json
+          category?: string
+          created_at?: string
+          decision_brief_template?: Json | null
+          description?: string | null
+          evidence_base?: string | null
+          id?: string
+          name?: string
+          resources_needed?: string[] | null
+          target_outcomes?: string[]
+          typical_timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       initiatives: {
         Row: {
           context_tags: string[] | null
