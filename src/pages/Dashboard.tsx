@@ -159,7 +159,7 @@ export default function Dashboard() {
                   id="title"
                   value={newInitiative.title}
                   onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
-                  placeholder="e.g., Reading Fluency Programme"
+                  placeholder="e.g., Student Support Initiative"
                 />
               </div>
               <div className="space-y-2">
@@ -378,7 +378,7 @@ export default function Dashboard() {
                           id="title"
                           value={newInitiative.title}
                           onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
-                          placeholder="e.g., Reading Fluency Programme"
+                          placeholder="e.g., Student Support Initiative"
                         />
                       </div>
                       <div className="space-y-2">

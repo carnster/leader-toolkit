@@ -8,14 +8,14 @@ const mockIndicators = [
   { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
   { id: "2", name: "Adoption (%)", value: 85, target: 90, type: "leading", trend: "up" },
   { id: "3", name: "Staff Acceptability", value: 3.8, target: 4.0, type: "leading", trend: "stable" },
-  { id: "4", name: "Reading Growth (SSA)", value: 62, target: 75, type: "lagging", trend: "up" },
+  { id: "4", name: "Outcome Progress", value: 62, target: 75, type: "lagging", trend: "up" },
 ];
 
 const mockPDSA = [
   { 
     id: "1",
     cycle: "PDSA 1",
-    aim: "Increase daily phonics session attendance from 75% to 90%",
+    aim: "Increase daily session attendance from 75% to 90%",
     changeIdea: "Move sessions to start of day, before first break",
     status: "complete",
     outcome: "Attendance increased to 88% - close to target"

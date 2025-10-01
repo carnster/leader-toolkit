@@ -150,7 +150,7 @@ export default function Sustain() {
           <div className="rounded-lg border p-4 space-y-2">
             <h4 className="font-medium">Time Allocations</h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Daily 20-min phonics block protected in timetable</li>
+              <li>• Daily structured session time protected in timetable</li>
               <li>• Weekly team meeting time (1 hour) ring-fenced</li>
               <li>• Monthly data review time allocated</li>
             </ul>
@@ -159,8 +159,8 @@ export default function Sustain() {
           <div className="rounded-lg border p-4 space-y-2">
             <h4 className="font-medium">Budget & Materials</h4>
             <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Annual budget line for decodable texts (£2,500)</li>
-              <li>• Replacement materials fund (£500/year)</li>
+              <li>• Annual budget line for core materials</li>
+              <li>• Replacement materials fund</li>
               <li>• Professional learning budget protected</li>
             </ul>
           </div>

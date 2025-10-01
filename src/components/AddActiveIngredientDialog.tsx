@@ -74,7 +74,7 @@ export function AddActiveIngredientDialog({ initiativeId }: AddActiveIngredientD
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g., Daily explicit phonics instruction"
+              placeholder="e.g., Daily structured practice sessions"
             />
           </div>
 

@@ -7,8 +7,8 @@ import { PlayCircle, Clock, CheckCircle2, MessageSquare, TrendingUp } from "luci
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const mockFidelityLogs = [
-  { id: "1", date: "2025-10-28", component: "Daily phonics sessions", rating: 4, observer: "Sarah Chen" },
-  { id: "2", date: "2025-10-27", component: "Decodable texts", rating: 5, observer: "James Wilson" },
+  { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
+  { id: "2", date: "2025-10-27", component: "Core practice delivery", rating: 5, observer: "James Wilson" },
   { id: "3", date: "2025-10-27", component: "Weekly progress checks", rating: 3, observer: "Emma Davies" },
 ];
 
@@ -168,8 +168,8 @@ export default function Implement() {
                 <div className="space-y-2">
                   <Label>Component Being Observed</Label>
                   <select className="w-full rounded-md border px-3 py-2">
-                    <option>Daily 20-min phonics sessions</option>
-                    <option>Decodable texts matched to skill</option>
+                    <option>Daily structured sessions</option>
+                    <option>Core practice delivery</option>
                     <option>Weekly progress checks</option>
                   </select>
                 </div>
