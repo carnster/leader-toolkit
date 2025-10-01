@@ -68,6 +68,24 @@ export default function Decide() {
   const [goalsEvaluation, setGoalsEvaluation] = useState<any>(null);
   const [isEvaluatingGoals, setIsEvaluatingGoals] = useState(false);
   
+  // Feasibility factors state
+  const [feasibilityFactors, setFeasibilityFactors] = useState({
+    time_scheduling: 0,
+    staff_capacity: 0,
+    resources_budget: 0,
+    leadership_support: 0,
+    school_culture: 0,
+  });
+  
+  // Auto-calculate overall feasibility score
+  const calculatedFeasibilityScore = Math.round(
+    (feasibilityFactors.time_scheduling +
+     feasibilityFactors.staff_capacity +
+     feasibilityFactors.resources_budget +
+     feasibilityFactors.leadership_support +
+     feasibilityFactors.school_culture) / 5
+  );
+  
   // Load existing decision brief
   useEffect(() => {
     if (decisionBrief) {
@@ -85,6 +103,17 @@ export default function Decide() {
       setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
       setMeasurementTimeline(decisionBrief.measurement_timeline || "");
       setGoalsEvaluation(decisionBrief.goals_feedback || null);
+      
+      // Load feasibility factors
+      if (decisionBrief.feasibility_factors) {
+        setFeasibilityFactors({
+          time_scheduling: decisionBrief.feasibility_factors.time_scheduling || 0,
+          staff_capacity: decisionBrief.feasibility_factors.staff_capacity || 0,
+          resources_budget: decisionBrief.feasibility_factors.resources_budget || 0,
+          leadership_support: decisionBrief.feasibility_factors.leadership_support || 0,
+          school_culture: decisionBrief.feasibility_factors.school_culture || 0,
+        });
+      }
     }
   }, [decisionBrief]);
 
@@ -139,7 +168,7 @@ export default function Decide() {
   const isStep2Complete = teamMembers.length > 0; // Team Assembly
   const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
-  const isStep5Complete = stakeholderInput && equityNotes && feasibilityScore > 0; // Readiness & Feasibility
+  const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
   
   // Step completion validation
@@ -266,7 +295,8 @@ export default function Decide() {
       stakeholder_input: stakeholderInput,
       chosen_approach: chosenApproach,
       evidence_base: evidenceBase,
-      feasibility_score: feasibilityScore || null,
+      feasibility_score: calculatedFeasibilityScore,
+      feasibility_factors: feasibilityFactors,
       leading_indicators: leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : null,
       lagging_indicators: laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : null,
       measurement_timeline: measurementTimeline,
@@ -993,115 +1023,41 @@ export default function Decide() {
               <Label>Feasibility Assessment (1-10 confidence rating)</Label>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-primary/5">
                     <div className="flex-1">
-                      <p className="font-medium text-sm">Overall Feasibility Score</p>
-                      <p className="text-muted-foreground text-xs">How confident are you this can be implemented successfully?</p>
+                      <p className="font-bold text-lg">Overall Feasibility Score</p>
+                      <p className="text-muted-foreground text-sm">Auto-calculated from factors below</p>
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={feasibilityScore}
-                      onChange={(e) => setFeasibilityScore(parseInt(e.target.value) || 0)}
-                      className="w-20"
-                    />
+                    <div className="text-4xl font-bold text-primary">
+                      {calculatedFeasibilityScore}/10
+                    </div>
                   </div>
                 </div>
 
                 {[
-                  { factor: "Time & Scheduling", description: "Sufficient time for planning, training, and delivery?" },
-                  { factor: "Staff Capacity & Skills", description: "Staff have or can develop needed expertise?" },
-                  { factor: "Resources & Budget", description: "Materials, funding, and space available?" },
-                  { factor: "Leadership Support", description: "Active backing and protection from competing priorities?" },
-                  { factor: "School Culture & Climate", description: "Culture supportive of change and innovation?" },
+                  { key: "time_scheduling", factor: "Time & Scheduling", description: "Sufficient time for planning, training, and delivery?" },
+                  { key: "staff_capacity", factor: "Staff Capacity & Skills", description: "Staff have or can develop needed expertise?" },
+                  { key: "resources_budget", factor: "Resources & Budget", description: "Materials, funding, and space available?" },
+                  { key: "leadership_support", factor: "Leadership Support", description: "Active backing and protection from competing priorities?" },
+                  { key: "school_culture", factor: "School Culture & Climate", description: "Culture supportive of change and innovation?" },
                 ].map((item) => (
-                  <div key={item.factor} className="rounded-lg border p-3 bg-muted/30">
+                  <div key={item.key} className="rounded-lg border p-3 bg-muted/30">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex-1">
                         <p className="font-medium">{item.factor}</p>
                         <p className="text-muted-foreground text-xs">{item.description}</p>
                       </div>
-                      <select className="rounded-md border px-3 py-1.5 bg-background">
-                        <option>High</option>
-                        <option>Medium</option>
-                        <option>Low</option>
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Progress"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 6: Success Metrics */}
-      {step === 6 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle>Step 4: Feasibility Assessment</CardTitle>
-            </div>
-            <CardDescription>
-              Is the approach feasible to implement in our setting?
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <h4 className="font-medium mb-2">What to do in this step:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Assess your capacity: time, skills, resources, and leadership support</li>
-                <li>Rate your confidence in each feasibility factor honestly</li>
-                <li>Consider both immediate and long-term sustainability</li>
-                <li>Be realistic about what your setting can manage</li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Feasibility Factors (rate your confidence 1-10)</Label>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">Overall Feasibility Score</p>
-                      <p className="text-muted-foreground text-xs">How confident are you that this approach can be implemented successfully?</p>
-                    </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="10"
-                      value={feasibilityScore}
-                      onChange={(e) => setFeasibilityScore(parseInt(e.target.value) || 0)}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
-
-                {[
-                  { factor: "Time available", description: "Do we have sufficient time for planning and delivery?" },
-                  { factor: "Staff capacity & skills", description: "Do staff have or can they develop the needed skills?" },
-                  { factor: "Resource availability", description: "Are materials, budget, and space available?" },
-                  { factor: "Leadership support", description: "Is there active backing and protection from competing priorities?" },
-                ].map((item) => (
-                  <div key={item.factor} className="rounded-lg border p-3 bg-muted/30">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.factor}</p>
-                        <p className="text-muted-foreground text-xs">{item.description}</p>
-                      </div>
-                      <select className="rounded-md border px-3 py-1.5 bg-background">
-                        <option>High</option>
-                        <option>Medium</option>
-                        <option>Low</option>
-                      </select>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={feasibilityFactors[item.key as keyof typeof feasibilityFactors]}
+                        onChange={(e) => setFeasibilityFactors({
+                          ...feasibilityFactors,
+                          [item.key]: parseInt(e.target.value) || 0
+                        })}
+                        className="w-20"
+                      />
                     </div>
                   </div>
                 ))}

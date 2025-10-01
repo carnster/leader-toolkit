@@ -15,6 +15,7 @@ export interface DecisionBrief {
   chosen_approach: string | null;
   evidence_base: string | null;
   feasibility_score: number | null;
+  feasibility_factors: any | null;
   leading_indicators: string[] | null;
   lagging_indicators: string[] | null;
   measurement_timeline: string | null;
