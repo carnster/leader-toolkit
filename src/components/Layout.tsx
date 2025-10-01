@@ -43,12 +43,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">I</span>
-              </div>
-              <span className="hidden font-bold sm:inline-block">
-                IMPACT Companion
+            <Link to="/" className="flex items-center space-x-3">
+              <img 
+                src="/src/assets/impact-logo.jpg" 
+                alt="IMPACT" 
+                className="h-10 w-auto object-contain"
+              />
+              <span className="hidden font-bold text-lg sm:inline-block">
+                Companion
               </span>
             </Link>
             
