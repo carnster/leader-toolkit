@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, HelpCircle } from "lucide-react";
 
 interface ImplementationStrategyDialogProps {
   open: boolean;
@@ -14,10 +16,62 @@ interface ImplementationStrategyDialogProps {
 }
 
 const ericCategories = [
-  { value: "enable", label: "Enable - Support capacity building", description: "Train, educate, provide tools" },
-  { value: "redesign", label: "Redesign - Adjust context", description: "Modify workflows, systems, structures" },
-  { value: "integrate", label: "Integrate - Embed in routine", description: "Make it part of standard practice" },
-  { value: "create", label: "Create - Build new supports", description: "Develop new policies, teams, resources" },
+  { 
+    value: "enable", 
+    label: "Enable - Support capacity building", 
+    description: "Train, educate, provide tools",
+    examples: [
+      "Conduct educational meetings",
+      "Conduct ongoing training",
+      "Develop educational materials",
+      "Provide clinical supervision",
+      "Use train-the-trainer strategies",
+      "Make training dynamic",
+      "Facilitate relay of clinical data to providers"
+    ]
+  },
+  { 
+    value: "redesign", 
+    label: "Redesign - Adjust context", 
+    description: "Modify workflows, systems, structures",
+    examples: [
+      "Change physical structure and equipment",
+      "Change record systems",
+      "Revise professional roles",
+      "Create new clinical teams",
+      "Change service sites",
+      "Alter incentive/allowance structures",
+      "Make billing easier"
+    ]
+  },
+  { 
+    value: "integrate", 
+    label: "Integrate - Embed in routine", 
+    description: "Make it part of standard practice",
+    examples: [
+      "Conduct cyclical small tests of change (PDSA)",
+      "Remind clinicians",
+      "Develop and organize quality monitoring systems",
+      "Audit and provide feedback",
+      "Purposely reexamine the implementation",
+      "Tailor strategies to local context",
+      "Promote adaptability"
+    ]
+  },
+  { 
+    value: "create", 
+    label: "Create - Build new supports", 
+    description: "Develop new policies, teams, resources",
+    examples: [
+      "Build a coalition",
+      "Identify and prepare champions",
+      "Develop a formal implementation blueprint",
+      "Create a learning collaborative",
+      "Use advisory boards and workgroups",
+      "Access new funding",
+      "Develop resource sharing agreements"
+    ]
+  },
 ];
 
 const statusOptions = [
@@ -38,6 +92,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
     success_indicators: "",
     status: "planned",
   });
+  const [showExamples, setShowExamples] = useState(false);
 
   useEffect(() => {
     if (strategy) {
@@ -69,8 +124,33 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
           <DialogTitle>{strategy ? "Edit Implementation Strategy" : "Add Implementation Strategy"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ERIC Framework Info Banner */}
+          <div className="rounded-lg bg-muted p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <HelpCircle className="h-5 w-5 text-primary mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">About ERIC Strategies</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  The ERIC framework provides 73 evidence-based implementation strategies organized into four categories. Choose strategies that address your specific implementation barriers.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="eric_category">ERIC Category *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="eric_category">ERIC Category *</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowExamples(!showExamples)}
+                className="h-auto py-1 px-2 text-xs"
+              >
+                {showExamples ? "Hide" : "Show"} Examples
+                <ChevronDown className={`ml-1 h-3 w-3 transition-transform ${showExamples ? "rotate-180" : ""}`} />
+              </Button>
+            </div>
             <select
               id="eric_category"
               className="w-full rounded-md border px-3 py-2"
@@ -87,6 +167,21 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
             <p className="text-sm text-muted-foreground">
               {ericCategories.find(c => c.value === formData.eric_category)?.description}
             </p>
+            
+            {/* Example Strategies Collapsible */}
+            {showExamples && (
+              <div className="rounded-md border bg-muted/50 p-3 space-y-2 mt-2">
+                <p className="text-xs font-medium">Example {ericCategories.find(c => c.value === formData.eric_category)?.label} strategies:</p>
+                <ul className="text-xs text-muted-foreground space-y-1 ml-4">
+                  {ericCategories.find(c => c.value === formData.eric_category)?.examples.map((example, idx) => (
+                    <li key={idx}>• {example}</li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground italic mt-2">
+                  Source: Powell et al. (2015) Implementation Science - 73 ERIC strategies
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
