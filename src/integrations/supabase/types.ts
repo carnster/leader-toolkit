@@ -14,7 +14,465 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      active_ingredients: {
+        Row: {
+          adaptable_boundaries: string[] | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          initiative_id: string
+          is_core: boolean
+          look_fors: string[] | null
+          name: string
+        }
+        Insert: {
+          adaptable_boundaries?: string[] | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          initiative_id: string
+          is_core?: boolean
+          look_fors?: string[] | null
+          name: string
+        }
+        Update: {
+          adaptable_boundaries?: string[] | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          initiative_id?: string
+          is_core?: boolean
+          look_fors?: string[] | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_ingredients_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decision_briefs: {
+        Row: {
+          baseline_data: string | null
+          checklist_completed: boolean | null
+          chosen_approach: string | null
+          created_at: string
+          equity_notes: string | null
+          evidence_base: string | null
+          feasibility_score: number | null
+          id: string
+          initiative_id: string
+          lagging_indicators: string[] | null
+          leading_indicators: string[] | null
+          measurement_timeline: string | null
+          problem_statement: string
+          root_causes: string[] | null
+          stakeholder_input: string | null
+          target_group: string
+          updated_at: string
+        }
+        Insert: {
+          baseline_data?: string | null
+          checklist_completed?: boolean | null
+          chosen_approach?: string | null
+          created_at?: string
+          equity_notes?: string | null
+          evidence_base?: string | null
+          feasibility_score?: number | null
+          id?: string
+          initiative_id: string
+          lagging_indicators?: string[] | null
+          leading_indicators?: string[] | null
+          measurement_timeline?: string | null
+          problem_statement: string
+          root_causes?: string[] | null
+          stakeholder_input?: string | null
+          target_group: string
+          updated_at?: string
+        }
+        Update: {
+          baseline_data?: string | null
+          checklist_completed?: boolean | null
+          chosen_approach?: string | null
+          created_at?: string
+          equity_notes?: string | null
+          evidence_base?: string | null
+          feasibility_score?: number | null
+          id?: string
+          initiative_id?: string
+          lagging_indicators?: string[] | null
+          leading_indicators?: string[] | null
+          measurement_timeline?: string | null
+          problem_statement?: string
+          root_causes?: string[] | null
+          stakeholder_input?: string | null
+          target_group?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decision_briefs_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: true
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fidelity_logs: {
+        Row: {
+          component_id: string | null
+          created_at: string
+          id: string
+          initiative_id: string
+          notes: string | null
+          observed_at: string
+          observer_id: string
+          rating: number
+        }
+        Insert: {
+          component_id?: string | null
+          created_at?: string
+          id?: string
+          initiative_id: string
+          notes?: string | null
+          observed_at?: string
+          observer_id: string
+          rating: number
+        }
+        Update: {
+          component_id?: string | null
+          created_at?: string
+          id?: string
+          initiative_id?: string
+          notes?: string | null
+          observed_at?: string
+          observer_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fidelity_logs_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fidelity_logs_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fidelity_logs_observer_id_fkey"
+            columns: ["observer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indicator_values: {
+        Row: {
+          id: string
+          indicator_id: string
+          notes: string | null
+          recorded_at: string
+          value: number
+        }
+        Insert: {
+          id?: string
+          indicator_id: string
+          notes?: string | null
+          recorded_at?: string
+          value: number
+        }
+        Update: {
+          id?: string
+          indicator_id?: string
+          notes?: string | null
+          recorded_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicator_values_indicator_id_fkey"
+            columns: ["indicator_id"]
+            isOneToOne: false
+            referencedRelation: "indicators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indicators: {
+        Row: {
+          created_at: string
+          id: string
+          initiative_id: string
+          name: string
+          schedule: string | null
+          source: string | null
+          target_value: number | null
+          type: Database["public"]["Enums"]["indicator_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initiative_id: string
+          name: string
+          schedule?: string | null
+          source?: string | null
+          target_value?: number | null
+          type: Database["public"]["Enums"]["indicator_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initiative_id?: string
+          name?: string
+          schedule?: string | null
+          source?: string | null
+          target_value?: number | null
+          type?: Database["public"]["Enums"]["indicator_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indicators_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      initiative_team_members: {
+        Row: {
+          id: string
+          initiative_id: string
+          joined_at: string
+          responsibilities: string[] | null
+          role_in_initiative: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          initiative_id: string
+          joined_at?: string
+          responsibilities?: string[] | null
+          role_in_initiative: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          initiative_id?: string
+          joined_at?: string
+          responsibilities?: string[] | null
+          role_in_initiative?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initiative_team_members_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "initiative_team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      initiatives: {
+        Row: {
+          context_tags: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          owner_id: string
+          stage: Database["public"]["Enums"]["initiative_stage"]
+          start_date: string | null
+          status: Database["public"]["Enums"]["initiative_status"]
+          target_end_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          context_tags?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_id: string
+          stage?: Database["public"]["Enums"]["initiative_stage"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["initiative_status"]
+          target_end_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          context_tags?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          owner_id?: string
+          stage?: Database["public"]["Enums"]["initiative_stage"]
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["initiative_status"]
+          target_end_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initiatives_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdsa_cycles: {
+        Row: {
+          aim: string
+          change_idea: string
+          created_at: string
+          cycle_number: number
+          decision: string | null
+          id: string
+          initiative_id: string
+          results: string | null
+          status: Database["public"]["Enums"]["pdsa_status"]
+          test_window_end: string | null
+          test_window_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          aim: string
+          change_idea: string
+          created_at?: string
+          cycle_number: number
+          decision?: string | null
+          id?: string
+          initiative_id: string
+          results?: string | null
+          status?: Database["public"]["Enums"]["pdsa_status"]
+          test_window_end?: string | null
+          test_window_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aim?: string
+          change_idea?: string
+          created_at?: string
+          cycle_number?: number
+          decision?: string | null
+          id?: string
+          initiative_id?: string
+          results?: string | null
+          status?: Database["public"]["Enums"]["pdsa_status"]
+          test_window_end?: string | null
+          test_window_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdsa_cycles_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string
+          id: string
+          organization: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name: string
+          id: string
+          organization?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          organization?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sustainability_plans: {
+        Row: {
+          created_at: string
+          embedding_routines: Json | null
+          id: string
+          initiative_id: string
+          next_steps: string | null
+          onboarding_resources: Json | null
+          resource_protections: Json | null
+          scale_readiness_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          embedding_routines?: Json | null
+          id?: string
+          initiative_id: string
+          next_steps?: string | null
+          onboarding_resources?: Json | null
+          resource_protections?: Json | null
+          scale_readiness_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          embedding_routines?: Json | null
+          id?: string
+          initiative_id?: string
+          next_steps?: string | null
+          onboarding_resources?: Json | null
+          resource_protections?: Json | null
+          scale_readiness_score?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sustainability_plans_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: true
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +481,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "district_leader"
+        | "principal"
+        | "implementation_lead"
+        | "teacher"
+        | "data_manager"
+        | "governor"
+      indicator_type: "leading" | "lagging"
+      initiative_stage: "decide" | "plan" | "implement" | "monitor" | "sustain"
+      initiative_status: "active" | "on_hold" | "completed" | "archived"
+      pdsa_status: "planning" | "testing" | "complete"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +618,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "district_leader",
+        "principal",
+        "implementation_lead",
+        "teacher",
+        "data_manager",
+        "governor",
+      ],
+      indicator_type: ["leading", "lagging"],
+      initiative_stage: ["decide", "plan", "implement", "monitor", "sustain"],
+      initiative_status: ["active", "on_hold", "completed", "archived"],
+      pdsa_status: ["planning", "testing", "complete"],
+    },
   },
 } as const
