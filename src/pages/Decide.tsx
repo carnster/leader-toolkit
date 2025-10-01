@@ -15,6 +15,9 @@ import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { EBPRecommendations } from "@/components/EBPRecommendations";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { TeamMemberDialog } from "@/components/TeamMemberDialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target pupils defined", required: true },
@@ -38,8 +41,12 @@ export default function Decide() {
   // Decision brief hook
   const { decisionBrief, upsertDecisionBrief, isSaving } = useDecisionBrief(effectiveInitiativeId || undefined);
   
+  // Team members hook
+  const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId || undefined);
+  
   // Initiative creation dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
   
   // Form state
@@ -47,7 +54,6 @@ export default function Decide() {
   const [targetGroup, setTargetGroup] = useState("");
   const [baselineData, setBaselineData] = useState("");
   const [rootCauses, setRootCauses] = useState("");
-  const [teamMembers, setTeamMembers] = useState("");
   const [goals, setGoals] = useState("");
   const [equityNotes, setEquityNotes] = useState("");
   const [stakeholderInput, setStakeholderInput] = useState("");
@@ -65,7 +71,6 @@ export default function Decide() {
       setTargetGroup(decisionBrief.target_group || "");
       setBaselineData(decisionBrief.baseline_data || "");
       setRootCauses(decisionBrief.root_causes?.join(", ") || "");
-      setTeamMembers(decisionBrief.stakeholder_input || ""); // Store team in stakeholder_input temporarily
       setGoals(decisionBrief.chosen_approach || ""); // Store goals in chosen_approach temporarily until we add proper fields
       setEquityNotes(decisionBrief.equity_notes || "");
       setStakeholderInput(decisionBrief.stakeholder_input || "");
@@ -80,8 +85,8 @@ export default function Decide() {
 
   // Auto-calculate checklist completion based on form data
   const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses; // Problem Definition
-  const isStep2Complete = teamMembers && teamMembers.length > 0; // Team Assembly (we'll add this)
-  const isStep3Complete = goals && goals.length > 0; // Goal Development (we'll add this)
+  const isStep2Complete = teamMembers.length > 0; // Team Assembly
+  const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
   const isStep5Complete = stakeholderInput && equityNotes && feasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
@@ -455,18 +460,71 @@ export default function Decide() {
               </ul>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="teamMembers">Implementation Team Members</Label>
-              <Textarea
-                id="teamMembers"
-                placeholder="Example: Sarah Jones (Year 9 Lead) - leads delivery and coordinates team; David Smith (SLT) - provides strategic oversight and protects resources; Emma Wilson (SENCO) - advises on differentiation and inclusion; Parent rep - provides family perspective; Year 9 student council members - give student voice..."
-                rows={5}
-                value={teamMembers}
-                onChange={(e) => setTeamMembers(e.target.value)}
-              />
-              <p className="text-sm text-muted-foreground">
-                List team members with their roles and why they're essential to this initiative
-              </p>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <Label>Implementation Team Members</Label>
+                  <Button onClick={() => setTeamDialogOpen(true)} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Member
+                  </Button>
+                </div>
+                
+                {isLoadingTeam ? (
+                  <p className="text-sm text-muted-foreground">Loading team members...</p>
+                ) : teamMembers.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="pt-6">
+                      <p className="text-sm text-muted-foreground text-center">
+                        No team members added yet. Click "Add Member" to build your implementation team.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-2">
+                    {teamMembers.map((member) => (
+                      <Card key={member.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback>
+                                {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium">{member.profiles?.full_name || 'Unknown'}</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setTeamDialogOpen(true)}
+                                >
+                                  Edit
+                                </Button>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{member.role_in_initiative}</p>
+                              {member.responsibilities && member.responsibilities.length > 0 && (
+                                <div className="mt-2">
+                                  <p className="text-xs text-muted-foreground">Responsibilities:</p>
+                                  <ul className="text-xs text-muted-foreground list-disc list-inside">
+                                    {member.responsibilities.map((resp, idx) => (
+                                      <li key={idx}>{resp}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+                
+                <p className="text-sm text-muted-foreground mt-2">
+                  Include key stakeholders who will implement and support this initiative. Add their roles and specific responsibilities.
+                </p>
+              </div>
             </div>
             
             <div className="rounded-lg border border-accent/50 bg-accent/5 p-4">
@@ -911,6 +969,12 @@ export default function Decide() {
           )}
         </div>
       </div>
+
+      <TeamMemberDialog
+        open={teamDialogOpen}
+        onOpenChange={setTeamDialogOpen}
+        initiativeId={effectiveInitiativeId || ""}
+      />
     </div>
   );
 }
