@@ -1020,7 +1020,31 @@ export default function Decide() {
             </div>
 
             <div className="space-y-3">
-              <Label>Feasibility Assessment (1-10 confidence rating)</Label>
+              <Label>Feasibility Assessment</Label>
+              
+              {/* Scoring Rubric Guide */}
+              <div className="rounded-lg border border-primary/20 bg-muted/50 p-4 space-y-3">
+                <h4 className="font-medium text-sm">Scoring Rubric (1-10 Scale)</h4>
+                <div className="grid gap-2 text-xs">
+                  <div className="flex gap-2">
+                    <span className="font-semibold w-16">1-3:</span>
+                    <span className="text-muted-foreground">Low confidence - Significant barriers exist, major concerns about feasibility</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-semibold w-16">4-6:</span>
+                    <span className="text-muted-foreground">Moderate confidence - Some barriers present, but potentially manageable with effort</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-semibold w-16">7-8:</span>
+                    <span className="text-muted-foreground">High confidence - Most conditions favorable, minor challenges anticipated</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="font-semibold w-16">9-10:</span>
+                    <span className="text-muted-foreground">Very high confidence - All conditions favorable, strong likelihood of success</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-4 rounded-lg border-2 bg-primary/5">
@@ -1035,17 +1059,43 @@ export default function Decide() {
                 </div>
 
                 {[
-                  { key: "time_scheduling", factor: "Time & Scheduling", description: "Sufficient time for planning, training, and delivery?" },
-                  { key: "staff_capacity", factor: "Staff Capacity & Skills", description: "Staff have or can develop needed expertise?" },
-                  { key: "resources_budget", factor: "Resources & Budget", description: "Materials, funding, and space available?" },
-                  { key: "leadership_support", factor: "Leadership Support", description: "Active backing and protection from competing priorities?" },
-                  { key: "school_culture", factor: "School Culture & Climate", description: "Culture supportive of change and innovation?" },
+                  { 
+                    key: "time_scheduling", 
+                    factor: "Time & Scheduling", 
+                    description: "Sufficient time for planning, training, and delivery?",
+                    examples: "Consider: protected planning time, schedule flexibility, competing initiatives"
+                  },
+                  { 
+                    key: "staff_capacity", 
+                    factor: "Staff Capacity & Skills", 
+                    description: "Staff have or can develop needed expertise?",
+                    examples: "Consider: current skill levels, training availability, workload capacity"
+                  },
+                  { 
+                    key: "resources_budget", 
+                    factor: "Resources & Budget", 
+                    description: "Materials, funding, and space available?",
+                    examples: "Consider: budget allocations, physical resources, technology needs"
+                  },
+                  { 
+                    key: "leadership_support", 
+                    factor: "Leadership Support", 
+                    description: "Active backing and protection from competing priorities?",
+                    examples: "Consider: SLT commitment, priority status, resource allocation support"
+                  },
+                  { 
+                    key: "school_culture", 
+                    factor: "School Culture & Climate", 
+                    description: "Culture supportive of change and innovation?",
+                    examples: "Consider: openness to new practices, collaboration norms, past initiative success"
+                  },
                 ].map((item) => (
-                  <div key={item.key} className="rounded-lg border p-3 bg-muted/30">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.factor}</p>
+                  <div key={item.key} className="rounded-lg border p-3 bg-muted/30 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="font-medium text-sm">{item.factor}</p>
                         <p className="text-muted-foreground text-xs">{item.description}</p>
+                        <p className="text-muted-foreground text-xs italic">{item.examples}</p>
                       </div>
                       <Input
                         type="number"
