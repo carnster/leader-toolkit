@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { useTeamMembers, TeamMember } from "@/hooks/useTeamMembers";
+import { useProfiles } from "@/hooks/useProfiles";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface TeamMemberDialogProps {
@@ -41,6 +42,7 @@ const ROLE_RESPONSIBILITIES: Record<string, string[]> = {
 
 export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: TeamMemberDialogProps) {
   const { addTeamMember, updateTeamMember, removeTeamMember, isAdding, isUpdating, isRemoving } = useTeamMembers(initiativeId);
+  const { profiles, isLoading: profilesLoading } = useProfiles();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     user_id: member?.user_id || "",
@@ -118,14 +120,23 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="user_id">User ID *</Label>
-              <Input
-                id="user_id"
-                value={formData.user_id}
-                onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                placeholder="Enter user ID"
-                disabled={!!member}
-              />
+              <Label htmlFor="user_id">Team Member *</Label>
+              <Select 
+                value={formData.user_id} 
+                onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+                disabled={!!member || profilesLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={profilesLoading ? "Loading users..." : "Select a user"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.full_name} {profile.organization ? `(${profile.organization})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
