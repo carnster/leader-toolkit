@@ -170,14 +170,26 @@ export default function Decide() {
   };
 
   const handleCreateInitiative = () => {
-    createInitiative({
-      title: newInitiative.title,
-      description: newInitiative.description,
-      stage: "decide",
-      status: "active",
-    });
-    setNewInitiative({ title: "", description: "" });
-    setDialogOpen(false);
+    createInitiative(
+      {
+        title: newInitiative.title,
+        description: newInitiative.description,
+        stage: "decide",
+        status: "active",
+      },
+      {
+        onSuccess: (created: any) => {
+          try {
+            if (created?.id) {
+              sessionStorage.setItem("initiativeId", created.id);
+              navigate(`/decide?initiative=${created.id}`);
+            }
+          } catch {}
+          setNewInitiative({ title: "", description: "" });
+          setDialogOpen(false);
+        },
+      }
+    );
   };
 
   // Check for template on mount
