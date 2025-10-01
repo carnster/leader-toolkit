@@ -35,7 +35,9 @@ const mockTimeline = [
 export default function Plan() {
   const [searchParams] = useSearchParams();
   const initiativeId = searchParams.get("initiative");
-  const { activeIngredients, isLoading } = useActiveIngredients(initiativeId || "");
+  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
+  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  const { activeIngredients, isLoading } = useActiveIngredients(effectiveInitiativeId);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,10 +45,10 @@ export default function Plan() {
   useEffect(() => {
     const templateId = sessionStorage.getItem("templateId");
     
-    if (templateId && initiativeId) {
-      loadTemplateIngredients(templateId, initiativeId);
+    if (templateId && effectiveInitiativeId) {
+      loadTemplateIngredients(templateId, effectiveInitiativeId);
     }
-  }, [initiativeId]);
+  }, [effectiveInitiativeId]);
 
   const loadTemplateIngredients = async (templateId: string, initiativeId: string) => {
     try {
@@ -60,6 +62,18 @@ export default function Plan() {
       
       const templateData = template as any;
       if (templateData && templateData.active_ingredients) {
+        // If this initiative already has ingredients, skip seeding
+        const { count, error: countError } = await supabase
+          .from("active_ingredients")
+          .select("id", { count: "exact", head: true })
+          .eq("initiative_id", initiativeId);
+        if (countError) throw countError;
+        if ((count ?? 0) > 0) {
+          // Already populated; clear the template marker and exit
+          sessionStorage.removeItem("templateId");
+          return;
+        }
+
         // Create active ingredients from template
         const ingredients = templateData.active_ingredients.map((ing: any) => ({
           initiative_id: initiativeId,
@@ -93,7 +107,7 @@ export default function Plan() {
     }
   };
 
-  const displayIngredients = activeIngredients.length > 0 ? activeIngredients : mockActiveIngredients;
+  const displayIngredients = activeIngredients;
 
   return (
     <div className="space-y-8 max-w-7xl">

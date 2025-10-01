@@ -69,8 +69,8 @@ export default function Decide() {
         description: "Decision brief pre-filled from template",
       });
 
-      // Clear sessionStorage after loading
-      sessionStorage.removeItem("templateId");
+      // Keep templateId for Plan page to import active ingredients
+      // sessionStorage.removeItem("templateId");
     } catch (error) {
       console.error("Error loading template:", error);
     }
