@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Users, Calendar, Shield, Lightbulb, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const mockActiveIngredients = [
   { id: "1", name: "Daily 20-min phonics sessions", category: "Instruction", isCore: true },
@@ -27,6 +32,64 @@ const mockTimeline = [
 ];
 
 export default function Plan() {
+  const [searchParams] = useSearchParams();
+  const initiativeId = searchParams.get("initiative");
+  const { activeIngredients, isLoading } = useActiveIngredients(initiativeId || "");
+  const { toast } = useToast();
+
+  // Check for template and auto-populate active ingredients
+  useEffect(() => {
+    const templateId = sessionStorage.getItem("templateId");
+    
+    if (templateId && initiativeId) {
+      loadTemplateIngredients(templateId, initiativeId);
+    }
+  }, [initiativeId]);
+
+  const loadTemplateIngredients = async (templateId: string, initiativeId: string) => {
+    try {
+      const { data: template, error } = await supabase
+        .from("initiative_templates" as any)
+        .select("*")
+        .eq("id", templateId)
+        .single();
+
+      if (error) throw error;
+      
+      const templateData = template as any;
+      if (templateData && templateData.active_ingredients) {
+        // Create active ingredients from template
+        const ingredients = templateData.active_ingredients.map((ing: any) => ({
+          initiative_id: initiativeId,
+          name: ing.name,
+          description: ing.description,
+          is_core: ing.is_core,
+          category: ing.category || null,
+          look_fors: ing.look_fors || null,
+          adaptable_boundaries: ing.adaptable_boundaries || null,
+        }));
+
+        const { error: insertError } = await supabase
+          .from("active_ingredients")
+          .insert(ingredients);
+
+        if (insertError) throw insertError;
+
+        toast({
+          title: "Active ingredients loaded",
+          description: `${ingredients.length} components added from template`,
+        });
+      }
+
+      // Clear sessionStorage after loading
+      sessionStorage.removeItem("templateId");
+    } catch (error) {
+      console.error("Error loading template ingredients:", error);
+    }
+  };
+
+  const displayIngredients = activeIngredients.length > 0 ? activeIngredients : mockActiveIngredients;
+
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -70,26 +133,35 @@ export default function Plan() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {mockActiveIngredients.map((ingredient) => (
-                <div key={ingredient.id} className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{ingredient.name}</h4>
-                        {ingredient.isCore ? (
-                          <Badge variant="default">Core</Badge>
-                        ) : (
-                          <Badge variant="secondary">Adaptable</Badge>
-                        )}
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading active ingredients...</p>
+              ) : displayIngredients.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No active ingredients yet. Add components to get started.</p>
+              ) : (
+                displayIngredients.map((ingredient) => {
+                  const ing = ingredient as any;
+                  return (
+                    <div key={ingredient.id} className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="flex items-center gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{ingredient.name}</h4>
+                            {(ing.is_core ?? ing.isCore) ? (
+                              <Badge variant="default">Core</Badge>
+                            ) : (
+                              <Badge variant="secondary">Adaptable</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{ingredient.category}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">{ingredient.category}</p>
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
                     </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Edit
-                  </Button>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </CardContent>
           </Card>
 
@@ -102,16 +174,30 @@ export default function Plan() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockActiveIngredients.filter(i => i.isCore).map((ingredient) => (
-                  <div key={ingredient.id} className="rounded-lg border p-3">
-                    <p className="font-medium text-sm mb-2">{ingredient.name}</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                      <li>• Sessions happen daily at scheduled time</li>
-                      <li>• All pupils actively participating</li>
-                      <li>• Teacher following lesson structure</li>
-                    </ul>
-                  </div>
-                ))}
+                {displayIngredients.filter(i => {
+                  const ing = i as any;
+                  return ing.is_core ?? ing.isCore;
+                }).map((ingredient) => {
+                  const ing = ingredient as any;
+                  return (
+                    <div key={ingredient.id} className="rounded-lg border p-3">
+                      <p className="font-medium text-sm mb-2">{ingredient.name}</p>
+                      {ing.look_fors && ing.look_fors.length > 0 ? (
+                        <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                          {ing.look_fors.map((lookFor: string, idx: number) => (
+                            <li key={idx}>• {lookFor}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                          <li>• Implementation happening as planned</li>
+                          <li>• All participants actively engaged</li>
+                          <li>• Core practices being followed</li>
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

@@ -6,7 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Search, FileText, Users, Target, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const exploreChecklist = [
   { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
@@ -18,8 +21,60 @@ const exploreChecklist = [
 export default function Decide() {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState(1);
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  
+  // Form state
+  const [problemStatement, setProblemStatement] = useState("");
+  const [targetGroup, setTargetGroup] = useState("");
+  const [baselineData, setBaselineData] = useState("");
+  const [leadingIndicators, setLeadingIndicators] = useState("");
+  const [laggingIndicators, setLaggingIndicators] = useState("");
+  const [measurementTimeline, setMeasurementTimeline] = useState("");
 
   const completionRate = (Object.values(checkedItems).filter(Boolean).length / exploreChecklist.length) * 100;
+
+  // Check for template on mount
+  useEffect(() => {
+    const templateId = sessionStorage.getItem("templateId");
+    const initiativeId = searchParams.get("initiative");
+    
+    if (templateId && initiativeId) {
+      loadTemplateData(templateId, initiativeId);
+    }
+  }, [searchParams]);
+
+  const loadTemplateData = async (templateId: string, initiativeId: string) => {
+    try {
+      const { data: template, error } = await supabase
+        .from("initiative_templates" as any)
+        .select("*")
+        .eq("id", templateId)
+        .single();
+
+      if (error) throw error;
+      
+      const templateData = template as any;
+      if (templateData && templateData.decision_brief_template) {
+        const brief = templateData.decision_brief_template;
+        setProblemStatement(brief.problem_statement || "");
+        setTargetGroup(brief.target_group || "");
+        setMeasurementTimeline(brief.measurement_timeline || "");
+        setLeadingIndicators(brief.leading_indicators?.join(", ") || "");
+        setLaggingIndicators(brief.lagging_indicators?.join(", ") || "");
+      }
+
+      toast({
+        title: "Template loaded",
+        description: "Decision brief pre-filled from template",
+      });
+
+      // Clear sessionStorage after loading
+      sessionStorage.removeItem("templateId");
+    } catch (error) {
+      console.error("Error loading template:", error);
+    }
+  };
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -70,6 +125,8 @@ export default function Decide() {
                 id="problem"
                 placeholder="Describe the core issue you're trying to solve..."
                 rows={4}
+                value={problemStatement}
+                onChange={(e) => setProblemStatement(e.target.value)}
               />
               <p className="text-sm text-muted-foreground">
                 Be specific: What's happening? For whom? What's the impact?
@@ -81,6 +138,8 @@ export default function Decide() {
               <Input
                 id="target"
                 placeholder="e.g., Year 3 pupils reading below age-related expectations"
+                value={targetGroup}
+                onChange={(e) => setTargetGroup(e.target.value)}
               />
             </div>
 
@@ -90,6 +149,8 @@ export default function Decide() {
                 id="baseline"
                 placeholder="What does the current data tell you? Include numbers and sources..."
                 rows={3}
+                value={baselineData}
+                onChange={(e) => setBaselineData(e.target.value)}
               />
             </div>
 
@@ -234,6 +295,8 @@ export default function Decide() {
                 id="leading"
                 placeholder="e.g., Teacher fidelity to programme, pupil attendance at sessions, weekly assessment scores..."
                 rows={3}
+                value={leadingIndicators}
+                onChange={(e) => setLeadingIndicators(e.target.value)}
               />
             </div>
 
@@ -243,6 +306,8 @@ export default function Decide() {
                 id="lagging"
                 placeholder="e.g., End-of-term reading assessments, standardized test scores..."
                 rows={3}
+                value={laggingIndicators}
+                onChange={(e) => setLaggingIndicators(e.target.value)}
               />
             </div>
 
@@ -251,6 +316,8 @@ export default function Decide() {
               <Input
                 id="timeline"
                 placeholder="When will you check each indicator?"
+                value={measurementTimeline}
+                onChange={(e) => setMeasurementTimeline(e.target.value)}
               />
             </div>
           </CardContent>
