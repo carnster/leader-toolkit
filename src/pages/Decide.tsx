@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
+import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 
 const exploreChecklist = [
   { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
@@ -35,6 +36,9 @@ export default function Decide() {
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
+  // Decision brief hook
+  const { decisionBrief, upsertDecisionBrief, isSaving } = useDecisionBrief(effectiveInitiativeId || undefined);
+  
   // Initiative creation dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
@@ -43,11 +47,111 @@ export default function Decide() {
   const [problemStatement, setProblemStatement] = useState("");
   const [targetGroup, setTargetGroup] = useState("");
   const [baselineData, setBaselineData] = useState("");
+  const [rootCauses, setRootCauses] = useState("");
+  const [equityNotes, setEquityNotes] = useState("");
+  const [stakeholderInput, setStakeholderInput] = useState("");
+  const [chosenApproach, setChosenApproach] = useState("");
+  const [evidenceBase, setEvidenceBase] = useState("");
+  const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
   const [leadingIndicators, setLeadingIndicators] = useState("");
   const [laggingIndicators, setLaggingIndicators] = useState("");
   const [measurementTimeline, setMeasurementTimeline] = useState("");
+  
+  // Load existing decision brief
+  useEffect(() => {
+    if (decisionBrief) {
+      setProblemStatement(decisionBrief.problem_statement || "");
+      setTargetGroup(decisionBrief.target_group || "");
+      setBaselineData(decisionBrief.baseline_data || "");
+      setRootCauses(decisionBrief.root_causes?.join(", ") || "");
+      setEquityNotes(decisionBrief.equity_notes || "");
+      setStakeholderInput(decisionBrief.stakeholder_input || "");
+      setChosenApproach(decisionBrief.chosen_approach || "");
+      setEvidenceBase(decisionBrief.evidence_base || "");
+      setFeasibilityScore(decisionBrief.feasibility_score || 0);
+      setLeadingIndicators(decisionBrief.leading_indicators?.join(", ") || "");
+      setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
+      setMeasurementTimeline(decisionBrief.measurement_timeline || "");
+      
+      if (decisionBrief.checklist_completed) {
+        setCheckedItems({
+          problem_defined: true,
+          equity_considered: true,
+          fit_feasibility: true,
+          success_metrics: true,
+        });
+      }
+    }
+  }, [decisionBrief]);
 
   const completionRate = (Object.values(checkedItems).filter(Boolean).length / exploreChecklist.length) * 100;
+  
+  const handleSaveProgress = () => {
+    if (!effectiveInitiativeId) {
+      toast({
+        title: "No initiative selected",
+        description: "Please create or select an initiative first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    upsertDecisionBrief({
+      initiative_id: effectiveInitiativeId,
+      problem_statement: problemStatement,
+      target_group: targetGroup,
+      baseline_data: baselineData,
+      root_causes: rootCauses ? rootCauses.split(",").map(s => s.trim()) : null,
+      equity_notes: equityNotes,
+      stakeholder_input: stakeholderInput,
+      chosen_approach: chosenApproach,
+      evidence_base: evidenceBase,
+      feasibility_score: feasibilityScore || null,
+      leading_indicators: leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : null,
+      lagging_indicators: laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : null,
+      measurement_timeline: measurementTimeline,
+      checklist_completed: completionRate === 100,
+    });
+  };
+  
+  const handleAdoptInitiative = async () => {
+    if (completionRate < 100) {
+      toast({
+        title: "Checklist incomplete",
+        description: "Please complete all required checklist items before adopting this initiative.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Save final decision brief
+    handleSaveProgress();
+    
+    // Update initiative stage to plan
+    const { error } = await supabase
+      .from("initiatives")
+      .update({ stage: "plan" })
+      .eq("id", effectiveInitiativeId);
+    
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update initiative stage.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Initiative adopted! 🎉",
+      description: "Decision brief complete. Moving to Plan & Prepare stage.",
+    });
+    
+    // Navigate to Plan page
+    setTimeout(() => {
+      navigate(`/plan?initiative=${effectiveInitiativeId}`);
+    }, 1500);
+  };
 
   const handleCreateInitiative = () => {
     createInitiative({
@@ -281,7 +385,15 @@ export default function Decide() {
                 id="rootCauses"
                 placeholder="What are the underlying factors contributing to this problem?..."
                 rows={3}
+                value={rootCauses}
+                onChange={(e) => setRootCauses(e.target.value)}
               />
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -315,6 +427,8 @@ export default function Decide() {
                 id="equity"
                 placeholder="Who might be disproportionately affected? Are there barriers to access?..."
                 rows={4}
+                value={equityNotes}
+                onChange={(e) => setEquityNotes(e.target.value)}
               />
             </div>
 
@@ -324,7 +438,15 @@ export default function Decide() {
                 id="stakeholders"
                 placeholder="What have you heard from teachers, pupils, families, and leaders?..."
                 rows={4}
+                value={stakeholderInput}
+                onChange={(e) => setStakeholderInput(e.target.value)}
               />
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
             </div>
 
             <div className="rounded-lg border border-accent/50 bg-accent/5 p-4">
@@ -369,6 +491,8 @@ export default function Decide() {
               <Input
                 id="approach"
                 placeholder="e.g., Evidence-based intervention framework"
+                value={chosenApproach}
+                onChange={(e) => setChosenApproach(e.target.value)}
               />
             </div>
 
@@ -378,6 +502,8 @@ export default function Decide() {
                 id="evidence"
                 placeholder="What research or evidence supports this approach?..."
                 rows={3}
+                value={evidenceBase}
+                onChange={(e) => setEvidenceBase(e.target.value)}
               />
             </div>
 
@@ -405,6 +531,12 @@ export default function Decide() {
                   </div>
                 ))}
               </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -462,6 +594,12 @@ export default function Decide() {
                 value={measurementTimeline}
                 onChange={(e) => setMeasurementTimeline(e.target.value)}
               />
+            </div>
+            
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -542,7 +680,7 @@ export default function Decide() {
         </CardContent>
       </Card>
       
-      {/* Navigation */}
+      {/* Navigation & Adoption */}
       <div className="flex items-center justify-between">
         <Button
           variant="outline"
@@ -552,13 +690,21 @@ export default function Decide() {
           Previous Step
         </Button>
         <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Progress"}
+          </Button>
           {step < 4 ? (
             <Button onClick={() => setStep(Math.min(4, step + 1))}>
               Next Step
             </Button>
           ) : (
-            <Button disabled={completionRate < 100}>
-              Generate Decision Brief
+            <Button 
+              disabled={completionRate < 100 || !effectiveInitiativeId}
+              onClick={handleAdoptInitiative}
+              className="bg-primary"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Adopt Initiative & Move to Plan
             </Button>
           )}
         </div>
