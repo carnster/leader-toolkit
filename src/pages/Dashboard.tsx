@@ -6,13 +6,9 @@ import { Plus, AlertCircle, TrendingUp, Users, CheckCircle2, Trash2, MoreVertica
 import { Link } from "react-router-dom";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 const mockStages = [
   { id: "decide", name: "Decide", completed: true, current: false },
@@ -68,22 +64,10 @@ const mockAlerts = [
 ];
 
 export default function Dashboard() {
-  const { initiatives, isLoading, createInitiative, deleteInitiative, isCreating, isDeleting } = useInitiatives();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
+  const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
+  const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
-
-  const handleCreateInitiative = () => {
-    createInitiative({
-      title: newInitiative.title,
-      description: newInitiative.description,
-      stage: "decide",
-      status: "active",
-    });
-    setNewInitiative({ title: "", description: "" });
-    setDialogOpen(false);
-  };
 
   const handleDeleteClick = (id: string) => {
     setInitiativeToDelete(id);
@@ -126,62 +110,10 @@ export default function Dashboard() {
             Track and manage your school improvement initiatives
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Initiative
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Initiative</DialogTitle>
-              <DialogDescription>
-                Start a new school improvement initiative
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <InitiativeTemplateSelector />
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newInitiative.title}
-                  onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
-                  placeholder="e.g., Student Support Initiative"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Textarea
-                  id="description"
-                  value={newInitiative.description}
-                  onChange={(e) => setNewInitiative({ ...newInitiative, description: e.target.value })}
-                  placeholder="Brief description of the initiative..."
-                  rows={3}
-                />
-              </div>
-              <Button
-                onClick={handleCreateInitiative}
-                disabled={!newInitiative.title || isCreating}
-                className="w-full"
-              >
-                {isCreating ? "Creating..." : "Create Initiative"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => navigate('/decide')}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Initiative
+        </Button>
       </div>
 
       {/* Key Metrics */}
@@ -345,62 +277,10 @@ export default function Dashboard() {
                 <p className="text-muted-foreground mb-4">
                   Get started by creating your first school improvement initiative
                 </p>
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Initiative
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Initiative</DialogTitle>
-                      <DialogDescription>
-                        Start a new school improvement initiative
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-3">
-                        <InitiativeTemplateSelector />
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                          </div>
-                          <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Title</Label>
-                        <Input
-                          id="title"
-                          value={newInitiative.title}
-                          onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
-                          placeholder="e.g., Student Support Initiative"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="description">Description (optional)</Label>
-                        <Textarea
-                          id="description"
-                          value={newInitiative.description}
-                          onChange={(e) => setNewInitiative({ ...newInitiative, description: e.target.value })}
-                          placeholder="Brief description of the initiative..."
-                          rows={3}
-                        />
-                      </div>
-                      <Button
-                        onClick={handleCreateInitiative}
-                        disabled={!newInitiative.title || isCreating}
-                        className="w-full"
-                      >
-                        {isCreating ? "Creating..." : "Create Initiative"}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button onClick={() => navigate('/decide')}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Your First Initiative
+                </Button>
               </div>
             </div>
           </CardContent>

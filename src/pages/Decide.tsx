@@ -5,11 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Search, FileText, Users, Target, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Search, FileText, Users, Target, AlertCircle, CheckCircle2, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
+import { useInitiatives } from "@/hooks/useInitiatives";
 
 const exploreChecklist = [
   { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
@@ -22,7 +25,13 @@ export default function Decide() {
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState(1);
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { createInitiative, isCreating } = useInitiatives();
+  
+  // Initiative creation dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
   
   // Form state
   const [problemStatement, setProblemStatement] = useState("");
@@ -33,6 +42,17 @@ export default function Decide() {
   const [measurementTimeline, setMeasurementTimeline] = useState("");
 
   const completionRate = (Object.values(checkedItems).filter(Boolean).length / exploreChecklist.length) * 100;
+
+  const handleCreateInitiative = () => {
+    createInitiative({
+      title: newInitiative.title,
+      description: newInitiative.description,
+      stage: "decide",
+      status: "active",
+    });
+    setNewInitiative({ title: "", description: "" });
+    setDialogOpen(false);
+  };
 
   // Check for template on mount
   useEffect(() => {
@@ -79,15 +99,73 @@ export default function Decide() {
   return (
     <div className="space-y-8 max-w-5xl">
       {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-          <Search className="h-4 w-4" />
-          <span>Stage 1: Decide</span>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <Search className="h-4 w-4" />
+            <span>Stage 1: Decide</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Decision Brief Wizard</h1>
+          <p className="text-muted-foreground">
+            Define the problem, assess evidence-fit, and establish success criteria
+          </p>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Decision Brief Wizard</h1>
-        <p className="text-muted-foreground">
-          Define the problem, assess evidence-fit, and establish success criteria
-        </p>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Initiative
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Initiative</DialogTitle>
+              <DialogDescription>
+                Start a new school improvement initiative
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <InitiativeTemplateSelector />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={newInitiative.title}
+                  onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
+                  placeholder="e.g., Student Support Initiative"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Textarea
+                  id="description"
+                  value={newInitiative.description}
+                  onChange={(e) => setNewInitiative({ ...newInitiative, description: e.target.value })}
+                  placeholder="Brief description of the initiative..."
+                  rows={3}
+                />
+              </div>
+              <Button
+                onClick={handleCreateInitiative}
+                disabled={!newInitiative.title || isCreating}
+                className="w-full"
+              >
+                {isCreating ? "Creating..." : "Create Initiative"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Progress */}
