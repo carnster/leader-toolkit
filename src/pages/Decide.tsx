@@ -696,6 +696,8 @@ export default function Decide() {
         </Card>
       )}
 
+      {/* Master Checklist - Decide stage */}
+      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
       
       {/* Next Stage Preview */}
       <Card className="border-secondary/30 bg-secondary/5">
@@ -726,9 +728,6 @@ export default function Decide() {
           </ul>
         </CardContent>
       </Card>
-      
-      {/* Master Checklist - Decide stage */}
-      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
       
       {/* Navigation & Adoption */}
       <div className="flex items-center justify-between">
