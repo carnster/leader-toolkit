@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { useTeamMembers, TeamMember } from "@/hooks/useTeamMembers";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -13,6 +14,30 @@ interface TeamMemberDialogProps {
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
 }
+
+const COMMON_ROLES = [
+  "Implementation Lead",
+  "School Leader/Principal",
+  "Instructional Coach",
+  "Teacher/Practitioner",
+  "District Administrator",
+  "Data Analyst",
+  "Family/Community Liaison",
+  "Support Staff",
+  "Professional Development Coordinator",
+];
+
+const ROLE_RESPONSIBILITIES: Record<string, string[]> = {
+  "Implementation Lead": ["Oversee implementation timeline", "Coordinate team meetings", "Monitor fidelity", "Report to stakeholders"],
+  "School Leader/Principal": ["Provide administrative support", "Allocate resources", "Remove barriers", "Champion the initiative"],
+  "Instructional Coach": ["Provide ongoing coaching", "Model practices", "Observe and give feedback", "Facilitate professional learning"],
+  "Teacher/Practitioner": ["Implement core components", "Collect student data", "Participate in PD", "Share feedback"],
+  "District Administrator": ["Secure funding", "Align with district goals", "Provide policy support", "Facilitate communication"],
+  "Data Analyst": ["Track indicators", "Analyze results", "Create dashboards", "Present findings"],
+  "Family/Community Liaison": ["Engage families", "Gather community input", "Communicate progress", "Build partnerships"],
+  "Support Staff": ["Provide logistical support", "Coordinate schedules", "Manage materials", "Document meetings"],
+  "Professional Development Coordinator": ["Plan PD sessions", "Secure facilitators", "Track attendance", "Evaluate training effectiveness"],
+};
 
 export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: TeamMemberDialogProps) {
   const { addTeamMember, updateTeamMember, removeTeamMember, isAdding, isUpdating, isRemoving } = useTeamMembers(initiativeId);
@@ -38,6 +63,19 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
       });
     }
   }, [member, open]);
+
+  const handleRoleChange = (role: string) => {
+    setFormData({ ...formData, role_in_initiative: role });
+    
+    // Suggest responsibilities based on role
+    if (ROLE_RESPONSIBILITIES[role] && formData.responsibilities.length === 1 && !formData.responsibilities[0]) {
+      setFormData({ 
+        ...formData, 
+        role_in_initiative: role,
+        responsibilities: ROLE_RESPONSIBILITIES[role] 
+      });
+    }
+  };
 
   const handleSubmit = () => {
     const data = {
@@ -92,12 +130,18 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
 
             <div className="space-y-2">
               <Label htmlFor="role">Role in Initiative *</Label>
-              <Input
-                id="role"
-                value={formData.role_in_initiative}
-                onChange={(e) => setFormData({ ...formData, role_in_initiative: e.target.value })}
-                placeholder="e.g., Implementation Lead, Coach, Teacher"
-              />
+              <Select value={formData.role_in_initiative} onValueChange={handleRoleChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
