@@ -25,7 +25,6 @@ const exploreChecklist = [
 ];
 
 export default function Decide() {
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [step, setStep] = useState(1);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -74,18 +73,24 @@ export default function Decide() {
       setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
       setMeasurementTimeline(decisionBrief.measurement_timeline || "");
       
-      if (decisionBrief.checklist_completed) {
-        setCheckedItems({
-          problem_defined: true,
-          equity_considered: true,
-          fit_feasibility: true,
-          success_metrics: true,
-        });
-      }
+      // Checklist is now auto-calculated, no need to load it
     }
   }, [decisionBrief]);
 
-  const completionRate = (Object.values(checkedItems).filter(Boolean).length / exploreChecklist.length) * 100;
+  // Auto-calculate checklist completion based on form data
+  const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses;
+  const isStep2Complete = equityNotes && stakeholderInput;
+  const isStep3Complete = chosenApproach && evidenceBase && feasibilityScore > 0;
+  const isStep4Complete = leadingIndicators && laggingIndicators && measurementTimeline;
+  
+  const autoCheckedItems = {
+    problem_defined: !!isStep1Complete,
+    equity_considered: !!isStep2Complete,
+    fit_feasibility: !!isStep3Complete,
+    success_metrics: !!isStep4Complete,
+  };
+  
+  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / exploreChecklist.length) * 100;
   
   const handleSaveProgress = () => {
     if (!effectiveInitiativeId) {
@@ -628,36 +633,47 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* Explore Checklist */}
+      {/* Decision Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle>Decision Checklist</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Decision Checklist
+          </CardTitle>
           <CardDescription>
-            Complete all required items before progressing to Plan stage
+            This checklist updates automatically as you complete each step above
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            {exploreChecklist.map((item) => (
-              <div key={item.id} className="flex items-start space-x-3 rounded-lg border p-3">
-                <Checkbox
-                  id={item.id}
-                  checked={checkedItems[item.id]}
-                  onCheckedChange={(checked) =>
-                    setCheckedItems({ ...checkedItems, [item.id]: checked as boolean })
-                  }
-                />
-                <label
-                  htmlFor={item.id}
-                  className="flex-1 text-sm leading-relaxed cursor-pointer"
-                >
-                  {item.text}
-                  {item.required && (
-                    <span className="ml-1 text-destructive">*</span>
-                  )}
-                </label>
-              </div>
-            ))}
+            {exploreChecklist.map((item, index) => {
+              const isComplete = autoCheckedItems[item.id as keyof typeof autoCheckedItems];
+              return (
+                <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                  <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary flex-shrink-0 mt-0.5">
+                    {isComplete ? (
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                    ) : (
+                      <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <p className={`text-sm leading-relaxed ${isComplete ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      {item.text}
+                      {item.required && (
+                        <span className="ml-1 text-destructive">*</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {index === 0 && "Complete Step 1 above"}
+                      {index === 1 && "Complete Step 2 above"}
+                      {index === 2 && "Complete Step 3 above"}
+                      {index === 3 && "Complete Step 4 above"}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           
           <div className="space-y-2 pt-4">
