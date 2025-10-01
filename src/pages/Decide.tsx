@@ -10,6 +10,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
@@ -47,6 +48,7 @@ export default function Decide() {
   // Initiative creation dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
+  const [skipWarningOpen, setSkipWarningOpen] = useState(false);
   const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
   
   // Form state
@@ -90,6 +92,44 @@ export default function Decide() {
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
   const isStep5Complete = stakeholderInput && equityNotes && feasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
+  
+  // Step completion validation
+  const getStepCompletion = (stepNumber: number): boolean => {
+    switch(stepNumber) {
+      case 1: return !!isStep1Complete;
+      case 2: return !!isStep2Complete;
+      case 3: return !!isStep3Complete;
+      case 4: return !!isStep4Complete;
+      case 5: return !!isStep5Complete;
+      case 6: return !!isStep6Complete;
+      default: return false;
+    }
+  };
+  
+  const getStepName = (stepNumber: number): string => {
+    switch(stepNumber) {
+      case 1: return "Problem Definition";
+      case 2: return "Team Assembly";
+      case 3: return "Goal Development";
+      case 4: return "Solution Selection";
+      case 5: return "Readiness & Feasibility";
+      case 6: return "Success Metrics";
+      default: return "Unknown Step";
+    }
+  };
+  
+  const handleNextStep = () => {
+    if (!getStepCompletion(step)) {
+      setSkipWarningOpen(true);
+      return;
+    }
+    setStep(Math.min(6, step + 1));
+  };
+  
+  const confirmSkipStep = () => {
+    setStep(Math.min(6, step + 1));
+    setSkipWarningOpen(false);
+  };
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
@@ -952,6 +992,40 @@ export default function Decide() {
         </CardContent>
       </Card>
       
+      {/* Skip Step Warning Dialog */}
+      <AlertDialog open={skipWarningOpen} onOpenChange={setSkipWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Step Incomplete</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-3">
+                <p>
+                  You haven't completed <strong>{getStepName(step)}</strong>. Skipping this step may impact your implementation plan.
+                </p>
+                <div className="rounded-lg bg-destructive/10 p-3 space-y-2">
+                  <p className="font-semibold text-destructive">Potential Impact:</p>
+                  <ul className="text-sm space-y-1 ml-4 list-disc">
+                    <li>Missing critical information for decision-making</li>
+                    <li>Incomplete decision brief documentation</li>
+                    <li>Reduced likelihood of implementation success</li>
+                    <li>Difficulty tracking progress and outcomes</li>
+                  </ul>
+                </div>
+                <p className="text-sm">
+                  Do you want to skip this step anyway, or go back and complete it?
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back & Complete</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSkipStep} className="bg-destructive hover:bg-destructive/90">
+              Skip Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {/* Navigation & Adoption */}
       <div className="flex items-center justify-between">
         <Button
@@ -966,7 +1040,7 @@ export default function Decide() {
             {isSaving ? "Saving..." : "Save Progress"}
           </Button>
           {step < 6 ? (
-            <Button onClick={() => setStep(Math.min(6, step + 1))}>
+            <Button onClick={handleNextStep}>
               Next Step
             </Button>
           ) : (
