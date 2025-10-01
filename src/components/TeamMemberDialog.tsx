@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2 } from "lucide-react";
 import { useTeamMembers, TeamMember } from "@/hooks/useTeamMembers";
 import { useProfiles } from "@/hooks/useProfiles";
+import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface TeamMemberDialogProps {
@@ -43,6 +44,7 @@ const ROLE_RESPONSIBILITIES: Record<string, string[]> = {
 export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: TeamMemberDialogProps) {
   const { addTeamMember, updateTeamMember, removeTeamMember, isAdding, isUpdating, isRemoving } = useTeamMembers(initiativeId);
   const { profiles, isLoading: profilesLoading } = useProfiles();
+  const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [useExistingUser, setUseExistingUser] = useState(!!member?.user_id);
   const [formData, setFormData] = useState({
@@ -86,11 +88,18 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
   };
 
   const handleSubmit = () => {
-    // Use name as user_id if entering manually (temporary solution)
-    const userId = useExistingUser ? formData.user_id : formData.name;
-    
+    // Temporarily require selecting an existing user until backend supports name-only entries
+    if (!useExistingUser) {
+      toast({
+        title: "Select an existing user",
+        description: "Entering a name only isn't supported yet. Please select a user from the list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const data = {
-      user_id: userId,
+      user_id: formData.user_id,
       role_in_initiative: formData.role_in_initiative,
       responsibilities: formData.responsibilities.filter(r => r.trim() !== ""),
     };
@@ -249,13 +258,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
                 </Button>
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={
-                    (!useExistingUser && !formData.name) || 
-                    (useExistingUser && !formData.user_id) || 
-                    !formData.role_in_initiative || 
-                    isAdding || 
-                    isUpdating
-                  }
+                  disabled={!formData.user_id || !formData.role_in_initiative || isAdding || isUpdating}
                 >
                   {isAdding || isUpdating ? "Saving..." : member ? "Save Changes" : "Add Member"}
                 </Button>
