@@ -37,12 +37,27 @@ export default function Monitor() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <BarChart3 className="h-4 w-4" />
-          <span>Stage 4: Monitor</span>
+          <span>Within Implement Stage: Monitor & Adjust</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Monitor & Adjust</h1>
-        <p className="text-muted-foreground">
-          Track leading and lagging indicators, run PDSA cycles, and make data-informed adjustments
+        <p className="text-muted-foreground mt-2">
+          Assess and adjust continuously using data and improvement cycles
         </p>
+        <Card className="mt-4 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <Target className="h-5 w-5 text-primary" />
+              What to do in Monitor & Adjust
+            </h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• <strong>Track leading indicators:</strong> Monitor fidelity, adoption, and implementation quality</li>
+              <li>• <strong>Track lagging indicators:</strong> Measure student outcomes and intended results</li>
+              <li>• <strong>Run PDSA cycles:</strong> Test small changes to improve implementation effectiveness</li>
+              <li>• <strong>Ask the right questions:</strong> "What are we trying to accomplish?" "How will we know it's working?"</li>
+              <li>• <strong>Learn from data:</strong> Turn failure into growth; refine strategies based on evidence</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Key Indicators */}

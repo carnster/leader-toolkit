@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Search, FileText, Users, Target, AlertCircle, CheckCircle2, Plus } from "lucide-react";
+import { Search, FileText, Users, Target, AlertCircle, CheckCircle2, Plus, Lightbulb } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,9 +105,9 @@ export default function Decide() {
             <Search className="h-4 w-4" />
             <span>Stage 1: Decide</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Decision Brief Wizard</h1>
-          <p className="text-muted-foreground">
-            Define the problem, assess evidence-fit, and establish success criteria
+          <h1 className="text-3xl font-bold tracking-tight">Decide Stage</h1>
+          <p className="text-muted-foreground mt-2">
+            Make informed decisions about what changes to implement based on evidence and organizational readiness
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -167,6 +167,34 @@ export default function Decide() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* IMPACT Framework Guidance */}
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-primary" />
+            IMPACT Framework: Decide Stage Essentials
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-semibold mb-2">Key Activities for This Stage:</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground ml-4">
+              <li>• <strong>Assemble your implementation team:</strong> Include diverse stakeholders with expertise</li>
+              <li>• <strong>Name the problem and need for change (the why):</strong> Be specific about what needs improvement</li>
+              <li>• <strong>Develop the goal:</strong> Create measurable, time-bound objectives</li>
+              <li>• <strong>Identify evidence-based solutions:</strong> Select practices with proven effectiveness</li>
+              <li>• <strong>Consider fit and feasibility:</strong> Match the solution to your context and capacity</li>
+              <li>• <strong>Assess organizational readiness:</strong> Evaluate resources, climate, and support systems</li>
+            </ul>
+          </div>
+          <div className="rounded-lg bg-background/50 p-3 text-sm">
+            <p className="text-muted-foreground">
+              <strong className="text-foreground">Remember:</strong> Implementation is a learning process. Involving implementers from the start builds ownership and increases the likelihood of success. Use this stage to ensure everyone understands <em>why</em> this change matters.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Progress */}
       <Card>

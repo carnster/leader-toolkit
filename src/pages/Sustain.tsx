@@ -30,12 +30,28 @@ export default function Sustain() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <Shield className="h-4 w-4" />
-          <span>Stage 5: Sustain</span>
+          <span>Stage 4: Spread and Sustain</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Sustainability Planning</h1>
-        <p className="text-muted-foreground">
-          Embed practices, protect resources, and prepare for scale or adaptation
+        <h1 className="text-3xl font-bold tracking-tight">Spread and Sustain Stage</h1>
+        <p className="text-muted-foreground mt-2">
+          Navigate to sustainment, embed practices into standard operations, and prepare for spread
         </p>
+        <Card className="mt-4 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              What to do in the Spread and Sustain Stage
+            </h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• <strong>Navigate to sustainment:</strong> Transition from learning the work to doing the work</li>
+              <li>• <strong>Embed in routines:</strong> Make practices part of standard operating procedures</li>
+              <li>• <strong>Protect resources:</strong> Secure time, budget, and staffing allocations</li>
+              <li>• <strong>Build onboarding systems:</strong> Prepare materials for new staff joining the initiative</li>
+              <li>• <strong>Assess scale readiness:</strong> Determine if you're ready to expand to other settings</li>
+              <li>• <strong>Celebrate success:</strong> Recognize and reward implementation achievements</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Sustainability Checklist */}

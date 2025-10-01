@@ -26,10 +26,25 @@ export default function Implement() {
           <PlayCircle className="h-4 w-4" />
           <span>Stage 3: Implement</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Deliver Hub</h1>
-        <p className="text-muted-foreground">
-          Track fidelity, log observations, and receive implementation nudges
+        <h1 className="text-3xl font-bold tracking-tight">Implement Stage</h1>
+        <p className="text-muted-foreground mt-2">
+          Put the plan into action while building supportive structures and cultivating a learning culture
         </p>
+        <Card className="mt-4 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <PlayCircle className="h-5 w-5 text-primary" />
+              What to do in the Implement Stage
+            </h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• <strong>Grow the implementers:</strong> Provide ongoing training, coaching, and support</li>
+              <li>• <strong>Build supportive structures:</strong> Establish systems, policies, and resources needed for success</li>
+              <li>• <strong>Use improvement cycles:</strong> Apply PDSA (Plan-Do-Study-Act) to continuously refine implementation</li>
+              <li>• <strong>Gather implementation data:</strong> Monitor fidelity, adoption, and early outcomes</li>
+              <li>• <strong>Harness data for action:</strong> Make data-informed adjustments to improve effectiveness</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}

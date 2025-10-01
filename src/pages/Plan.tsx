@@ -132,12 +132,27 @@ export default function Plan() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <FileText className="h-4 w-4" />
-          <span>Stage 2: Plan</span>
+          <span>Stage 2: Plan and Prepare</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Implementation Planning</h1>
-        <p className="text-muted-foreground">
-          Define active ingredients, build your team, and create a structured implementation plan
+        <h1 className="text-3xl font-bold tracking-tight">Plan and Prepare Stage</h1>
+        <p className="text-muted-foreground mt-2">
+          Design a comprehensive implementation plan using human- and learning-centered design principles
         </p>
+        <Card className="mt-4 border-primary/20 bg-primary/5">
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              What to do in the Plan and Prepare Stage
+            </h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>• <strong>Identify active ingredients:</strong> Define core (non-negotiable) and adaptable components</li>
+              <li>• <strong>Select implementation strategies:</strong> Use ERIC framework (Enable, Redesign, Integrate, Create)</li>
+              <li>• <strong>Build your implementation team:</strong> Assemble diverse stakeholders with clear roles</li>
+              <li>• <strong>Plan professional learning:</strong> Design ongoing, job-embedded development opportunities</li>
+              <li>• <strong>Develop monitoring systems:</strong> Create fidelity measures and "look-fors" for quality implementation</li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs */}
