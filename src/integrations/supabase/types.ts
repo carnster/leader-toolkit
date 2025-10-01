@@ -181,6 +181,59 @@ export type Database = {
           },
         ]
       }
+      implementation_risks: {
+        Row: {
+          contingency_plan: string | null
+          created_at: string
+          id: string
+          impact: string
+          initiative_id: string
+          likelihood: string
+          mitigation_strategy: string
+          owner_id: string | null
+          risk_category: string
+          risk_description: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contingency_plan?: string | null
+          created_at?: string
+          id?: string
+          impact: string
+          initiative_id: string
+          likelihood: string
+          mitigation_strategy: string
+          owner_id?: string | null
+          risk_category: string
+          risk_description: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contingency_plan?: string | null
+          created_at?: string
+          id?: string
+          impact?: string
+          initiative_id?: string
+          likelihood?: string
+          mitigation_strategy?: string
+          owner_id?: string | null
+          risk_category?: string
+          risk_description?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implementation_risks_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       indicator_values: {
         Row: {
           id: string
@@ -391,6 +444,65 @@ export type Database = {
           },
         ]
       }
+      pd_activities: {
+        Row: {
+          activity_type: string
+          attendance_count: number | null
+          completion_status: string
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          facilitator: string | null
+          fidelity_focus: string[] | null
+          id: string
+          initiative_id: string
+          scheduled_date: string | null
+          target_audience: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          attendance_count?: number | null
+          completion_status?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          facilitator?: string | null
+          fidelity_focus?: string[] | null
+          id?: string
+          initiative_id: string
+          scheduled_date?: string | null
+          target_audience?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          attendance_count?: number | null
+          completion_status?: string
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          facilitator?: string | null
+          fidelity_focus?: string[] | null
+          id?: string
+          initiative_id?: string
+          scheduled_date?: string | null
+          target_audience?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pd_activities_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdsa_cycles: {
         Row: {
           aim: string
@@ -513,6 +625,53 @@ export type Database = {
             foreignKeyName: "sustainability_plans_initiative_id_fkey"
             columns: ["initiative_id"]
             isOneToOne: true
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeline_milestones: {
+        Row: {
+          completion_date: string | null
+          created_at: string
+          id: string
+          initiative_id: string
+          milestone: string
+          notes: string | null
+          phase: string
+          status: string
+          target_date: string
+          updated_at: string
+        }
+        Insert: {
+          completion_date?: string | null
+          created_at?: string
+          id?: string
+          initiative_id: string
+          milestone: string
+          notes?: string | null
+          phase: string
+          status?: string
+          target_date: string
+          updated_at?: string
+        }
+        Update: {
+          completion_date?: string | null
+          created_at?: string
+          id?: string
+          initiative_id?: string
+          milestone?: string
+          notes?: string | null
+          phase?: string
+          status?: string
+          target_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_milestones_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
             referencedRelation: "initiatives"
             referencedColumns: ["id"]
           },
