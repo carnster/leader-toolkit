@@ -234,6 +234,54 @@ export type Database = {
           },
         ]
       }
+      implementation_strategies: {
+        Row: {
+          created_at: string
+          description: string | null
+          eric_category: string
+          id: string
+          initiative_id: string
+          resources_needed: string | null
+          responsible_party: string | null
+          status: string
+          strategy_name: string
+          success_indicators: string | null
+          target_barrier: string | null
+          timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          eric_category: string
+          id?: string
+          initiative_id: string
+          resources_needed?: string | null
+          responsible_party?: string | null
+          status?: string
+          strategy_name: string
+          success_indicators?: string | null
+          target_barrier?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          eric_category?: string
+          id?: string
+          initiative_id?: string
+          resources_needed?: string | null
+          responsible_party?: string | null
+          status?: string
+          strategy_name?: string
+          success_indicators?: string | null
+          target_barrier?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       indicator_values: {
         Row: {
           id: string

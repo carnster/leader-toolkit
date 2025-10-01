@@ -10,6 +10,7 @@ import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { usePDActivities } from "@/hooks/usePDActivities";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,11 +20,13 @@ import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { MilestoneDialog } from "@/components/MilestoneDialog";
 import { RiskDialog } from "@/components/RiskDialog";
 import { PDActivityDialog } from "@/components/PDActivityDialog";
+import { ImplementationStrategyDialog } from "@/components/ImplementationStrategyDialog";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import type { PDActivity } from "@/hooks/usePDActivities";
+import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 import { format } from "date-fns";
 
 
@@ -38,6 +41,7 @@ export default function Plan() {
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
   const { activities, isLoading: isLoadingActivities } = usePDActivities(effectiveInitiativeId);
+  const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -51,6 +55,8 @@ export default function Plan() {
   const [editingRisk, setEditingRisk] = useState<ImplementationRisk | null>(null);
   const [pdDialogOpen, setPdDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<PDActivity | null>(null);
+  const [strategyDialogOpen, setStrategyDialogOpen] = useState(false);
+  const [editingStrategy, setEditingStrategy] = useState<ImplementationStrategy | null>(null);
 
   // Check for template and auto-populate active ingredients
   useEffect(() => {
@@ -136,8 +142,9 @@ export default function Plan() {
 
       {/* Tabs */}
       <Tabs defaultValue="ingredients" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="ingredients">Active Ingredients</TabsTrigger>
+          <TabsTrigger value="strategies">Strategies</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="risks">Risks</TabsTrigger>
@@ -230,6 +237,127 @@ export default function Plan() {
                   );
                 })}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Implementation Strategies Tab */}
+        <TabsContent value="strategies" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <CardTitle>Implementation Strategies (ERIC Framework)</CardTitle>
+                </div>
+                <Button onClick={() => {
+                  setEditingStrategy(null);
+                  setStrategyDialogOpen(true);
+                }}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Strategy
+                </Button>
+              </div>
+              <CardDescription>
+                Use the ERIC framework to plan strategies that Enable, Redesign, Integrate, and Create supports for implementation success.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStrategies ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading strategies...</p>
+              ) : strategies.length === 0 ? (
+                <div className="text-center py-8 space-y-2">
+                  <p className="text-sm text-muted-foreground">No implementation strategies yet. Use the ERIC framework to plan:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li><strong>Enable</strong> - Train, educate, provide tools</li>
+                    <li><strong>Redesign</strong> - Modify workflows, systems, structures</li>
+                    <li><strong>Integrate</strong> - Make it part of standard practice</li>
+                    <li><strong>Create</strong> - Develop new policies, teams, resources</li>
+                  </ul>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {["enable", "redesign", "integrate", "create"].map((category) => {
+                    const categoryStrategies = strategies.filter(s => s.eric_category === category);
+                    if (categoryStrategies.length === 0) return null;
+                    
+                    const categoryLabels = {
+                      enable: "Enable - Support capacity building",
+                      redesign: "Redesign - Adjust context",
+                      integrate: "Integrate - Embed in routine",
+                      create: "Create - Build new supports"
+                    };
+                    
+                    return (
+                      <div key={category}>
+                        <h3 className="text-sm font-semibold mb-3 text-primary">
+                          {categoryLabels[category as keyof typeof categoryLabels]}
+                        </h3>
+                        <div className="space-y-3">
+                          {categoryStrategies.map((strategy) => (
+                            <div key={strategy.id} className="rounded-lg border p-4 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium">{strategy.strategy_name}</h4>
+                                    <Badge variant={
+                                      strategy.status === "completed" ? "default" :
+                                      strategy.status === "in_progress" ? "secondary" :
+                                      strategy.status === "on_hold" ? "outline" : "secondary"
+                                    }>
+                                      {strategy.status.replace("_", " ")}
+                                    </Badge>
+                                  </div>
+                                  {strategy.description && (
+                                    <p className="text-sm text-muted-foreground mt-1">{strategy.description}</p>
+                                  )}
+                                  <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-muted-foreground">
+                                    {strategy.target_barrier && (
+                                      <div><strong>Barrier:</strong> {strategy.target_barrier}</div>
+                                    )}
+                                    {strategy.timeline && (
+                                      <div><strong>Timeline:</strong> {strategy.timeline}</div>
+                                    )}
+                                    {strategy.resources_needed && (
+                                      <div><strong>Resources:</strong> {strategy.resources_needed}</div>
+                                    )}
+                                    {strategy.success_indicators && (
+                                      <div><strong>Success:</strong> {strategy.success_indicators}</div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-1 ml-4">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingStrategy(strategy);
+                                      setStrategyDialogOpen(true);
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm("Delete this strategy?")) {
+                                        deleteStrategy(strategy.id);
+                                      }
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -620,6 +748,22 @@ export default function Plan() {
               if (!open) setEditingActivity(null);
             }}
             initiativeId={effectiveInitiativeId}
+          />
+          
+          <ImplementationStrategyDialog
+            strategy={editingStrategy}
+            open={strategyDialogOpen}
+            onOpenChange={(open) => {
+              setStrategyDialogOpen(open);
+              if (!open) setEditingStrategy(null);
+            }}
+            onSave={(strategy) => {
+              if (editingStrategy) {
+                updateStrategy({ id: editingStrategy.id, ...strategy });
+              } else {
+                createStrategy(strategy);
+              }
+            }}
           />
         </>
       )}
