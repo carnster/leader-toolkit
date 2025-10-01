@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 
 const mockStages = [
   { id: "decide", name: "Decide", completed: true, current: false },
@@ -331,13 +332,25 @@ export default function Dashboard() {
                           rows={3}
                         />
                       </div>
-                      <Button
-                        onClick={handleCreateInitiative}
-                        disabled={!newInitiative.title || isCreating}
-                        className="w-full"
-                      >
-                        {isCreating ? "Creating..." : "Create Initiative"}
-                      </Button>
+                       <div className="space-y-3">
+                        <InitiativeTemplateSelector />
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">Or</span>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={handleCreateInitiative}
+                          disabled={!newInitiative.title || isCreating}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          {isCreating ? "Creating..." : "Start from Scratch"}
+                        </Button>
+                      </div>
                     </div>
                   </DialogContent>
                 </Dialog>
