@@ -4,11 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Users, Calendar, Shield, Lightbulb, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
+import { EditActiveIngredientDialog } from "@/components/EditActiveIngredientDialog";
+import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 
 const mockActiveIngredients = [
   { id: "1", name: "Daily 20-min phonics sessions", category: "Instruction", isCore: true },
@@ -40,6 +43,7 @@ export default function Plan() {
   const { activeIngredients, isLoading } = useActiveIngredients(effectiveInitiativeId);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingIngredient, setEditingIngredient] = useState<ActiveIngredient | null>(null);
 
   // Check for template and auto-populate active ingredients
   useEffect(() => {
@@ -142,13 +146,10 @@ export default function Plan() {
                   <Lightbulb className="h-5 w-5 text-primary" />
                   <CardTitle>Active Ingredients Mapper</CardTitle>
                 </div>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Component
-                </Button>
+                {effectiveInitiativeId && <AddActiveIngredientDialog initiativeId={effectiveInitiativeId} />}
               </div>
               <CardDescription>
-                Define core practices (non-negotiable) and adaptable elements
+                Define core practices (non-negotiable) and adaptable elements. Each ingredient should have clear look-fors for fidelity monitoring.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -409,6 +410,16 @@ export default function Plan() {
         <Button variant="outline">Save as Draft</Button>
         <Button>Complete Planning & Move to Implement</Button>
       </div>
+
+      {/* Edit Ingredient Dialog */}
+      {editingIngredient && effectiveInitiativeId && (
+        <EditActiveIngredientDialog
+          ingredient={editingIngredient}
+          open={!!editingIngredient}
+          onOpenChange={(open) => !open && setEditingIngredient(null)}
+          initiativeId={effectiveInitiativeId}
+        />
+      )}
     </div>
   );
 }
