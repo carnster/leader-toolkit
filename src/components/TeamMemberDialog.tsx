@@ -88,18 +88,36 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
   };
 
   const handleSubmit = () => {
-    // Temporarily require selecting an existing user until backend supports name-only entries
-    if (!useExistingUser) {
+    if (useExistingUser && !formData.user_id) {
       toast({
-        title: "Select an existing user",
-        description: "Entering a name only isn't supported yet. Please select a user from the list.",
+        title: "Select a user",
+        description: "Please select a user from the list.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!useExistingUser && !formData.name.trim()) {
+      toast({
+        title: "Enter a name",
+        description: "Please enter the team member's name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.role_in_initiative) {
+      toast({
+        title: "Select a role",
+        description: "Please select a role for this team member.",
         variant: "destructive",
       });
       return;
     }
 
     const data = {
-      user_id: formData.user_id,
+      user_id: useExistingUser ? formData.user_id : null,
+      name: useExistingUser ? null : formData.name,
       role_in_initiative: formData.role_in_initiative,
       responsibilities: formData.responsibilities.filter(r => r.trim() !== ""),
     };
@@ -258,7 +276,13 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
                 </Button>
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={!formData.user_id || !formData.role_in_initiative || isAdding || isUpdating}
+                  disabled={
+                    (useExistingUser && !formData.user_id) ||
+                    (!useExistingUser && !formData.name.trim()) ||
+                    !formData.role_in_initiative || 
+                    isAdding || 
+                    isUpdating
+                  }
                 >
                   {isAdding || isUpdating ? "Saving..." : member ? "Save Changes" : "Add Member"}
                 </Button>

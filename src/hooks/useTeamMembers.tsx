@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 export interface TeamMember {
   id: string;
   initiative_id: string;
-  user_id: string;
+  user_id: string | null;
+  name: string | null;
   role_in_initiative: string;
   responsibilities: string[] | null;
   joined_at: string;
@@ -47,7 +48,8 @@ export function useTeamMembers(initiativeId: string | undefined) {
         .from("initiative_team_members")
         .insert({
           initiative_id: initiativeId!,
-          user_id: member.user_id!,
+          user_id: member.user_id || null,
+          name: member.name || null,
           role_in_initiative: member.role_in_initiative!,
           responsibilities: member.responsibilities,
         })

@@ -597,12 +597,16 @@ export default function Decide() {
                           <div className="flex items-start gap-3">
                             <Avatar className="h-10 w-10">
                               <AvatarFallback>
-                                {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??'}
+                                {(member.profiles?.full_name || member.name || '??')
+                                  .split(' ')
+                                  .map(n => n[0])
+                                  .join('')
+                                  .toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
-                                <p className="font-medium">{member.profiles?.full_name || 'Unknown'}</p>
+                                <p className="font-medium">{member.profiles?.full_name || member.name || 'Unknown'}</p>
                                 <Button
                                   variant="ghost"
                                   size="sm"

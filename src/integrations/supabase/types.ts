@@ -360,25 +360,28 @@ export type Database = {
           id: string
           initiative_id: string
           joined_at: string
+          name: string | null
           responsibilities: string[] | null
           role_in_initiative: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           id?: string
           initiative_id: string
           joined_at?: string
+          name?: string | null
           responsibilities?: string[] | null
           role_in_initiative: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           id?: string
           initiative_id?: string
           joined_at?: string
+          name?: string | null
           responsibilities?: string[] | null
           role_in_initiative?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

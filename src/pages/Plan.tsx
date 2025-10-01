@@ -408,10 +408,14 @@ export default function Plan() {
                     <div key={member.id} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent/50 transition-colors">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-                          {member.profiles?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
+                          {(member.profiles?.full_name || member.name || 'U')
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium">{member.profiles?.full_name || 'Unknown User'}</p>
+                          <p className="font-medium">{member.profiles?.full_name || member.name || 'Unknown User'}</p>
                           <p className="text-sm text-muted-foreground">{member.role_in_initiative}</p>
                           {member.responsibilities && member.responsibilities.length > 0 && (
                             <p className="text-xs text-muted-foreground mt-1">
