@@ -88,13 +88,14 @@ export default function Decide() {
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
+    "team-assembled": !!isStep2Complete,
+    "goals-defined": !!isStep3Complete,
     "evidence-approach": !!isStep4Complete,
-    "implementation-requirements": !!isStep5Complete,
     "barriers-enablers": !!isStep5Complete,
     "feasibility": !!isStep5Complete,
   };
   
-  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 5) * 100;
+  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
   
   const handleSaveProgress = () => {
     if (!effectiveInitiativeId) {
@@ -849,7 +850,7 @@ export default function Decide() {
       )}
 
       {/* Master Checklist - Decide stage */}
-      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
+      <MasterChecklist stage="decide" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
       
       {/* Next Stage Preview */}
       <Card className="border-secondary/30 bg-secondary/5">

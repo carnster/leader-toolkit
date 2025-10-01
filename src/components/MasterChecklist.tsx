@@ -11,12 +11,44 @@ interface ChecklistItem {
 }
 
 interface MasterChecklistProps {
-  stage: "explore" | "prepare" | "deliver" | "sustain";
+  stage: "decide" | "explore" | "prepare" | "deliver" | "sustain";
   initiativeId?: string;
   autoCheckedItems?: Record<string, boolean>;
 }
 
 const CHECKLIST_ITEMS = {
+  decide: [
+    {
+      id: "identified-need",
+      text: "Are we confident that we have identified the right pupil need(s) by drawing on a range of data and perspectives?",
+      category: "Problem Definition"
+    },
+    {
+      id: "team-assembled",
+      text: "Have we assembled an implementation team with diverse stakeholders and expertise?",
+      category: "Team"
+    },
+    {
+      id: "goals-defined",
+      text: "Have we developed clear, measurable, time-bound goals for this initiative?",
+      category: "Goals"
+    },
+    {
+      id: "evidence-approach",
+      text: "Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?",
+      category: "Solution Selection"
+    },
+    {
+      id: "barriers-enablers",
+      text: "Are we aware of potential barriers and enablers to change in our setting?",
+      category: "Readiness"
+    },
+    {
+      id: "feasibility",
+      text: "Is the approach feasible to implement given our resources, capacity, and context?",
+      category: "Feasibility"
+    }
+  ],
   explore: [
     {
       id: "identified-need",
@@ -132,7 +164,7 @@ export function MasterChecklist({ stage, initiativeId, autoCheckedItems }: Maste
           <div>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              {stage.charAt(0).toUpperCase() + stage.slice(1)} Stage Checklist
+              {stage === "decide" ? "Decide" : stage.charAt(0).toUpperCase() + stage.slice(1)} Stage Checklist
             </CardTitle>
             <CardDescription>
               Reflection questions to guide this stage of implementation
