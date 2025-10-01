@@ -1,0 +1,174 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { DecisionBrief } from "@/hooks/useDecisionBrief";
+
+interface EBPRecommendation {
+  name: string;
+  description: string;
+  evidence_level: 'Strong' | 'Moderate' | 'Emerging';
+  fit_score: number;
+  implementation_notes: string;
+}
+
+interface EBPRecommendationsProps {
+  decisionBrief: DecisionBrief | null;
+  onSelectRecommendation?: (recommendation: EBPRecommendation) => void;
+}
+
+export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EBPRecommendationsProps) {
+  const [recommendations, setRecommendations] = useState<EBPRecommendation[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const getRecommendations = async () => {
+    if (!decisionBrief) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommend-ebp`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ decisionBrief }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to get recommendations');
+      }
+
+      const data = await response.json();
+      setRecommendations(data.recommendations || []);
+    } catch (error) {
+      console.error('Error getting recommendations:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get recommendations",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getEvidenceColor = (level: string) => {
+    switch (level) {
+      case 'Strong': return 'bg-green-500/10 text-green-700 dark:text-green-400';
+      case 'Moderate': return 'bg-blue-500/10 text-blue-700 dark:text-blue-400';
+      case 'Emerging': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400';
+      default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getFitScoreColor = (score: number) => {
+    if (score >= 80) return 'text-green-600 dark:text-green-400';
+    if (score >= 60) return 'text-blue-600 dark:text-blue-400';
+    return 'text-yellow-600 dark:text-yellow-400';
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI-Recommended Evidence-Based Practices
+            </CardTitle>
+            <CardDescription>
+              Get personalized EBP recommendations based on your decision brief
+            </CardDescription>
+          </div>
+          {recommendations.length === 0 && (
+            <Button onClick={getRecommendations} disabled={isLoading || !decisionBrief}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Get Recommendations
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      {recommendations.length > 0 && (
+        <CardContent className="space-y-4">
+          {recommendations.map((rec, index) => (
+            <Card
+              key={index}
+              className={`transition-all ${
+                selectedId === `${index}` ? 'border-primary shadow-md' : ''
+              }`}
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">{rec.name}</CardTitle>
+                      {selectedId === `${index}` && (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className={getEvidenceColor(rec.evidence_level)} variant="secondary">
+                        {rec.evidence_level} Evidence
+                      </Badge>
+                      <Badge variant="outline" className={getFitScoreColor(rec.fit_score)}>
+                        {rec.fit_score}% Fit
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button
+                    variant={selectedId === `${index}` ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedId(`${index}`);
+                      onSelectRecommendation?.(rec);
+                      toast({
+                        title: "Recommendation Selected",
+                        description: `${rec.name} has been noted for your initiative.`,
+                      });
+                    }}
+                  >
+                    {selectedId === `${index}` ? "Selected" : "Select"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">{rec.description}</p>
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-medium mb-1">Implementation Considerations:</p>
+                  <p className="text-sm text-muted-foreground">{rec.implementation_notes}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          <Button
+            variant="outline"
+            onClick={getRecommendations}
+            disabled={isLoading}
+            className="w-full"
+          >
+            <Sparkles className="mr-2 h-4 w-4" />
+            Get New Recommendations
+          </Button>
+        </CardContent>
+      )}
+    </Card>
+  );
+}

@@ -15,6 +15,7 @@ import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelec
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
+import { EBPRecommendations } from "@/components/EBPRecommendations";
 
 const exploreChecklist = [
   { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
@@ -649,6 +650,15 @@ export default function Decide() {
 
       {/* Master Checklist - Decide stage */}
       <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} />
+      
+      {/* AI Recommendations */}
+      <EBPRecommendations 
+        decisionBrief={decisionBrief}
+        onSelectRecommendation={(rec) => {
+          setChosenApproach(rec.name + ": " + rec.description);
+          setEvidenceBase(rec.evidence_level + " evidence. " + rec.implementation_notes);
+        }}
+      />
       
       {/* Next Stage Preview */}
       <Card className="border-secondary/30 bg-secondary/5">
