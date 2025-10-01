@@ -77,20 +77,21 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
   };
 
   return (
-    <Card>
+    <Card className="border-dashed">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
+          <div className="space-y-1">
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               AI-Recommended Evidence-Based Practices
+              <Badge variant="secondary" className="ml-2">Optional</Badge>
             </CardTitle>
             <CardDescription>
-              Get personalized EBP recommendations based on your decision brief
+              Get personalized EBP recommendations based on your decision brief, or skip if you already have an initiative in mind
             </CardDescription>
           </div>
           {recommendations.length === 0 && (
-            <Button onClick={getRecommendations} disabled={isLoading || !decisionBrief}>
+            <Button onClick={getRecommendations} disabled={isLoading || !decisionBrief} variant="outline">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -105,6 +106,11 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
             </Button>
           )}
         </div>
+        {recommendations.length === 0 && (
+          <p className="text-sm text-muted-foreground mt-2">
+            💡 Already have an initiative from templates or your own approach? Feel free to continue without recommendations.
+          </p>
+        )}
       </CardHeader>
       {recommendations.length > 0 && (
         <CardContent className="space-y-4">
