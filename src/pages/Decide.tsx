@@ -142,14 +142,42 @@ export default function Decide() {
   
   const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
   
-  const handleSaveProgress = () => {
+  const handleSaveProgress = async (): Promise<boolean> => {
     if (!effectiveInitiativeId) {
       toast({
         title: "No initiative selected",
         description: "Please create or select an initiative first.",
         variant: "destructive",
       });
-      return;
+      setDialogOpen(true);
+      return false;
+    }
+
+    // Verify the initiative exists and the user has access before saving
+    const { data: initiative, error: initError } = await supabase
+      .from("initiatives")
+      .select("id")
+      .eq("id", effectiveInitiativeId)
+      .maybeSingle();
+
+    if (initError) {
+      toast({
+        title: "Error checking initiative",
+        description: initError.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!initiative) {
+      try { sessionStorage.removeItem("initiativeId"); } catch {}
+      toast({
+        title: "Initiative not found",
+        description: "Please create or select an initiative before saving.",
+        variant: "destructive",
+      });
+      setDialogOpen(true);
+      return false;
     }
     
     upsertDecisionBrief({
@@ -168,6 +196,8 @@ export default function Decide() {
       measurement_timeline: measurementTimeline,
       checklist_completed: completionRate === 100,
     });
+
+    return true;
   };
   
   const handleAdoptInitiative = async () => {
@@ -180,8 +210,9 @@ export default function Decide() {
       return;
     }
     
-    // Save final decision brief
-    handleSaveProgress();
+    // Save final decision brief (ensures initiative exists too)
+    const saved = await handleSaveProgress();
+    if (!saved) return;
     
     // Update initiative stage to plan
     const { error } = await supabase
