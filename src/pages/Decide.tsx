@@ -27,7 +27,7 @@ export default function Decide() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <Search className="h-4 w-4" />
-          <span>Stage 1: Decide / EEF Explore</span>
+          <span>Stage 1: Decide</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Decision Brief Wizard</h1>
         <p className="text-muted-foreground">
@@ -145,7 +145,7 @@ export default function Decide() {
               <div className="flex gap-3">
                 <AlertCircle className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">EEF Guidance: Engage Behaviours</p>
+                  <p className="text-sm font-medium">Implementation Guidance: Engage Behaviours</p>
                   <p className="text-sm text-muted-foreground">
                     Actively seek diverse perspectives. Consider who might be missing from the conversation.
                   </p>
@@ -257,10 +257,10 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* EEF Explore Checklist */}
+      {/* Explore Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle>EEF Explore Checklist</CardTitle>
+          <CardTitle>Decision Checklist</CardTitle>
           <CardDescription>
             Complete all required items before progressing to Plan stage
           </CardDescription>

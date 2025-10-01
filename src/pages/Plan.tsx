@@ -33,7 +33,7 @@ export default function Plan() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <FileText className="h-4 w-4" />
-          <span>Stage 2: Plan / EEF Prepare</span>
+          <span>Stage 2: Plan</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Implementation Planning</h1>
         <p className="text-muted-foreground">

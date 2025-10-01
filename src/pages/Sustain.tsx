@@ -30,7 +30,7 @@ export default function Sustain() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <Shield className="h-4 w-4" />
-          <span>Stage 5: Sustain / EEF Sustain</span>
+          <span>Stage 5: Sustain</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Sustainability Planning</h1>
         <p className="text-muted-foreground">
@@ -38,10 +38,10 @@ export default function Sustain() {
         </p>
       </div>
 
-      {/* EEF Sustain Checklist */}
+      {/* Sustainability Checklist */}
       <Card>
         <CardHeader>
-          <CardTitle>EEF Sustain Checklist</CardTitle>
+          <CardTitle>Sustainability Checklist</CardTitle>
           <CardDescription>
             Ensure the initiative is embedded for the long term
           </CardDescription>

@@ -24,7 +24,7 @@ export default function Implement() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <PlayCircle className="h-4 w-4" />
-          <span>Stage 3: Implement / EEF Deliver</span>
+          <span>Stage 3: Implement</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Deliver Hub</h1>
         <p className="text-muted-foreground">
@@ -111,7 +111,7 @@ export default function Implement() {
         <TabsList>
           <TabsTrigger value="logs">Fidelity Logs</TabsTrigger>
           <TabsTrigger value="new-log">New Quick Log</TabsTrigger>
-          <TabsTrigger value="behaviors">EEF Behaviors</TabsTrigger>
+          <TabsTrigger value="behaviors">Behaviors</TabsTrigger>
         </TabsList>
 
         {/* Fidelity Logs Tab */}
@@ -206,11 +206,11 @@ export default function Implement() {
           </Card>
         </TabsContent>
 
-        {/* EEF Behaviors Tab */}
+        {/* Implementation Behaviors Tab */}
         <TabsContent value="behaviors" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>EEF Implementation Behaviors</CardTitle>
+              <CardTitle>Implementation Behaviors</CardTitle>
               <CardDescription>
                 Engage → Unite → Reflect: Key behaviors for effective delivery
               </CardDescription>
