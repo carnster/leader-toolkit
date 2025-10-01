@@ -143,34 +143,60 @@ export default function Decide() {
   const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
   
   const handleSaveProgress = async (): Promise<boolean> => {
-    if (!effectiveInitiativeId) {
-      toast({
-        title: "No initiative selected",
-        description: "Please create or select an initiative first.",
-        variant: "destructive",
-      });
-      setDialogOpen(true);
-      return false;
+    let idToUse = effectiveInitiativeId;
+
+    // If no initiative selected, create one automatically so saving works seamlessly
+    if (!idToUse) {
+      const { data: authInfo } = await supabase.auth.getUser();
+      if (!authInfo.user) {
+        toast({
+          title: "Not signed in",
+          description: "Please sign in to save your progress.",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const fallbackTitle = newInitiative.title?.trim() ||
+        (problemStatement ? `${problemStatement.slice(0, 40)}...` : `Initiative - ${new Date().toLocaleDateString()}`);
+
+      const { data: created, error: createErr } = await supabase
+        .from("initiatives")
+        .insert({
+          title: fallbackTitle,
+          description: newInitiative.description || null,
+          stage: "decide",
+          status: "active",
+          owner_id: authInfo.user.id,
+        })
+        .select()
+        .single();
+
+      if (createErr || !created) {
+        toast({
+          title: "No initiative selected",
+          description: "Please create or select an initiative first.",
+          variant: "destructive",
+        });
+        setDialogOpen(true);
+        return false;
+      }
+
+      idToUse = created.id;
+      try {
+        sessionStorage.setItem("initiativeId", created.id);
+      } catch {}
+      navigate(`/decide?initiative=${created.id}`);
     }
 
     // Verify the initiative exists and the user has access before saving
     const { data: initiative, error: initError } = await supabase
       .from("initiatives")
       .select("id")
-      .eq("id", effectiveInitiativeId)
+      .eq("id", idToUse)
       .maybeSingle();
 
-    if (initError) {
-      toast({
-        title: "Error checking initiative",
-        description: initError.message,
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!initiative) {
-      try { sessionStorage.removeItem("initiativeId"); } catch {}
+    if (initError || !initiative) {
       toast({
         title: "Initiative not found",
         description: "Please create or select an initiative before saving.",
@@ -179,9 +205,9 @@ export default function Decide() {
       setDialogOpen(true);
       return false;
     }
-    
+
     upsertDecisionBrief({
-      initiative_id: effectiveInitiativeId,
+      initiative_id: idToUse,
       problem_statement: problemStatement,
       target_group: targetGroup,
       baseline_data: baselineData,
