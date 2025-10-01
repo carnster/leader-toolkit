@@ -137,7 +137,7 @@ export default function Decide() {
               <Label htmlFor="target">Target Pupil Group</Label>
               <Input
                 id="target"
-                placeholder="e.g., Year 3 pupils reading below age-related expectations"
+                placeholder="e.g., Year 7 pupils, Key Stage 2 students"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
               />
@@ -154,18 +154,13 @@ export default function Decide() {
               />
             </div>
 
-            <div className="space-y-3">
-              <Label>Root Causes (select all that apply)</Label>
-              <div className="space-y-2">
-                {["Limited phonics instruction", "Inconsistent practice", "Low engagement", "Assessment gaps", "Other"].map((cause) => (
-                  <div key={cause} className="flex items-center space-x-2">
-                    <Checkbox id={cause} />
-                    <label htmlFor={cause} className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      {cause}
-                    </label>
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="rootCauses">Root Causes</Label>
+              <Textarea
+                id="rootCauses"
+                placeholder="What are the underlying factors contributing to this problem?..."
+                rows={3}
+              />
             </div>
           </CardContent>
         </Card>
@@ -234,7 +229,7 @@ export default function Decide() {
               <Label htmlFor="approach">Chosen Approach</Label>
               <Input
                 id="approach"
-                placeholder="e.g., Structured phonics programme with daily practice"
+                placeholder="e.g., Evidence-based intervention framework"
               />
             </div>
 
@@ -293,7 +288,7 @@ export default function Decide() {
               <Label htmlFor="leading">Leading Indicators (early signals)</Label>
               <Textarea
                 id="leading"
-                placeholder="e.g., Teacher fidelity to programme, pupil attendance at sessions, weekly assessment scores..."
+                placeholder="e.g., Implementation fidelity, attendance rates, weekly progress checks..."
                 rows={3}
                 value={leadingIndicators}
                 onChange={(e) => setLeadingIndicators(e.target.value)}
@@ -304,7 +299,7 @@ export default function Decide() {
               <Label htmlFor="lagging">Lagging Indicators (outcome measures)</Label>
               <Textarea
                 id="lagging"
-                placeholder="e.g., End-of-term reading assessments, standardized test scores..."
+                placeholder="e.g., End-of-term assessments, standardized measures, outcome data..."
                 rows={3}
                 value={laggingIndicators}
                 onChange={(e) => setLaggingIndicators(e.target.value)}
