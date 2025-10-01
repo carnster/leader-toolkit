@@ -61,29 +61,31 @@ Provide recommendations in a clear, structured format.`;
         tools: [
           {
             type: 'function',
-            name: 'provide_recommendations',
-            description: 'Provide structured EBP recommendations',
-            parameters: {
-              type: 'object',
-              properties: {
-                recommendations: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      name: { type: 'string' },
-                      description: { type: 'string' },
-                      evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
-                      fit_score: { type: 'number', minimum: 1, maximum: 100 },
-                      implementation_notes: { type: 'string' }
-                    },
-                    required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes'],
-                    additionalProperties: false
+            function: {
+              name: 'provide_recommendations',
+              description: 'Provide structured EBP recommendations',
+              parameters: {
+                type: 'object',
+                properties: {
+                  recommendations: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        description: { type: 'string' },
+                        evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
+                        fit_score: { type: 'number', minimum: 1, maximum: 100 },
+                        implementation_notes: { type: 'string' }
+                      },
+                      required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes'],
+                      additionalProperties: false
+                    }
                   }
-                }
-              },
-              required: ['recommendations'],
-              additionalProperties: false
+                },
+                required: ['recommendations'],
+                additionalProperties: false
+              }
             }
           }
         ],
