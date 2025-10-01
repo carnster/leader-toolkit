@@ -345,17 +345,18 @@ export default function Decide() {
                 <li>Consider the root causes contributing to this problem</li>
               </ul>
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="problem">Problem Statement</Label>
               <Textarea
                 id="problem"
-                placeholder="Describe the core issue you're trying to solve..."
-                rows={4}
+                placeholder="Example: Year 9 students are not meeting expected progress in mathematics. Only 45% of students achieved age-related expectations in autumn term assessments, compared to 62% in Year 8. This gap is particularly pronounced for disadvantaged pupils (32% vs 48%)."
+                rows={5}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
               />
               <p className="text-sm text-muted-foreground">
-                Be specific: What's happening? For whom? What's the impact?
+                <strong>Be specific:</strong> State what's happening, for whom, and the measurable impact
               </p>
             </div>
 
@@ -363,32 +364,53 @@ export default function Decide() {
               <Label htmlFor="target">Target Pupil Group</Label>
               <Input
                 id="target"
-                placeholder="e.g., Year 7 pupils, Key Stage 2 students"
+                placeholder="Example: Year 9 students, particularly disadvantaged pupils in Sets 2 and 3 (approximately 65 students)"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
               />
+              <p className="text-sm text-muted-foreground">
+                Specify year group, demographics, class/set, or other defining characteristics
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="baseline">Baseline Data</Label>
               <Textarea
                 id="baseline"
-                placeholder="What does the current data tell you? Include numbers and sources..."
-                rows={3}
+                placeholder="Example: Autumn 2024 end-of-term assessments show 45% at expected standard. Teacher observations indicate 60% of students lack confidence in problem-solving. Attendance data shows target group has 89% attendance vs 94% whole-school average. Parent survey indicates 35% of families feel they can support maths homework."
+                rows={4}
                 value={baselineData}
                 onChange={(e) => setBaselineData(e.target.value)}
               />
+              <p className="text-sm text-muted-foreground">
+                Include quantitative data (test scores, attendance) and qualitative insights (observations, surveys)
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="rootCauses">Root Causes</Label>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2">
+                <Label htmlFor="rootCauses">Root Causes</Label>
+                <div className="rounded-lg border bg-muted/50 p-3 text-sm space-y-2 flex-1">
+                  <p className="font-medium">How to identify root causes:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
+                    <li><strong>Use the "5 Whys" technique:</strong> Keep asking "why" to dig deeper</li>
+                    <li><strong>Look at multiple data sources:</strong> Academic, behavioral, attendance, surveys</li>
+                    <li><strong>Involve stakeholders:</strong> Ask teachers, pupils, and families</li>
+                    <li><strong>Consider systemic factors:</strong> Resources, training, time, culture</li>
+                    <li><strong>Distinguish symptoms from causes:</strong> Low scores are symptoms; lack of practice is a cause</li>
+                  </ol>
+                </div>
+              </div>
               <Textarea
                 id="rootCauses"
-                placeholder="What are the underlying factors contributing to this problem?..."
-                rows={3}
+                placeholder="Example: Limited differentiation in lessons (teacher feedback), Insufficient retrieval practice built into schemes of work (curriculum review), Lack of targeted intervention for students falling behind (progress data analysis), Parent uncertainty about how to support at home (parent survey)"
+                rows={4}
                 value={rootCauses}
                 onChange={(e) => setRootCauses(e.target.value)}
               />
+              <p className="text-sm text-muted-foreground">
+                List underlying factors that contribute to the problem. Each should be evidence-based.
+              </p>
             </div>
             
             <div className="flex justify-end">
