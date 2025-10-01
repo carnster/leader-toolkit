@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const mockActiveIngredients = [
   { id: "1", name: "Daily 20-min phonics sessions", category: "Instruction", isCore: true },
@@ -36,6 +37,7 @@ export default function Plan() {
   const initiativeId = searchParams.get("initiative");
   const { activeIngredients, isLoading } = useActiveIngredients(initiativeId || "");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Check for template and auto-populate active ingredients
   useEffect(() => {
@@ -74,6 +76,9 @@ export default function Plan() {
           .insert(ingredients);
 
         if (insertError) throw insertError;
+
+        // Invalidate and refetch the query
+        await queryClient.invalidateQueries({ queryKey: ["active-ingredients", initiativeId] });
 
         toast({
           title: "Active ingredients loaded",

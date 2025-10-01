@@ -305,7 +305,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/${initiative.stage}`}>View Details</Link>
+                        <Link to={`/${initiative.stage}?initiative=${initiative.id}`}>View Details</Link>
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
