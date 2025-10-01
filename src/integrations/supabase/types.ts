@@ -67,6 +67,8 @@ export type Database = {
           equity_notes: string | null
           evidence_base: string | null
           feasibility_score: number | null
+          goals: string | null
+          goals_feedback: Json | null
           id: string
           initiative_id: string
           lagging_indicators: string[] | null
@@ -86,6 +88,8 @@ export type Database = {
           equity_notes?: string | null
           evidence_base?: string | null
           feasibility_score?: number | null
+          goals?: string | null
+          goals_feedback?: Json | null
           id?: string
           initiative_id: string
           lagging_indicators?: string[] | null
@@ -105,6 +109,8 @@ export type Database = {
           equity_notes?: string | null
           evidence_base?: string | null
           feasibility_score?: number | null
+          goals?: string | null
+          goals_feedback?: Json | null
           id?: string
           initiative_id?: string
           lagging_indicators?: string[] | null

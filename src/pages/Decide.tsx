@@ -65,6 +65,8 @@ export default function Decide() {
   const [leadingIndicators, setLeadingIndicators] = useState("");
   const [laggingIndicators, setLaggingIndicators] = useState("");
   const [measurementTimeline, setMeasurementTimeline] = useState("");
+  const [goalsEvaluation, setGoalsEvaluation] = useState<any>(null);
+  const [isEvaluatingGoals, setIsEvaluatingGoals] = useState(false);
   
   // Load existing decision brief
   useEffect(() => {
@@ -73,7 +75,7 @@ export default function Decide() {
       setTargetGroup(decisionBrief.target_group || "");
       setBaselineData(decisionBrief.baseline_data || "");
       setRootCauses(decisionBrief.root_causes?.join(", ") || "");
-      setGoals(decisionBrief.chosen_approach || ""); // Store goals in chosen_approach temporarily until we add proper fields
+      setGoals(decisionBrief.goals || "");
       setEquityNotes(decisionBrief.equity_notes || "");
       setStakeholderInput(decisionBrief.stakeholder_input || "");
       setChosenApproach(decisionBrief.chosen_approach || "");
@@ -82,8 +84,55 @@ export default function Decide() {
       setLeadingIndicators(decisionBrief.leading_indicators?.join(", ") || "");
       setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
       setMeasurementTimeline(decisionBrief.measurement_timeline || "");
+      setGoalsEvaluation(decisionBrief.goals_feedback || null);
     }
   }, [decisionBrief]);
+
+  const handleEvaluateGoals = async () => {
+    if (!goals || !goals.trim()) {
+      toast({
+        title: "No goals to evaluate",
+        description: "Please enter your initiative goals first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEvaluatingGoals(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("evaluate-goals", {
+        body: { goals }
+      });
+
+      if (error) throw error;
+
+      if (data?.evaluation) {
+        setGoalsEvaluation(data.evaluation);
+        
+        // Save evaluation to database
+        if (effectiveInitiativeId) {
+          await supabase
+            .from("decision_briefs")
+            .update({ goals_feedback: data.evaluation })
+            .eq("initiative_id", effectiveInitiativeId);
+        }
+
+        toast({
+          title: "Goals evaluated",
+          description: `Overall score: ${data.evaluation.overall_score}/100`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error evaluating goals:", error);
+      toast({
+        title: "Evaluation failed",
+        description: error.message || "Failed to evaluate goals. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEvaluatingGoals(false);
+    }
+  };
 
   // Auto-calculate checklist completion based on form data
   const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses; // Problem Definition
@@ -212,6 +261,7 @@ export default function Decide() {
       target_group: targetGroup,
       baseline_data: baselineData,
       root_causes: rootCauses ? rootCauses.split(",").map(s => s.trim()) : null,
+      goals: goals,
       equity_notes: equityNotes,
       stakeholder_input: stakeholderInput,
       chosen_approach: chosenApproach,
@@ -691,12 +741,122 @@ export default function Decide() {
                 placeholder="Example: By July 2025, increase the percentage of Year 9 disadvantaged pupils achieving age-related expectations in maths from 32% to 50%. Achieve 90% fidelity to the mastery learning framework by March 2025 as measured by classroom observations. Increase student confidence in problem-solving from baseline of 40% to 70% by summer term..."
                 rows={6}
                 value={goals}
-                onChange={(e) => setGoals(e.target.value)}
+                onChange={(e) => {
+                  setGoals(e.target.value);
+                  setGoalsEvaluation(null); // Clear evaluation when goals change
+                }}
               />
-              <p className="text-sm text-muted-foreground">
-                State specific, measurable goals with clear timelines and target numbers
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  State specific, measurable goals with clear timelines and target numbers
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleEvaluateGoals}
+                  disabled={isEvaluatingGoals || !goals.trim()}
+                >
+                  {isEvaluatingGoals ? "Evaluating..." : "Evaluate Goals"}
+                </Button>
+              </div>
             </div>
+
+            {/* Goals Evaluation Feedback */}
+            {goalsEvaluation && (
+              <Card className={
+                goalsEvaluation.is_smartie_compliant 
+                  ? "border-green-500/50 bg-green-500/5" 
+                  : goalsEvaluation.is_smart_compliant 
+                  ? "border-yellow-500/50 bg-yellow-500/5"
+                  : "border-destructive/50 bg-destructive/5"
+              }>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {goalsEvaluation.is_smartie_compliant ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        Excellent SMARTIE Goals
+                      </>
+                    ) : goalsEvaluation.is_smart_compliant ? (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-yellow-600" />
+                        Good SMART Goals (Consider SMARTIE)
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-destructive" />
+                        Goals Need Improvement
+                      </>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    Overall Score: <span className="font-bold text-lg">{goalsEvaluation.overall_score}/100</span>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Criteria Scores */}
+                  <div>
+                    <h4 className="font-medium mb-2">Criteria Breakdown:</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {Object.entries(goalsEvaluation.criteria_scores).map(([key, value]: [string, any]) => (
+                        <div key={key} className="flex items-center justify-between p-2 rounded bg-background/50">
+                          <span className="capitalize">{key.replace('_', ' ')}</span>
+                          <span className={`font-medium ${value >= 70 ? 'text-green-600' : value >= 50 ? 'text-yellow-600' : 'text-destructive'}`}>
+                            {value}/100
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Strengths */}
+                  {goalsEvaluation.strengths?.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 text-green-600">Strengths:</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm">
+                        {goalsEvaluation.strengths.map((strength: string, idx: number) => (
+                          <li key={idx}>{strength}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Improvements */}
+                  {goalsEvaluation.improvements?.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 text-destructive">Suggested Improvements:</h4>
+                      <div className="space-y-3">
+                        {goalsEvaluation.improvements.map((improvement: any, idx: number) => (
+                          <div key={idx} className="p-3 rounded bg-background/50 space-y-1">
+                            <p className="font-medium text-sm">{improvement.criterion}</p>
+                            <p className="text-sm text-muted-foreground">{improvement.issue}</p>
+                            <p className="text-sm text-primary">💡 {improvement.suggestion}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Improved Version */}
+                  {goalsEvaluation.improved_version && (
+                    <div>
+                      <h4 className="font-medium mb-2">Suggested Improved Version:</h4>
+                      <div className="p-3 rounded bg-background/50 text-sm whitespace-pre-wrap">
+                        {goalsEvaluation.improved_version}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setGoals(goalsEvaluation.improved_version)}
+                      >
+                        Use This Version
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
             
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
@@ -1059,25 +1219,23 @@ export default function Decide() {
           <AlertDialogHeader>
             <AlertDialogTitle>Step Incomplete</AlertDialogTitle>
             <AlertDialogDescription>
-              <div className="space-y-3">
-                <p>
-                  You haven't completed <strong>{getStepName(step)}</strong>. Skipping this step may impact your implementation plan.
-                </p>
-                <div className="rounded-lg bg-destructive/10 p-3 space-y-2">
-                  <p className="font-semibold text-destructive">Potential Impact:</p>
-                  <ul className="text-sm space-y-1 ml-4 list-disc">
-                    <li>Missing critical information for decision-making</li>
-                    <li>Incomplete decision brief documentation</li>
-                    <li>Reduced likelihood of implementation success</li>
-                    <li>Difficulty tracking progress and outcomes</li>
-                  </ul>
-                </div>
-                <p className="text-sm">
-                  Do you want to skip this step anyway, or go back and complete it?
-                </p>
-              </div>
+              You haven't completed <strong>{getStepName(step)}</strong>. Skipping this step may impact your implementation plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="space-y-3 px-6">
+            <div className="rounded-lg bg-destructive/10 p-3 space-y-2">
+              <p className="font-semibold text-destructive">Potential Impact:</p>
+              <ul className="text-sm space-y-1 ml-4 list-disc">
+                <li>Missing critical information for decision-making</li>
+                <li>Incomplete decision brief documentation</li>
+                <li>Reduced likelihood of implementation success</li>
+                <li>Difficulty tracking progress and outcomes</li>
+              </ul>
+            </div>
+            <p className="text-sm">
+              Do you want to skip this step anyway, or go back and complete it?
+            </p>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Go Back & Complete</AlertDialogCancel>
             <AlertDialogAction onClick={confirmSkipStep} className="bg-destructive hover:bg-destructive/90">

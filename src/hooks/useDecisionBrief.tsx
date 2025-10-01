@@ -9,6 +9,7 @@ export interface DecisionBrief {
   target_group: string;
   baseline_data: string | null;
   root_causes: string[] | null;
+  goals: string | null;
   equity_notes: string | null;
   stakeholder_input: string | null;
   chosen_approach: string | null;
@@ -18,6 +19,7 @@ export interface DecisionBrief {
   lagging_indicators: string[] | null;
   measurement_timeline: string | null;
   checklist_completed: boolean | null;
+  goals_feedback: any | null;
   created_at: string;
   updated_at: string;
 }
