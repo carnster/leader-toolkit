@@ -44,22 +44,28 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
   const { addTeamMember, updateTeamMember, removeTeamMember, isAdding, isUpdating, isRemoving } = useTeamMembers(initiativeId);
   const { profiles, isLoading: profilesLoading } = useProfiles();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [useExistingUser, setUseExistingUser] = useState(!!member?.user_id);
   const [formData, setFormData] = useState({
     user_id: member?.user_id || "",
+    name: "",
     role_in_initiative: member?.role_in_initiative || "",
     responsibilities: member?.responsibilities || [""],
   });
 
   useEffect(() => {
     if (member) {
+      setUseExistingUser(true);
       setFormData({
         user_id: member.user_id,
+        name: "",
         role_in_initiative: member.role_in_initiative,
         responsibilities: member.responsibilities && member.responsibilities.length > 0 ? member.responsibilities : [""],
       });
     } else {
+      setUseExistingUser(false);
       setFormData({
         user_id: "",
+        name: "",
         role_in_initiative: "",
         responsibilities: [""],
       });
@@ -80,8 +86,11 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
   };
 
   const handleSubmit = () => {
+    // Use name as user_id if entering manually (temporary solution)
+    const userId = useExistingUser ? formData.user_id : formData.name;
+    
     const data = {
-      user_id: formData.user_id,
+      user_id: userId,
       role_in_initiative: formData.role_in_initiative,
       responsibilities: formData.responsibilities.filter(r => r.trim() !== ""),
     };
@@ -121,22 +130,54 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="user_id">Name *</Label>
-              <Select 
-                value={formData.user_id} 
-                onValueChange={(value) => setFormData({ ...formData, user_id: value })}
-                disabled={!!member || profilesLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={profilesLoading ? "Loading users..." : "Select a user"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.full_name} {profile.organization ? `(${profile.organization})` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              {!member && (
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    type="button"
+                    variant={!useExistingUser ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseExistingUser(false)}
+                  >
+                    Enter Name
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={useExistingUser ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUseExistingUser(true)}
+                  >
+                    Select Existing User
+                  </Button>
+                </div>
+              )}
+
+              {useExistingUser ? (
+                <Select 
+                  value={formData.user_id} 
+                  onValueChange={(value) => setFormData({ ...formData, user_id: value })}
+                  disabled={!!member || profilesLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={profilesLoading ? "Loading users..." : "Select a user"} />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-popover">
+                    {profiles.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.full_name} {profile.organization ? `(${profile.organization})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter team member name"
+                  disabled={!!member}
+                />
+              )}
             </div>
 
             <div className="space-y-2">
@@ -208,7 +249,13 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
                 </Button>
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={!formData.user_id || !formData.role_in_initiative || isAdding || isUpdating}
+                  disabled={
+                    (!useExistingUser && !formData.name) || 
+                    (useExistingUser && !formData.user_id) || 
+                    !formData.role_in_initiative || 
+                    isAdding || 
+                    isUpdating
+                  }
                 >
                   {isAdding || isUpdating ? "Saving..." : member ? "Save Changes" : "Add Member"}
                 </Button>
