@@ -190,13 +190,22 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              <CardTitle>Define the Priority Problem</CardTitle>
+              <CardTitle>Step 1: Define the Priority Problem</CardTitle>
             </div>
             <CardDescription>
               What specific challenge are you addressing? Who are the target pupils?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h4 className="font-medium mb-2">What to do in this step:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Clearly articulate the specific problem you're trying to solve</li>
+                <li>Identify which pupils or groups are most affected</li>
+                <li>Gather and document baseline data showing the current state</li>
+                <li>Consider the root causes contributing to this problem</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="problem">Problem Statement</Label>
               <Textarea
@@ -250,13 +259,22 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              <CardTitle>Equity & Stakeholder Considerations</CardTitle>
+              <CardTitle>Step 2: Equity & Stakeholder Considerations</CardTitle>
             </div>
             <CardDescription>
               Whose voices have been heard? What are the equity implications?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h4 className="font-medium mb-2">What to do in this step:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Consider who might be disproportionately affected by this problem</li>
+                <li>Identify any barriers to access or participation</li>
+                <li>Document input from teachers, pupils, families, and leaders</li>
+                <li>Ensure diverse perspectives are represented in your planning</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="equity">Equity Implications</Label>
               <Textarea
@@ -296,13 +314,22 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle>Fit & Feasibility Assessment</CardTitle>
+              <CardTitle>Step 3: Fit & Feasibility Assessment</CardTitle>
             </div>
             <CardDescription>
               Is this approach right for your context? Can you implement it well?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h4 className="font-medium mb-2">What to do in this step:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Name the specific approach or intervention you plan to use</li>
+                <li>Document the research or evidence supporting this approach</li>
+                <li>Assess your capacity: time, skills, resources, and leadership support</li>
+                <li>Rate your confidence in each feasibility factor honestly</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="approach">Chosen Approach</Label>
               <Input
@@ -355,13 +382,22 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
-              <CardTitle>Success Metrics & Measurement Plan</CardTitle>
+              <CardTitle>Step 4: Success Metrics & Measurement Plan</CardTitle>
             </div>
             <CardDescription>
               How will you know if it's working? Define leading and lagging indicators.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <h4 className="font-medium mb-2">What to do in this step:</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li><strong>Leading indicators:</strong> Early signals that show implementation is happening (e.g., attendance, fidelity checks)</li>
+                <li><strong>Lagging indicators:</strong> Outcome measures showing the impact (e.g., assessment results, behavior data)</li>
+                <li>Create a timeline for when you'll measure each indicator</li>
+                <li>Ensure metrics are specific, measurable, and aligned to your problem</li>
+              </ul>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="leading">Leading Indicators (early signals)</Label>
               <Textarea
