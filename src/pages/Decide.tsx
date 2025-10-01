@@ -77,17 +77,18 @@ export default function Decide() {
   }, [decisionBrief]);
 
   // Auto-calculate checklist completion based on form data
-  const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses;
-  const isStep2Complete = equityNotes && stakeholderInput;
-  const isStep3Complete = chosenApproach && evidenceBase && feasibilityScore > 0;
-  const isStep4Complete = leadingIndicators && laggingIndicators && measurementTimeline;
+  const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses; // Problem Definition
+  const isStep2Complete = chosenApproach && evidenceBase; // Solution Selection
+  const isStep3Complete = stakeholderInput && equityNotes; // Requirements & Readiness
+  const isStep4Complete = feasibilityScore > 0; // Feasibility
+  const isStep5Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
-    "evidence-approach": !!isStep3Complete,
+    "evidence-approach": !!isStep2Complete,
     "implementation-requirements": !!isStep3Complete,
-    "barriers-enablers": !!(isStep2Complete && isStep3Complete),
-    "feasibility": !!isStep3Complete,
+    "barriers-enablers": !!isStep3Complete,
+    "feasibility": !!isStep4Complete,
   };
   
   const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 5) * 100;
@@ -320,10 +321,10 @@ export default function Decide() {
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Step {step} of 4</span>
-              <span className="font-medium">{Math.round((step / 4) * 100)}%</span>
+              <span className="text-muted-foreground">Step {step} of 5</span>
+              <span className="font-medium">{Math.round((step / 5) * 100)}%</span>
             </div>
-            <Progress value={(step / 4) * 100} className="h-2" />
+            <Progress value={(step / 5) * 100} className="h-2" />
           </div>
         </CardContent>
       </Card>
@@ -427,48 +428,125 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* Step 2: Equity & Stakeholder Voice */}
+      {/* Step 2: Solution Selection */}
       {step === 2 && (
+        <>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-primary" />
+                <CardTitle>Step 2: Solution Selection</CardTitle>
+              </div>
+              <CardDescription>
+                Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+                <h4 className="font-medium mb-2">What to do in this step:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Name the specific approach or intervention you plan to use</li>
+                  <li>Document the research or evidence supporting this approach</li>
+                  <li>Consider using AI recommendations or selecting from templates</li>
+                  <li>Ensure the approach matches your identified problem and context</li>
+                </ul>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="approach">Chosen Approach</Label>
+                <Input
+                  id="approach"
+                  placeholder="Example: Mastery Learning framework for Year 9 maths"
+                  value={chosenApproach}
+                  onChange={(e) => setChosenApproach(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Name the specific program, practice, or intervention you will implement
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="evidence">Evidence Base</Label>
+                <Textarea
+                  id="evidence"
+                  placeholder="Example: EEF Teaching and Learning Toolkit shows +5 months progress for mastery learning. Research from [source] demonstrates effectiveness with similar student populations..."
+                  rows={4}
+                  value={evidenceBase}
+                  onChange={(e) => setEvidenceBase(e.target.value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Cite research, trials, or evidence that supports this approach
+                </p>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Progress"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Recommendations for Solution Selection */}
+          <EBPRecommendations 
+            decisionBrief={decisionBrief}
+            onSelectRecommendation={(rec) => {
+              setChosenApproach(rec.name + ": " + rec.description);
+              setEvidenceBase(rec.evidence_level + " evidence. " + rec.implementation_notes);
+            }}
+          />
+        </>
+      )}
+
+      {/* Step 3: Requirements & Readiness */}
+      {step === 3 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              <CardTitle>Step 2: Equity & Stakeholder Considerations</CardTitle>
+              <CardTitle>Step 3: Requirements & Readiness</CardTitle>
             </div>
             <CardDescription>
-              Whose voices have been heard? What are the equity implications?
+              What is needed to implement this approach? Are we aware of barriers and enablers?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
               <h4 className="font-medium mb-2">What to do in this step:</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Consider who might be disproportionately affected by this problem</li>
-                <li>Identify any barriers to access or participation</li>
-                <li>Document input from teachers, pupils, families, and leaders</li>
-                <li>Ensure diverse perspectives are represented in your planning</li>
+                <li>Identify who needs to be involved and what input they've provided</li>
+                <li>Document equity considerations and diverse perspectives</li>
+                <li>Consider potential barriers to implementation (time, skills, resources)</li>
+                <li>Identify enablers that will support success (leadership, culture, systems)</li>
               </ul>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="equity">Equity Implications</Label>
-              <Textarea
-                id="equity"
-                placeholder="Who might be disproportionately affected? Are there barriers to access?..."
-                rows={4}
-                value={equityNotes}
-                onChange={(e) => setEquityNotes(e.target.value)}
-              />
-            </div>
-
+            
             <div className="space-y-2">
               <Label htmlFor="stakeholders">Stakeholder Input</Label>
               <Textarea
                 id="stakeholders"
-                placeholder="What have you heard from teachers, pupils, families, and leaders?..."
+                placeholder="Example: Year 9 teachers expressed need for better differentiation resources. Parents want more guidance on supporting maths at home. SLT committed to protecting PPA time for planning. Student voice survey shows 78% want more practice opportunities..."
                 rows={4}
                 value={stakeholderInput}
                 onChange={(e) => setStakeholderInput(e.target.value)}
               />
+              <p className="text-sm text-muted-foreground">
+                Document input from teachers, pupils, families, and leaders
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="equity">Equity Considerations</Label>
+              <Textarea
+                id="equity"
+                placeholder="Example: Disadvantaged pupils are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for EAL families. Consider timing to avoid clash with Ramadan..."
+                rows={4}
+                value={equityNotes}
+                onChange={(e) => setEquityNotes(e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">
+                Consider who might be disproportionately affected and any barriers to access
+              </p>
             </div>
             
             <div className="flex justify-end">
@@ -476,81 +554,66 @@ export default function Decide() {
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
             </div>
-
-            <div className="rounded-lg border border-accent/50 bg-accent/5 p-4">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Implementation Guidance: Engage Behaviours</p>
-                  <p className="text-sm text-muted-foreground">
-                    Actively seek diverse perspectives. Consider who might be missing from the conversation.
-                  </p>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 3: Fit & Feasibility */}
-      {step === 3 && (
+      {/* Step 4: Feasibility Assessment */}
+      {step === 4 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle>Step 3: Fit & Feasibility Assessment</CardTitle>
+              <CardTitle>Step 4: Feasibility Assessment</CardTitle>
             </div>
             <CardDescription>
-              Is this approach right for your context? Can you implement it well?
+              Is the approach feasible to implement in our setting?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
               <h4 className="font-medium mb-2">What to do in this step:</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Name the specific approach or intervention you plan to use</li>
-                <li>Document the research or evidence supporting this approach</li>
                 <li>Assess your capacity: time, skills, resources, and leadership support</li>
                 <li>Rate your confidence in each feasibility factor honestly</li>
+                <li>Consider both immediate and long-term sustainability</li>
+                <li>Be realistic about what your setting can manage</li>
               </ul>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="approach">Chosen Approach</Label>
-              <Input
-                id="approach"
-                placeholder="e.g., Evidence-based intervention framework"
-                value={chosenApproach}
-                onChange={(e) => setChosenApproach(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="evidence">Evidence Base</Label>
-              <Textarea
-                id="evidence"
-                placeholder="What research or evidence supports this approach?..."
-                rows={3}
-                value={evidenceBase}
-                onChange={(e) => setEvidenceBase(e.target.value)}
-              />
             </div>
 
             <div className="space-y-3">
-              <Label>Feasibility Factors (rate your confidence)</Label>
+              <Label>Feasibility Factors (rate your confidence 1-10)</Label>
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Overall Feasibility Score</p>
+                      <p className="text-muted-foreground text-xs">How confident are you that this approach can be implemented successfully?</p>
+                    </div>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={feasibilityScore}
+                      onChange={(e) => setFeasibilityScore(parseInt(e.target.value) || 0)}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+
                 {[
-                  { factor: "Time available", description: "Do we have sufficient time?" },
-                  { factor: "Staff capacity", description: "Do we have the right skills?" },
-                  { factor: "Resource availability", description: "Do we have materials/budget?" },
-                  { factor: "Leadership support", description: "Is there active backing?" },
+                  { factor: "Time available", description: "Do we have sufficient time for planning and delivery?" },
+                  { factor: "Staff capacity & skills", description: "Do staff have or can they develop the needed skills?" },
+                  { factor: "Resource availability", description: "Are materials, budget, and space available?" },
+                  { factor: "Leadership support", description: "Is there active backing and protection from competing priorities?" },
                 ].map((item) => (
-                  <div key={item.factor} className="space-y-2">
+                  <div key={item.factor} className="rounded-lg border p-3 bg-muted/30">
                     <div className="flex items-center justify-between text-sm">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{item.factor}</p>
                         <p className="text-muted-foreground text-xs">{item.description}</p>
                       </div>
-                      <select className="rounded-md border px-2 py-1">
+                      <select className="rounded-md border px-3 py-1.5 bg-background">
                         <option>High</option>
                         <option>Medium</option>
                         <option>Low</option>
@@ -570,13 +633,13 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* Step 4: Success Metrics */}
-      {step === 4 && (
+      {/* Step 5: Success Metrics */}
+      {step === 5 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <CardTitle>Step 4: Success Metrics & Measurement Plan</CardTitle>
+              <TrendingUp className="h-5 w-5 text-primary" />
+              <CardTitle>Step 5: Success Metrics & Measurement Plan</CardTitle>
             </div>
             <CardDescription>
               How will you know if it's working? Define leading and lagging indicators.
@@ -596,7 +659,7 @@ export default function Decide() {
               <Label htmlFor="leading">Leading Indicators (early signals)</Label>
               <Textarea
                 id="leading"
-                placeholder="e.g., Implementation fidelity, attendance rates, weekly progress checks..."
+                placeholder="Example: Teacher completion of mastery lesson plans (weekly), Student attendance at intervention sessions (weekly), Fidelity observations using our rubric (fortnightly), Staff confidence surveys (half-termly)"
                 rows={3}
                 value={leadingIndicators}
                 onChange={(e) => setLeadingIndicators(e.target.value)}
@@ -607,7 +670,7 @@ export default function Decide() {
               <Label htmlFor="lagging">Lagging Indicators (outcome measures)</Label>
               <Textarea
                 id="lagging"
-                placeholder="e.g., End-of-term assessments, standardized measures, outcome data..."
+                placeholder="Example: End of half-term maths assessments (% at expected standard), Student confidence surveys (termly), Progress data vs autumn baseline, Standardized test scores (summer term)"
                 rows={3}
                 value={laggingIndicators}
                 onChange={(e) => setLaggingIndicators(e.target.value)}
@@ -618,7 +681,7 @@ export default function Decide() {
               <Label htmlFor="timeline">Measurement Timeline</Label>
               <Input
                 id="timeline"
-                placeholder="When will you check each indicator?"
+                placeholder="Example: Weekly fidelity checks, half-termly review meetings, termly outcome reporting to governors"
                 value={measurementTimeline}
                 onChange={(e) => setMeasurementTimeline(e.target.value)}
               />
@@ -633,14 +696,6 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* AI Recommendations */}
-      <EBPRecommendations 
-        decisionBrief={decisionBrief}
-        onSelectRecommendation={(rec) => {
-          setChosenApproach(rec.name + ": " + rec.description);
-          setEvidenceBase(rec.evidence_level + " evidence. " + rec.implementation_notes);
-        }}
-      />
       
       {/* Next Stage Preview */}
       <Card className="border-secondary/30 bg-secondary/5">
@@ -688,8 +743,8 @@ export default function Decide() {
           <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
             {isSaving ? "Saving..." : "Save Progress"}
           </Button>
-          {step < 4 ? (
-            <Button onClick={() => setStep(Math.min(4, step + 1))}>
+          {step < 5 ? (
+            <Button onClick={() => setStep(Math.min(5, step + 1))}>
               Next Step
             </Button>
           ) : (
