@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Shield, Calendar, Users, BookOpen, Scale } from "lucide-react";
+import { MasterChecklist } from "@/components/MasterChecklist";
+import { useSearchParams } from "react-router-dom";
 
 const sustainChecklist = [
   { id: "1", text: "Leaders continue to acknowledge and support good implementation practices", completed: true },
@@ -24,6 +26,11 @@ const mockOnboarding = [
 ];
 
 export default function Sustain() {
+  const [searchParams] = useSearchParams();
+  const initiativeId = searchParams.get("initiative");
+  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
+  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -266,6 +273,9 @@ export default function Sustain() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Master Checklist */}
+      <MasterChecklist stage="sustain" initiativeId={effectiveInitiativeId} />
     </div>
   );
 }

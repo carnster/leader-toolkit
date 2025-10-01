@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { useInitiatives } from "@/hooks/useInitiatives";
+import { MasterChecklist } from "@/components/MasterChecklist";
 
 const exploreChecklist = [
   { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
@@ -28,6 +29,11 @@ export default function Decide() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createInitiative, isCreating } = useInitiatives();
+  
+  // Get initiative ID
+  const initiativeId = searchParams.get("initiative");
+  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
+  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
   // Initiative creation dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -503,6 +509,9 @@ export default function Decide() {
         </CardContent>
       </Card>
 
+      {/* Master Checklist - Decide stage */}
+      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} />
+      
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button

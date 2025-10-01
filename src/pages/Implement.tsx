@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PlayCircle, Clock, CheckCircle2, MessageSquare, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
 
 const mockFidelityLogs = [
   { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
@@ -223,47 +224,7 @@ export default function Implement() {
 
         {/* Implementation Behaviors Tab */}
         <TabsContent value="behaviors" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Implementation Behaviors</CardTitle>
-              <CardDescription>
-                Engage → Unite → Reflect: Key behaviors for effective delivery
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="rounded-lg border-l-4 border-primary p-4 bg-primary/5">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <span className="text-primary">Engage</span>
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Open a 5-min check-in to surface concerns & ideas
-                  </p>
-                  <Button size="sm">Log Engagement Activity</Button>
-                </div>
-
-                <div className="rounded-lg border-l-4 border-secondary p-4 bg-secondary/5">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <span className="text-secondary">Unite</span>
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Run a quick protocol to align on one focus practice this week
-                  </p>
-                  <Button size="sm" variant="secondary">Log Unite Activity</Button>
-                </div>
-
-                <div className="rounded-lg border-l-4 border-accent p-4 bg-accent/5">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <span className="text-accent">Reflect</span>
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    End the week with a 10-min 'what worked/what changed' huddle
-                  </p>
-                  <Button size="sm" variant="outline">Log Reflection</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ImplementationBehaviors />
         </TabsContent>
       </Tabs>
     </div>

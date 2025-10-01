@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp, TrendingDown, Activity, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
+import { MasterChecklist } from "@/components/MasterChecklist";
+import { useSearchParams } from "react-router-dom";
 
 const mockIndicators = [
   { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
@@ -31,6 +34,11 @@ const mockPDSA = [
 ];
 
 export default function Monitor() {
+  const [searchParams] = useSearchParams();
+  const initiativeId = searchParams.get("initiative");
+  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
+  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -189,6 +197,12 @@ export default function Monitor() {
           ))}
         </CardContent>
       </Card>
+
+      {/* PDSA Cycle Assistant */}
+      <PDSACycleAssistant initiativeId={effectiveInitiativeId} />
+
+      {/* Master Checklist */}
+      <MasterChecklist stage="deliver" initiativeId={effectiveInitiativeId} />
 
       {/* Data Entry */}
       <Card>

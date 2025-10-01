@@ -21,6 +21,8 @@ import { MilestoneDialog } from "@/components/MilestoneDialog";
 import { RiskDialog } from "@/components/RiskDialog";
 import { PDActivityDialog } from "@/components/PDActivityDialog";
 import { ImplementationStrategyDialog } from "@/components/ImplementationStrategyDialog";
+import { MasterChecklist } from "@/components/MasterChecklist";
+import { ERICStrategySelector } from "@/components/ERICStrategySelector";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
@@ -712,6 +714,12 @@ export default function Plan() {
         <Button variant="outline">Save as Draft</Button>
         <Button>Complete Planning & Move to Implement</Button>
       </div>
+
+      {/* Master Checklist */}
+      <MasterChecklist stage="prepare" initiativeId={effectiveInitiativeId} />
+
+      {/* ERIC Strategies Library */}
+      <ERICStrategySelector />
 
       {/* Edit Ingredient Dialog */}
       {editingIngredient && effectiveInitiativeId && (
