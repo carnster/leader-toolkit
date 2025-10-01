@@ -13,6 +13,7 @@ interface ChecklistItem {
 interface MasterChecklistProps {
   stage: "explore" | "prepare" | "deliver" | "sustain";
   initiativeId?: string;
+  autoCheckedItems?: Record<string, boolean>;
 }
 
 const CHECKLIST_ITEMS = {
@@ -116,11 +117,13 @@ const CHECKLIST_ITEMS = {
   ]
 };
 
-export function MasterChecklist({ stage, initiativeId }: MasterChecklistProps) {
+export function MasterChecklist({ stage, initiativeId, autoCheckedItems }: MasterChecklistProps) {
   const items = CHECKLIST_ITEMS[stage];
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
-  const completionRate = (Object.values(checkedItems).filter(Boolean).length / items.length) * 100;
+  // Use auto-checked items if provided (for Decide stage), otherwise use manual checks
+  const effectiveCheckedItems = autoCheckedItems || checkedItems;
+  const completionRate = (Object.values(effectiveCheckedItems).filter(Boolean).length / items.length) * 100;
 
   return (
     <Card className="border-primary/20">
@@ -152,10 +155,11 @@ export function MasterChecklist({ stage, initiativeId }: MasterChecklistProps) {
             >
               <Checkbox
                 id={item.id}
-                checked={checkedItems[item.id]}
+                checked={effectiveCheckedItems[item.id] || false}
                 onCheckedChange={(checked) =>
-                  setCheckedItems({ ...checkedItems, [item.id]: checked as boolean })
+                  !autoCheckedItems && setCheckedItems({ ...checkedItems, [item.id]: checked as boolean })
                 }
+                disabled={!!autoCheckedItems}
                 className="mt-0.5"
               />
               <label

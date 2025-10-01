@@ -3,9 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Search, FileText, Users, Target, AlertCircle, CheckCircle2, Plus, Lightbulb } from "lucide-react";
+import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,10 +17,10 @@ import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { EBPRecommendations } from "@/components/EBPRecommendations";
 
 const exploreChecklist = [
-  { id: "problem_defined", text: "Priority problem & target pupils defined with baseline", required: true },
-  { id: "equity_considered", text: "Equity implications & stakeholder voices captured", required: true },
-  { id: "fit_feasibility", text: "Fit & feasibility assessed; risks noted", required: true },
-  { id: "success_metrics", text: "Clear success metrics & measurement plan", required: true },
+  { id: "identified-need", text: "Problem & target pupils defined", required: true },
+  { id: "evidence-approach", text: "Evidence-based approach selected", required: true },
+  { id: "barriers-enablers", text: "Barriers & enablers identified", required: true },
+  { id: "feasibility", text: "Feasibility assessed", required: true },
 ];
 
 export default function Decide() {
@@ -84,13 +83,14 @@ export default function Decide() {
   const isStep4Complete = leadingIndicators && laggingIndicators && measurementTimeline;
   
   const autoCheckedItems = {
-    problem_defined: !!isStep1Complete,
-    equity_considered: !!isStep2Complete,
-    fit_feasibility: !!isStep3Complete,
-    success_metrics: !!isStep4Complete,
+    "identified-need": !!isStep1Complete,
+    "evidence-approach": !!isStep3Complete,
+    "implementation-requirements": !!isStep3Complete,
+    "barriers-enablers": !!(isStep2Complete && isStep3Complete),
+    "feasibility": !!isStep3Complete,
   };
   
-  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / exploreChecklist.length) * 100;
+  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 5) * 100;
   
   const handleSaveProgress = () => {
     if (!effectiveInitiativeId) {
@@ -633,61 +633,8 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* Decision Checklist */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
-            Decision Checklist
-          </CardTitle>
-          <CardDescription>
-            This checklist updates automatically as you complete each step above
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            {exploreChecklist.map((item, index) => {
-              const isComplete = autoCheckedItems[item.id as keyof typeof autoCheckedItems];
-              return (
-                <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
-                  <div className="flex items-center justify-center h-5 w-5 rounded-full border-2 border-primary flex-shrink-0 mt-0.5">
-                    {isComplete ? (
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                    ) : (
-                      <span className="text-xs font-medium text-muted-foreground">{index + 1}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className={`text-sm leading-relaxed ${isComplete ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {item.text}
-                      {item.required && (
-                        <span className="ml-1 text-destructive">*</span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {index === 0 && "Complete Step 1 above"}
-                      {index === 1 && "Complete Step 2 above"}
-                      {index === 2 && "Complete Step 3 above"}
-                      {index === 3 && "Complete Step 4 above"}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="space-y-2 pt-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Checklist completion</span>
-              <span className="font-medium">{Math.round(completionRate)}%</span>
-            </div>
-            <Progress value={completionRate} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Master Checklist - Decide stage */}
-      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} />
+      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
       
       {/* AI Recommendations */}
       <EBPRecommendations 
