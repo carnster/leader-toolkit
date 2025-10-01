@@ -120,7 +120,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="user_id">Team Member *</Label>
+              <Label htmlFor="user_id">Name *</Label>
               <Select 
                 value={formData.user_id} 
                 onValueChange={(value) => setFormData({ ...formData, user_id: value })}
