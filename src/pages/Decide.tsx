@@ -633,9 +633,6 @@ export default function Decide() {
         </Card>
       )}
 
-      {/* Master Checklist - Decide stage */}
-      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
-      
       {/* AI Recommendations */}
       <EBPRecommendations 
         decisionBrief={decisionBrief}
@@ -674,6 +671,9 @@ export default function Decide() {
           </ul>
         </CardContent>
       </Card>
+      
+      {/* Master Checklist - Decide stage */}
+      <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
       
       {/* Navigation & Adoption */}
       <div className="flex items-center justify-between">

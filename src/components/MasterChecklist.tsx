@@ -135,7 +135,7 @@ export function MasterChecklist({ stage, initiativeId, autoCheckedItems }: Maste
               {stage.charAt(0).toUpperCase() + stage.slice(1)} Stage Checklist
             </CardTitle>
             <CardDescription>
-              EEF Implementation Framework - Reflection questions for this stage
+              Reflection questions to guide this stage of implementation
             </CardDescription>
           </div>
           <div className="text-right">
