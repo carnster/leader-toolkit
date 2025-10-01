@@ -124,6 +124,18 @@ export default function Dashboard() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div className="space-y-3">
+                <InitiativeTemplateSelector />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
+                  </div>
+                </div>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input
@@ -313,6 +325,18 @@ export default function Dashboard() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
+                      <div className="space-y-3">
+                        <InitiativeTemplateSelector />
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                          </div>
+                          <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">Or start from scratch</span>
+                          </div>
+                        </div>
+                      </div>
+                      
                       <div className="space-y-2">
                         <Label htmlFor="title">Title</Label>
                         <Input
@@ -332,25 +356,13 @@ export default function Dashboard() {
                           rows={3}
                         />
                       </div>
-                       <div className="space-y-3">
-                        <InitiativeTemplateSelector />
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                          </div>
-                          <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-background px-2 text-muted-foreground">Or</span>
-                          </div>
-                        </div>
-                        <Button
-                          onClick={handleCreateInitiative}
-                          disabled={!newInitiative.title || isCreating}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          {isCreating ? "Creating..." : "Start from Scratch"}
-                        </Button>
-                      </div>
+                      <Button
+                        onClick={handleCreateInitiative}
+                        disabled={!newInitiative.title || isCreating}
+                        className="w-full"
+                      >
+                        {isCreating ? "Creating..." : "Create Initiative"}
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
