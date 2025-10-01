@@ -100,13 +100,40 @@ export function useInitiatives() {
     },
   });
 
+  const deleteInitiative = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("initiatives")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+      toast({
+        title: "Initiative deleted",
+        description: "The initiative has been permanently deleted.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting initiative",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     initiatives: initiatives || [],
     isLoading,
     error,
     createInitiative: createInitiative.mutate,
     updateInitiative: updateInitiative.mutate,
+    deleteInitiative: deleteInitiative.mutate,
     isCreating: createInitiative.isPending,
     isUpdating: updateInitiative.isPending,
+    isDeleting: deleteInitiative.isPending,
   };
 }

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StageProgress } from "@/components/StageProgress";
-import { Plus, AlertCircle, TrendingUp, Users, CheckCircle2 } from "lucide-react";
+import { Plus, AlertCircle, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useState } from "react";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const mockStages = [
   { id: "decide", name: "Decide", completed: true, current: false },
@@ -66,9 +68,11 @@ const mockAlerts = [
 ];
 
 export default function Dashboard() {
-  const { initiatives, isLoading, createInitiative, isCreating } = useInitiatives();
+  const { initiatives, isLoading, createInitiative, deleteInitiative, isCreating, isDeleting } = useInitiatives();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
 
   const handleCreateInitiative = () => {
     createInitiative({
@@ -79,6 +83,19 @@ export default function Dashboard() {
     });
     setNewInitiative({ title: "", description: "" });
     setDialogOpen(false);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setInitiativeToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (initiativeToDelete) {
+      deleteInitiative(initiativeToDelete);
+      setDeleteDialogOpen(false);
+      setInitiativeToDelete(null);
+    }
   };
 
   const stageMap: Record<string, string> = {
@@ -271,7 +288,7 @@ export default function Dashboard() {
               return (
                 <div key={initiative.id} className="space-y-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                    <div className="space-y-1 flex-1">
                       <h3 className="font-semibold">{initiative.title}</h3>
                       {initiative.description && (
                         <p className="text-sm text-muted-foreground">{initiative.description}</p>
@@ -286,9 +303,27 @@ export default function Dashboard() {
                         )}
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/${initiative.stage}`}>View Details</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/${initiative.stage}`}>View Details</Link>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteClick(initiative.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Initiative
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <div className="pt-2">
                     <StageProgress stages={mockStages} />
@@ -407,6 +442,28 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Initiative?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this initiative and all associated data (active ingredients, decision briefs, PDSA cycles, etc.). This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
