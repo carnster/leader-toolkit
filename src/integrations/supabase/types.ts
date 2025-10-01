@@ -478,7 +478,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_initiative_team_member: {
+        Args: { _initiative_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
