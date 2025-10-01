@@ -2,9 +2,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Shield, Calendar, Users, BookOpen, Scale } from "lucide-react";
+import { Shield, Calendar, Users, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3 } from "lucide-react";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useSearchParams } from "react-router-dom";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useIndicators } from "@/hooks/useIndicators";
 
 const sustainChecklist = [
   { id: "1", text: "Leaders continue to acknowledge and support good implementation practices", completed: true },
@@ -30,6 +33,13 @@ export default function Sustain() {
   const initiativeId = searchParams.get("initiative");
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  
+  const { activeIngredients } = useActiveIngredients(effectiveInitiativeId);
+  const { strategies } = useImplementationStrategies(effectiveInitiativeId);
+  const { indicators } = useIndicators(effectiveInitiativeId);
+  
+  const successfulStrategies = strategies.filter(s => s.status === 'completed');
+  const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
   
   return (
     <div className="space-y-8 max-w-7xl">
@@ -60,6 +70,46 @@ export default function Sustain() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Implementation Summary */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <CardHeader>
+          <CardTitle>Implementation Journey Summary</CardTitle>
+          <CardDescription>
+            What you've built through Decide, Plan, Implement, and Monitor stages
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border bg-background/50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <h4 className="font-semibold">Core Ingredients</h4>
+              </div>
+              <p className="text-2xl font-bold mb-1">{coreIngredients.length}</p>
+              <p className="text-xs text-muted-foreground">Non-negotiable components defined</p>
+            </div>
+            
+            <div className="rounded-lg border bg-background/50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-secondary" />
+                <h4 className="font-semibold">Successful Strategies</h4>
+              </div>
+              <p className="text-2xl font-bold mb-1">{successfulStrategies.length}</p>
+              <p className="text-xs text-muted-foreground">ERIC strategies completed</p>
+            </div>
+            
+            <div className="rounded-lg border bg-background/50 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <BarChart3 className="h-5 w-5 text-accent" />
+                <h4 className="font-semibold">Indicators Tracked</h4>
+              </div>
+              <p className="text-2xl font-bold mb-1">{indicators.length}</p>
+              <p className="text-xs text-muted-foreground">Leading & lagging measures</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Sustainability Checklist */}
       <Card>
@@ -156,6 +206,38 @@ export default function Sustain() {
         </CardContent>
       </Card>
 
+      {/* Core Practices to Embed */}
+      {coreIngredients.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Core Practices to Embed in Standard Operations</CardTitle>
+            <CardDescription>
+              These active ingredients from your plan should become routine practice
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {coreIngredients.map((ingredient: any) => (
+                <div key={ingredient.id} className="flex items-start justify-between rounded-lg border p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">{ingredient.name}</p>
+                      {ingredient.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{ingredient.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    Embed in SOP
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Resource Protections */}
       <Card>
         <CardHeader>
@@ -164,7 +246,7 @@ export default function Sustain() {
             <div>
               <CardTitle>Resource Protections</CardTitle>
               <CardDescription>
-                Safeguards to maintain time, budget, and staffing
+                Safeguards to maintain time, budget, and staffing for {coreIngredients.length} core components
               </CardDescription>
             </div>
           </div>

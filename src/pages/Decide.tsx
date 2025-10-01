@@ -512,6 +512,36 @@ export default function Decide() {
       {/* Master Checklist - Decide stage */}
       <MasterChecklist stage="explore" initiativeId={effectiveInitiativeId} />
       
+      {/* Next Stage Preview */}
+      <Card className="border-secondary/30 bg-secondary/5">
+        <CardHeader>
+          <CardTitle className="text-lg">Ready for Plan & Prepare?</CardTitle>
+          <CardDescription>
+            Once your decision brief is complete, move to the Plan stage to:
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+              <span>Define active ingredients (core & adaptable components) based on your chosen approach</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+              <span>Select ERIC implementation strategies to address identified barriers</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+              <span>Build your implementation team with roles and responsibilities</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+              <span>Create a timeline with milestones from your measurement plan</span>
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+      
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button

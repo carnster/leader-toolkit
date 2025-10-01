@@ -3,9 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { PlayCircle, Clock, CheckCircle2, MessageSquare, TrendingUp } from "lucide-react";
+import { PlayCircle, Clock, CheckCircle2, MessageSquare, TrendingUp, Lightbulb } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useSearchParams } from "react-router-dom";
 
 const mockFidelityLogs = [
   { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
@@ -19,6 +22,16 @@ const mockNudges = [
 ];
 
 export default function Implement() {
+  const [searchParams] = useSearchParams();
+  const initiativeId = searchParams.get("initiative");
+  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
+  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  
+  const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
+  const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
+  
+  const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
+
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -47,6 +60,40 @@ export default function Implement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Active Ingredients from Plan Stage */}
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-primary" />
+            Core Active Ingredients (from Plan Stage)
+          </CardTitle>
+          <CardDescription>
+            These components from your plan should be monitored during implementation
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingIngredients ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
+          ) : coreIngredients.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No core ingredients defined yet. Add them in the Plan stage.</p>
+          ) : (
+            <div className="space-y-2">
+              {coreIngredients.map((ingredient: any) => (
+                <div key={ingredient.id} className="flex items-start gap-2 text-sm rounded-lg border p-3 bg-background/50">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">{ingredient.name}</p>
+                    {ingredient.description && (
+                      <p className="text-muted-foreground text-xs mt-1">{ingredient.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -184,10 +231,25 @@ export default function Implement() {
                 <div className="space-y-2">
                   <Label>Component Being Observed</Label>
                   <select className="w-full rounded-md border px-3 py-2">
-                    <option>Daily structured sessions</option>
-                    <option>Core practice delivery</option>
-                    <option>Weekly progress checks</option>
+                    {coreIngredients.length > 0 ? (
+                      coreIngredients.map((ingredient: any) => (
+                        <option key={ingredient.id} value={ingredient.id}>
+                          {ingredient.name}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option>Daily structured sessions</option>
+                        <option>Core practice delivery</option>
+                        <option>Weekly progress checks</option>
+                      </>
+                    )}
                   </select>
+                  <p className="text-xs text-muted-foreground">
+                    {coreIngredients.length > 0 
+                      ? "Select from your core active ingredients defined in Plan stage"
+                      : "Define active ingredients in Plan stage to track them here"}
+                  </p>
                 </div>
 
                 <div className="space-y-2">

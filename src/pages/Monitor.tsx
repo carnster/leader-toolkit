@@ -1,11 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, Activity, Target } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useSearchParams } from "react-router-dom";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useIndicators } from "@/hooks/useIndicators";
 
 const mockIndicators = [
   { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
@@ -39,6 +42,13 @@ export default function Monitor() {
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
+  const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
+  const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
+  const { indicators, isLoading: isLoadingIndicators } = useIndicators(effectiveInitiativeId);
+  
+  const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
+  const activeStrategies = strategies.filter(s => s.status === 'in_progress' || s.status === 'planned');
+  
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -68,9 +78,68 @@ export default function Monitor() {
         </Card>
       </div>
 
+      {/* Context from Plan Stage */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-primary" />
+              Core Ingredients Being Monitored
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingIngredients ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : coreIngredients.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No core ingredients defined. Add them in Plan stage.</p>
+            ) : (
+              <div className="space-y-2">
+                {coreIngredients.slice(0, 3).map((ingredient: any) => (
+                  <div key={ingredient.id} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>{ingredient.name}</span>
+                  </div>
+                ))}
+                {coreIngredients.length > 3 && (
+                  <p className="text-xs text-muted-foreground">+{coreIngredients.length - 3} more</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-secondary/20 bg-secondary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Target className="h-4 w-4 text-secondary" />
+              Active Implementation Strategies
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingStrategies ? (
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            ) : activeStrategies.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No active strategies. Add them in Plan stage.</p>
+            ) : (
+              <div className="space-y-2">
+                {activeStrategies.slice(0, 3).map((strategy) => (
+                  <div key={strategy.id} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
+                    <span>{strategy.strategy_name}</span>
+                  </div>
+                ))}
+                {activeStrategies.length > 3 && (
+                  <p className="text-xs text-muted-foreground">+{activeStrategies.length - 3} more</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Key Indicators */}
       <div className="grid gap-6 md:grid-cols-2">
-        {mockIndicators.map((indicator) => (
+        {(indicators.length > 0 ? indicators : mockIndicators).map((indicator: any) => (
           <Card key={indicator.id}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -85,7 +154,7 @@ export default function Monitor() {
                 <div className="flex items-baseline justify-between">
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold">
-                      {indicator.value}
+                      {indicator.value || indicator.target_value || "—"}
                       {indicator.name.includes("%") ? "%" : ""}
                     </span>
                     {indicator.trend === "up" && (
@@ -98,7 +167,7 @@ export default function Monitor() {
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Target</p>
                     <p className="font-semibold">
-                      {indicator.target}
+                      {indicator.target || indicator.target_value || "—"}
                       {indicator.name.includes("%") ? "%" : ""}
                     </p>
                   </div>
@@ -108,11 +177,13 @@ export default function Monitor() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progress to target</span>
                     <span className="font-medium">
-                      {Math.round((indicator.value / indicator.target) * 100)}%
+                      {indicator.value && indicator.target 
+                        ? Math.round((indicator.value / indicator.target) * 100)
+                        : "—"}%
                     </span>
                   </div>
                   <Progress 
-                    value={(indicator.value / indicator.target) * 100} 
+                    value={indicator.value && indicator.target ? (indicator.value / indicator.target) * 100 : 0} 
                     className="h-2"
                   />
                 </div>
