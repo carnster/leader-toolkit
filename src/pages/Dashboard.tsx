@@ -4,6 +4,12 @@ import { Progress } from "@/components/ui/progress";
 import { StageProgress } from "@/components/StageProgress";
 import { Plus, AlertCircle, TrendingUp, Users, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useInitiatives } from "@/hooks/useInitiatives";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const mockStages = [
   { id: "decide", name: "Decide", completed: true, current: false },
@@ -59,6 +65,39 @@ const mockAlerts = [
 ];
 
 export default function Dashboard() {
+  const { initiatives, isLoading, createInitiative, isCreating } = useInitiatives();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [newInitiative, setNewInitiative] = useState({ title: "", description: "" });
+
+  const handleCreateInitiative = () => {
+    createInitiative({
+      title: newInitiative.title,
+      description: newInitiative.description,
+      stage: "decide",
+      status: "active",
+    });
+    setNewInitiative({ title: "", description: "" });
+    setDialogOpen(false);
+  };
+
+  const stageMap: Record<string, string> = {
+    decide: "Decide",
+    plan: "Plan",
+    implement: "Implement",
+    monitor: "Monitor",
+    sustain: "Sustain",
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
+          <p className="text-muted-foreground">Loading initiatives...</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -69,12 +108,50 @@ export default function Dashboard() {
             Track and manage your school improvement initiatives
           </p>
         </div>
-        <Button asChild>
-          <Link to="/decide">
-            <Plus className="mr-2 h-4 w-4" />
-            New Initiative
-          </Link>
-        </Button>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Initiative
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Initiative</DialogTitle>
+              <DialogDescription>
+                Start a new school improvement initiative
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  value={newInitiative.title}
+                  onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
+                  placeholder="e.g., Reading Fluency Programme"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Textarea
+                  id="description"
+                  value={newInitiative.description}
+                  onChange={(e) => setNewInitiative({ ...newInitiative, description: e.target.value })}
+                  placeholder="Brief description of the initiative..."
+                  rows={3}
+                />
+              </div>
+              <Button
+                onClick={handleCreateInitiative}
+                disabled={!newInitiative.title || isCreating}
+                className="w-full"
+              >
+                {isCreating ? "Creating..." : "Create Initiative"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Key Metrics */}
@@ -85,9 +162,9 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{initiatives.length}</div>
             <p className="text-xs text-muted-foreground">
-              2 on track, 1 needs attention
+              {initiatives.filter(i => i.status === "active").length} active
             </p>
           </CardContent>
         </Card>
@@ -129,8 +206,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Alerts Section */}
-      {mockAlerts.length > 0 && (
+      {/* Alerts Section - Hidden when no alerts */}
+      {false && (
         <Card>
           <CardHeader>
             <CardTitle>Recent Alerts</CardTitle>
@@ -160,45 +237,115 @@ export default function Dashboard() {
       )}
 
       {/* Active Initiatives */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Initiatives</CardTitle>
-          <CardDescription>
-            Monitor progress across all implementation stages
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {mockInitiatives.map((initiative) => (
-            <div key={initiative.id} className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-semibold">{initiative.title}</h3>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span>Stage: {initiative.stage}</span>
-                    <span>•</span>
-                    <span>Due: {new Date(initiative.dueDate).toLocaleDateString()}</span>
-                    <span>•</span>
-                    <span>{initiative.team} team members</span>
+      {initiatives.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Initiatives</CardTitle>
+            <CardDescription>
+              Monitor progress across all implementation stages
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {initiatives.map((initiative) => {
+              const mockStages = [
+                { id: "decide", name: "Decide", completed: initiative.stage !== "decide", current: initiative.stage === "decide" },
+                { id: "plan", name: "Plan", completed: ["implement", "monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "plan" },
+                { id: "implement", name: "Implement", completed: ["monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "implement" },
+                { id: "monitor", name: "Monitor", completed: initiative.stage === "sustain", current: initiative.stage === "monitor" },
+                { id: "sustain", name: "Sustain", completed: false, current: initiative.stage === "sustain" },
+              ];
+
+              return (
+                <div key={initiative.id} className="space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">{initiative.title}</h3>
+                      {initiative.description && (
+                        <p className="text-sm text-muted-foreground">{initiative.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <span>Stage: {stageMap[initiative.stage]}</span>
+                        {initiative.target_end_date && (
+                          <>
+                            <span>•</span>
+                            <span>Due: {new Date(initiative.target_end_date).toLocaleDateString()}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to={`/${initiative.stage}`}>View Details</Link>
+                    </Button>
+                  </div>
+                  <div className="pt-2">
+                    <StageProgress stages={mockStages} />
                   </div>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/initiatives/${initiative.id}`}>View Details</Link>
-                </Button>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted mx-auto">
+                <Plus className="h-10 w-10 text-muted-foreground" />
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">{initiative.progress}%</span>
-                </div>
-                <Progress value={initiative.progress} className="h-2" />
-              </div>
-              <div className="pt-2">
-                <StageProgress stages={mockStages} />
+              <div>
+                <h3 className="font-semibold text-lg mb-2">No initiatives yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Get started by creating your first school improvement initiative
+                </p>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Initiative
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create New Initiative</DialogTitle>
+                      <DialogDescription>
+                        Start a new school improvement initiative
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          value={newInitiative.title}
+                          onChange={(e) => setNewInitiative({ ...newInitiative, title: e.target.value })}
+                          placeholder="e.g., Reading Fluency Programme"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Description (optional)</Label>
+                        <Textarea
+                          id="description"
+                          value={newInitiative.description}
+                          onChange={(e) => setNewInitiative({ ...newInitiative, description: e.target.value })}
+                          placeholder="Brief description of the initiative..."
+                          rows={3}
+                        />
+                      </div>
+                      <Button
+                        onClick={handleCreateInitiative}
+                        disabled={!newInitiative.title || isCreating}
+                        className="w-full"
+                      >
+                        {isCreating ? "Creating..." : "Create Initiative"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <Card>
