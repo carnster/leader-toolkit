@@ -53,6 +53,8 @@ export function useDecisionBrief(initiativeId: string | undefined) {
           problem_statement: briefData.problem_statement || "",
           target_group: briefData.target_group || "",
           ...briefData,
+        }, {
+          onConflict: 'initiative_id'  // This tells Supabase to update if initiative_id already exists
         })
         .select()
         .single();
