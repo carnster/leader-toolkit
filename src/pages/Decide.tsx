@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,13 @@ import { EBPRecommendations } from "@/components/EBPRecommendations";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DecideQuickNav } from "@/components/DecideQuickNav";
+import { SMARTCriteriaChecker } from "@/components/SMARTCriteriaChecker";
+import { FeasibilityRedFlags } from "@/components/FeasibilityRedFlags";
+import { EquityChecklist } from "@/components/EquityChecklist";
+import { DecisionBriefExport } from "@/components/DecisionBriefExport";
+import { TimelineVisualization } from "@/components/TimelineVisualization";
+import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target pupils defined", required: true },
@@ -77,6 +84,17 @@ export default function Decide() {
     school_culture: 0,
   });
   
+  // Equity checklist state
+  const [equityChecked, setEquityChecked] = useState<{ [key: string]: boolean }>({});
+  const [equityChecklistNotes, setEquityChecklistNotes] = useState<{ [key: string]: string }>({});
+  
+  // Auto-save state
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Current initiative title for export
+  const [initiativeTitle, setInitiativeTitle] = useState<string>("");
+  
   // Auto-calculate overall feasibility score
   const calculatedFeasibilityScore = Math.round(
     (feasibilityFactors.time_scheduling +
@@ -85,6 +103,21 @@ export default function Decide() {
      feasibilityFactors.leadership_support +
      feasibilityFactors.school_culture) / 5
   );
+  
+  // Load initiative title
+  useEffect(() => {
+    const loadInitiativeTitle = async () => {
+      if (effectiveInitiativeId) {
+        const { data } = await supabase
+          .from("initiatives")
+          .select("title")
+          .eq("id", effectiveInitiativeId)
+          .single();
+        if (data) setInitiativeTitle(data.title);
+      }
+    };
+    loadInitiativeTitle();
+  }, [effectiveInitiativeId]);
   
   // Load existing decision brief
   useEffect(() => {
@@ -116,6 +149,32 @@ export default function Decide() {
       }
     }
   }, [decisionBrief]);
+  
+  // Auto-save functionality with debounce
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      handleSaveProgress().then((success) => {
+        if (success) {
+          setLastSaved(new Date());
+        }
+      });
+    }, 2000); // 2 second debounce
+  }, [effectiveInitiativeId, problemStatement, targetGroup, baselineData, rootCauses, goals, 
+      equityNotes, stakeholderInput, chosenApproach, evidenceBase, feasibilityFactors,
+      leadingIndicators, laggingIndicators, measurementTimeline]);
+  
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleEvaluateGoals = async () => {
     if (!goals || !goals.trim()) {
@@ -412,7 +471,9 @@ export default function Decide() {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="flex gap-6 max-w-7xl mx-auto">
+      {/* Main Content */}
+      <div className="flex-1 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -425,14 +486,17 @@ export default function Decide() {
             Make informed decisions about what changes to implement based on evidence and organizational readiness
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Initiative
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
+        <div className="flex items-center gap-3">
+          <AutoSaveIndicator isSaving={isSaving} lastSaved={lastSaved} />
+          <DecisionBriefExport decisionBrief={decisionBrief} initiativeTitle={initiativeTitle} />
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Initiative
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Initiative</DialogTitle>
               <DialogDescription>
@@ -481,6 +545,7 @@ export default function Decide() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* IMPACT Framework Guidance */}
@@ -558,6 +623,7 @@ export default function Decide() {
                 rows={5}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
                 <strong>Be specific:</strong> State what's happening, for whom, and the measurable impact
@@ -571,6 +637,7 @@ export default function Decide() {
                 placeholder="Example: Year 9 students, particularly disadvantaged pupils in Sets 2 and 3 (approximately 65 students)"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
                 Specify year group, demographics, class/set, or other defining characteristics
@@ -585,6 +652,7 @@ export default function Decide() {
                 rows={4}
                 value={baselineData}
                 onChange={(e) => setBaselineData(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
                 Include quantitative data (test scores, attendance) and qualitative insights (observations, surveys)
@@ -611,6 +679,7 @@ export default function Decide() {
                 rows={4}
                 value={rootCauses}
                 onChange={(e) => setRootCauses(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
                 List underlying factors that contribute to the problem. Each should be evidence-based.
@@ -764,32 +833,36 @@ export default function Decide() {
               </ul>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="goals">Initiative Goals</Label>
-              <Textarea
-                id="goals"
-                placeholder="Example: By July 2025, increase the percentage of Year 9 disadvantaged pupils achieving age-related expectations in maths from 32% to 50%. Achieve 90% fidelity to the mastery learning framework by March 2025 as measured by classroom observations. Increase student confidence in problem-solving from baseline of 40% to 70% by summer term..."
-                rows={6}
-                value={goals}
-                onChange={(e) => {
-                  setGoals(e.target.value);
-                  setGoalsEvaluation(null); // Clear evaluation when goals change
-                }}
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  State specific, measurable goals with clear timelines and target numbers
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleEvaluateGoals}
-                  disabled={isEvaluatingGoals || !goals.trim()}
-                >
-                  {isEvaluatingGoals ? "Evaluating..." : "Evaluate Goals"}
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="goals">Initiative Goals</Label>
+                <Textarea
+                  id="goals"
+                  placeholder="Example: By July 2025, increase the percentage of Year 9 disadvantaged pupils achieving age-related expectations in maths from 32% to 50%. Achieve 90% fidelity to the mastery learning framework by March 2025 as measured by classroom observations. Increase student confidence in problem-solving from baseline of 40% to 70% by summer term..."
+                  rows={6}
+                  value={goals}
+                  onChange={(e) => {
+                    setGoals(e.target.value);
+                    setGoalsEvaluation(null); // Clear evaluation when goals change
+                  }}
+                  onBlur={triggerAutoSave}
+                />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    State specific, measurable goals with clear timelines and target numbers
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEvaluateGoals}
+                    disabled={isEvaluatingGoals || !goals.trim()}
+                  >
+                    {isEvaluatingGoals ? "Evaluating..." : "Evaluate Goals"}
+                  </Button>
+                </div>
               </div>
-            </div>
+
+              {/* Real-time SMART Criteria Checker */}
+              <SMARTCriteriaChecker goals={goals} />
 
             {/* Goals Evaluation Feedback */}
             {goalsEvaluation && (
@@ -904,7 +977,7 @@ export default function Decide() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-primary" />
-                <CardTitle>Step 2: Solution Selection</CardTitle>
+                <CardTitle>Step 4: Solution Selection</CardTitle>
               </div>
               <CardDescription>
                 Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?
@@ -936,13 +1009,14 @@ export default function Decide() {
 
               <div className="space-y-2">
                 <Label htmlFor="evidence">Evidence Base</Label>
-                <Textarea
-                  id="evidence"
-                  placeholder="Example: EEF Teaching and Learning Toolkit shows +5 months progress for mastery learning. Research from [source] demonstrates effectiveness with similar student populations..."
-                  rows={4}
-                  value={evidenceBase}
-                  onChange={(e) => setEvidenceBase(e.target.value)}
-                />
+              <Textarea
+                id="evidence"
+                placeholder="Example: EEF Teaching and Learning Toolkit shows +5 months progress for mastery learning. Research from [source] demonstrates effectiveness with similar student populations..."
+                rows={4}
+                value={evidenceBase}
+                onChange={(e) => setEvidenceBase(e.target.value)}
+                onBlur={triggerAutoSave}
+              />
                 <p className="text-sm text-muted-foreground">
                   Cite research, trials, or evidence that supports this approach
                 </p>
@@ -999,23 +1073,38 @@ export default function Decide() {
                 rows={4}
                 value={stakeholderInput}
                 onChange={(e) => setStakeholderInput(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
                 Document stakeholder perspectives and organizational context
               </p>
             </div>
 
+            <EquityChecklist
+              checked={equityChecked}
+              onCheckedChange={(id, checked) => {
+                setEquityChecked(prev => ({ ...prev, [id]: checked }));
+                triggerAutoSave();
+              }}
+              notes={equityChecklistNotes}
+              onNotesChange={(id, notes) => {
+                setEquityChecklistNotes(prev => ({ ...prev, [id]: notes }));
+                triggerAutoSave();
+              }}
+            />
+
             <div className="space-y-2">
-              <Label htmlFor="equity">Equity & Access Considerations</Label>
+              <Label htmlFor="equity">Additional Equity & Access Notes</Label>
               <Textarea
                 id="equity"
                 placeholder="Example: Disadvantaged pupils are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for EAL families. Consider timing to avoid clash with Ramadan..."
                 rows={4}
                 value={equityNotes}
                 onChange={(e) => setEquityNotes(e.target.value)}
+                onBlur={triggerAutoSave}
               />
               <p className="text-sm text-muted-foreground">
-                Consider who might be disproportionately affected, barriers to access, and how to ensure equity
+                Add any additional equity considerations not covered above
               </p>
             </div>
 
@@ -1106,6 +1195,7 @@ export default function Decide() {
                           ...feasibilityFactors,
                           [item.key]: parseInt(e.target.value) || 0
                         })}
+                        onBlur={triggerAutoSave}
                         className="w-20"
                       />
                     </div>
@@ -1113,6 +1203,9 @@ export default function Decide() {
                 ))}
               </div>
             </div>
+            
+            {/* Feasibility Red Flags */}
+            <FeasibilityRedFlags factors={feasibilityFactors} />
             
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
@@ -1153,6 +1246,7 @@ export default function Decide() {
                 rows={3}
                 value={leadingIndicators}
                 onChange={(e) => setLeadingIndicators(e.target.value)}
+                onBlur={triggerAutoSave}
               />
             </div>
 
@@ -1164,6 +1258,7 @@ export default function Decide() {
                 rows={3}
                 value={laggingIndicators}
                 onChange={(e) => setLaggingIndicators(e.target.value)}
+                onBlur={triggerAutoSave}
               />
             </div>
 
@@ -1174,8 +1269,16 @@ export default function Decide() {
                 placeholder="Example: Weekly fidelity checks, half-termly review meetings, termly outcome reporting to governors"
                 value={measurementTimeline}
                 onChange={(e) => setMeasurementTimeline(e.target.value)}
+                onBlur={triggerAutoSave}
               />
             </div>
+            
+            {/* Timeline Visualization */}
+            <TimelineVisualization 
+              measurementTimeline={measurementTimeline}
+              leadingIndicators={leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : []}
+              laggingIndicators={laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : []}
+            />
             
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
@@ -1286,6 +1389,23 @@ export default function Decide() {
         onOpenChange={setTeamDialogOpen}
         initiativeId={effectiveInitiativeId || ""}
       />
+      </div>
+      
+      {/* Sidebar Navigation */}
+      <div className="w-64 flex-shrink-0">
+        <DecideQuickNav
+          currentStep={step}
+          onStepChange={setStep}
+          completionStatus={{
+            1: !!isStep1Complete,
+            2: !!isStep2Complete,
+            3: !!isStep3Complete,
+            4: !!isStep4Complete,
+            5: !!isStep5Complete,
+            6: !!isStep6Complete,
+          }}
+        />
+      </div>
     </div>
   );
 }
