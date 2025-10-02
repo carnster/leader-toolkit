@@ -436,6 +436,7 @@ export default function Plan() {
       case "communication":
         return (
           <TeamCapacitySection
+            initiativeId={effectiveInitiativeId}
             teamMembers={teamMembers}
             pdActivities={activities}
             isLoadingTeam={isLoadingTeam}

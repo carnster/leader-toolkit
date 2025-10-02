@@ -7,6 +7,7 @@ import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { PDActivity } from "@/hooks/usePDActivities";
 
 interface TeamCapacitySectionProps {
+  initiativeId: string;
   teamMembers: TeamMember[];
   pdActivities: PDActivity[];
   isLoadingTeam: boolean;
@@ -20,6 +21,7 @@ interface TeamCapacitySectionProps {
 }
 
 export function TeamCapacitySection({
+  initiativeId,
   teamMembers,
   pdActivities,
   isLoadingTeam,
@@ -195,7 +197,7 @@ export function TeamCapacitySection({
       </Card>
 
       {/* Communication Plan */}
-      <CommunicationPlan />
+      <CommunicationPlan initiativeId={initiativeId} />
     </div>
   );
 }

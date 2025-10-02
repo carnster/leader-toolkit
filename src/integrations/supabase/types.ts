@@ -58,6 +58,59 @@ export type Database = {
           },
         ]
       }
+      communication_activities: {
+        Row: {
+          activity_type: string
+          channel: string | null
+          completed: boolean
+          completed_date: string | null
+          created_at: string
+          description: string
+          id: string
+          initiative_id: string
+          notes: string | null
+          scheduled_date: string | null
+          stakeholder_group: string
+          updated_at: string
+        }
+        Insert: {
+          activity_type: string
+          channel?: string | null
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          initiative_id: string
+          notes?: string | null
+          scheduled_date?: string | null
+          stakeholder_group: string
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          channel?: string | null
+          completed?: boolean
+          completed_date?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          initiative_id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          stakeholder_group?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_activities_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decision_briefs: {
         Row: {
           baseline_data: string | null

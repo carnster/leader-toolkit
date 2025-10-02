@@ -1,163 +1,196 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Users, Calendar, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle } from "lucide-react";
+import { format } from "date-fns";
+import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
+import { CommunicationActivityDialog } from "./CommunicationActivityDialog";
+import type { CommunicationActivity } from "@/hooks/useCommunicationActivities";
 
-export function CommunicationPlan() {
+interface CommunicationPlanProps {
+  initiativeId: string;
+}
+
+export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
+  const { activities, isLoading, updateActivity } = useCommunicationActivities(initiativeId);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<CommunicationActivity | undefined>();
+
+  const handleAddActivity = () => {
+    setSelectedActivity(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEditActivity = (activity: CommunicationActivity) => {
+    setSelectedActivity(activity);
+    setDialogOpen(true);
+  };
+
+  const handleToggleComplete = (activity: CommunicationActivity) => {
+    updateActivity({
+      id: activity.id,
+      completed: !activity.completed,
+      completed_date: !activity.completed ? format(new Date(), "yyyy-MM-dd") : null,
+    });
+  };
+
+  const groupedActivities = activities.reduce((acc, activity) => {
+    const group = activity.stakeholder_group;
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(activity);
+    return acc;
+  }, {} as Record<string, CommunicationActivity[]>);
+
+  const completedCount = activities.filter(a => a.completed).length;
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          <CardTitle>Communication & Stakeholder Engagement</CardTitle>
-        </div>
-        <CardDescription>
-          Strategic communication to build awareness, buy-in, and sustained support
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Stakeholder Groups */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Key Stakeholder Groups
-          </h4>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="p-3 rounded-lg border space-y-2">
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
               <div className="flex items-center gap-2">
-                <Badge variant="default">Primary</Badge>
-                <span className="font-medium text-sm">Implementation Team</span>
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <CardTitle>Communication & Stakeholder Engagement</CardTitle>
               </div>
-              <p className="text-xs text-muted-foreground">Direct implementers, coaches, coordinators</p>
-              <p className="text-xs"><strong>Needs:</strong> Training, ongoing support, feedback loops</p>
+              <CardDescription className="mt-1.5">
+                Strategic communication to build awareness, buy-in, and sustained support
+              </CardDescription>
             </div>
-            
-            <div className="p-3 rounded-lg border space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="default">Primary</Badge>
-                <span className="font-medium text-sm">Students/Families</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Target beneficiaries and their families</p>
-              <p className="text-xs"><strong>Needs:</strong> Clear expectations, progress updates, involvement opportunities</p>
-            </div>
-
-            <div className="p-3 rounded-lg border space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Secondary</Badge>
-                <span className="font-medium text-sm">School Leadership</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Principals, admin team, district leaders</p>
-              <p className="text-xs"><strong>Needs:</strong> Progress reports, data on outcomes, resource requests</p>
-            </div>
-
-            <div className="p-3 rounded-lg border space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">Secondary</Badge>
-                <span className="font-medium text-sm">Broader Staff</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Teachers, support staff not directly implementing</p>
-              <p className="text-xs"><strong>Needs:</strong> Awareness of initiative, how it affects them, success stories</p>
+            <div className="flex items-center gap-3">
+              {activities.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  {completedCount} of {activities.length} completed
+                </div>
+              )}
+              <Button onClick={handleAddActivity} size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Activity
+              </Button>
             </div>
           </div>
-        </div>
-
-        {/* Communication Timeline */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Communication Timeline
-          </h4>
-          <div className="space-y-2">
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-medium text-sm">Pre-Launch</span>
-                <Badge variant="outline" className="text-xs">Month 0</Badge>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading activities...</p>
+          ) : activities.length === 0 ? (
+            <div className="text-center py-8 space-y-3">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
+              <div>
+                <h3 className="font-medium text-lg mb-1">No communication activities yet</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start planning your stakeholder engagement strategy
+                </p>
+                <Button onClick={handleAddActivity} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Activity
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                • All-staff introduction • Parent information sessions • Team kickoff meeting
-              </p>
             </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedActivities).map(([group, groupActivities]) => (
+                <div key={group}>
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {group}
+                  </h4>
+                  <div className="space-y-2">
+                    {groupActivities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={activity.completed}
+                            onCheckedChange={() => handleToggleComplete(activity)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className={`font-medium text-sm ${activity.completed ? 'line-through text-muted-foreground' : ''}`}>
+                                  {activity.description}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {activity.activity_type}
+                                  </Badge>
+                                  {activity.channel && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {activity.channel}
+                                    </Badge>
+                                  )}
+                                  {activity.scheduled_date && (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {format(new Date(activity.scheduled_date), "MMM d, yyyy")}
+                                    </span>
+                                  )}
+                                  {activity.completed && activity.completed_date && (
+                                    <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                      <CheckCircle2 className="h-3 w-3" />
+                                      Completed {format(new Date(activity.completed_date), "MMM d")}
+                                    </span>
+                                  )}
+                                </div>
+                                {activity.notes && (
+                                  <p className="text-xs text-muted-foreground mt-2">{activity.notes}</p>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditActivity(activity)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-medium text-sm">Launch Phase</span>
-                <Badge variant="outline" className="text-xs">Months 1-2</Badge>
+          {/* Reference Guide - shown when there are activities */}
+          {activities.length > 0 && (
+            <div className="pt-6 border-t">
+              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Communication Best Practices</h4>
+              <div className="grid gap-2 md:grid-cols-2">
+                <div className="p-2 rounded text-xs border">
+                  <span className="font-medium">Early Involvement: </span>
+                  <span className="text-muted-foreground">Engage stakeholders in planning</span>
+                </div>
+                <div className="p-2 rounded text-xs border">
+                  <span className="font-medium">Share Successes: </span>
+                  <span className="text-muted-foreground">Celebrate wins and progress</span>
+                </div>
+                <div className="p-2 rounded text-xs border">
+                  <span className="font-medium">Transparent Data: </span>
+                  <span className="text-muted-foreground">Share successes and challenges</span>
+                </div>
+                <div className="p-2 rounded text-xs border">
+                  <span className="font-medium">Two-way: </span>
+                  <span className="text-muted-foreground">Seek feedback actively</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                • Weekly team check-ins • Monthly leadership updates • Student/family launch event
-              </p>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-medium text-sm">Implementation Phase</span>
-                <Badge variant="outline" className="text-xs">Months 3-6</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                • Bi-weekly team meetings • Quarterly family updates • Monthly staff newsletters
-              </p>
-            </div>
-
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-medium text-sm">Sustainability Phase</span>
-                <Badge variant="outline" className="text-xs">Months 6+</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                • Monthly team reflections • Semester outcome reports • Annual celebration events
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Communication Methods */}
-        <div>
-          <h4 className="font-semibold mb-3">Communication Channels</h4>
-          <div className="grid gap-2 md:grid-cols-2">
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm">Formal Meetings</p>
-              <p className="text-xs text-muted-foreground">Team meetings, PLCs, leadership briefings</p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm">Digital Updates</p>
-              <p className="text-xs text-muted-foreground">Email newsletters, shared documents, dashboards</p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm">Informal Check-ins</p>
-              <p className="text-xs text-muted-foreground">Hallway conversations, coaching sessions</p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm">Family Engagement</p>
-              <p className="text-xs text-muted-foreground">Parent portal updates, family nights, surveys</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Buy-in Strategies */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Target className="h-4 w-4" />
-            Building & Maintaining Buy-in
-          </h4>
-          <div className="space-y-2 text-sm">
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Early Involvement: </span>
-              <span className="text-muted-foreground">Engage key stakeholders in planning before launch</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Share Success Stories: </span>
-              <span className="text-muted-foreground">Celebrate quick wins and student progress</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Transparent Data: </span>
-              <span className="text-muted-foreground">Share both successes and challenges openly</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Two-way Communication: </span>
-              <span className="text-muted-foreground">Actively seek feedback and respond to concerns</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <CommunicationActivityDialog
+        activity={selectedActivity}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initiativeId={initiativeId}
+      />
+    </>
   );
 }
