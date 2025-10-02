@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Users, Calendar, Shield, Lightbulb, Plus } from "lucide-react";
+import { FileText, Users, Calendar, Shield, Lightbulb, Plus, Eye, MessageSquare, DollarSign, CheckCircle2, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -23,6 +23,11 @@ import { PDActivityDialog } from "@/components/PDActivityDialog";
 import { ImplementationStrategyDialog } from "@/components/ImplementationStrategyDialog";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
+import { FidelityMonitoringPlan } from "@/components/FidelityMonitoringPlan";
+import { CommunicationPlan } from "@/components/CommunicationPlan";
+import { ResourceAllocation } from "@/components/ResourceAllocation";
+import { ReadinessChecklist } from "@/components/ReadinessChecklist";
+import { AdaptationProtocol } from "@/components/AdaptationProtocol";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
@@ -41,6 +46,9 @@ export default function Plan() {
   const { activeIngredients, isLoading, createIngredient } = useActiveIngredients(effectiveInitiativeId);
   const [isGeneratingIngredients, setIsGeneratingIngredients] = useState(false);
   const [isGeneratingStrategies, setIsGeneratingStrategies] = useState(false);
+  const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
+  const [isGeneratingTimeline, setIsGeneratingTimeline] = useState(false);
+  const [isGeneratingPD, setIsGeneratingPD] = useState(false);
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
@@ -303,6 +311,102 @@ export default function Plan() {
     }
   };
 
+  const generateRisksFromDecisionBrief = async () => {
+    if (!effectiveInitiativeId) return;
+    setIsGeneratingRisks(true);
+    try {
+      const { data: brief } = await supabase.from("decision_briefs").select("*").eq("initiative_id", effectiveInitiativeId).single();
+      if (!brief) throw new Error("No decision brief found");
+
+      const { data, error } = await supabase.functions.invoke("recommend-risks", { body: { decisionBrief: brief } });
+      if (error) throw error;
+      
+      if (data?.risks) {
+        for (const risk of data.risks) {
+          await supabase.from("implementation_risks").insert({
+            initiative_id: effectiveInitiativeId,
+            risk_description: risk.risk_description,
+            risk_category: risk.risk_category,
+            likelihood: risk.likelihood,
+            impact: risk.impact,
+            mitigation_strategy: risk.mitigation_strategy,
+            contingency_plan: risk.contingency_plan,
+            status: 'active'
+          });
+        }
+        toast({ title: "Risks generated!", description: `${data.risks.length} risks identified from your feasibility data.` });
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingRisks(false);
+    }
+  };
+
+  const generateTimelineFromContext = async () => {
+    if (!effectiveInitiativeId) return;
+    setIsGeneratingTimeline(true);
+    try {
+      const { data: brief } = await supabase.from("decision_briefs").select("*").eq("initiative_id", effectiveInitiativeId).single();
+      const { data, error } = await supabase.functions.invoke("recommend-timeline", { 
+        body: { decisionBrief: brief, activeIngredients } 
+      });
+      if (error) throw error;
+      
+      if (data?.milestones) {
+        for (const m of data.milestones) {
+          const targetDate = new Date();
+          targetDate.setMonth(targetDate.getMonth() + m.months_from_start);
+          await supabase.from("timeline_milestones").insert({
+            initiative_id: effectiveInitiativeId,
+            milestone: m.milestone,
+            phase: m.phase,
+            target_date: targetDate.toISOString().split('T')[0],
+            notes: m.notes,
+            status: 'pending'
+          });
+        }
+        toast({ title: "Timeline generated!", description: `${data.milestones.length} milestones created.` });
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingTimeline(false);
+    }
+  };
+
+  const generatePDActivities = async () => {
+    if (!effectiveInitiativeId) return;
+    setIsGeneratingPD(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("recommend-pd", { 
+        body: { activeIngredients, teamMembers } 
+      });
+      if (error) throw error;
+      
+      if (data?.activities) {
+        for (const act of data.activities) {
+          await supabase.from("pd_activities").insert({
+            initiative_id: effectiveInitiativeId,
+            title: act.title,
+            activity_type: act.activity_type,
+            description: act.description,
+            target_audience: act.target_audience,
+            duration_minutes: act.duration_minutes,
+            fidelity_focus: act.fidelity_focus,
+            facilitator: act.facilitator,
+            completion_status: 'planned'
+          });
+        }
+        toast({ title: "PD activities generated!", description: `${data.activities.length} activities created.` });
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingPD(false);
+    }
+  };
+
   const displayIngredients = activeIngredients;
 
   return (
@@ -336,13 +440,16 @@ export default function Plan() {
 
       {/* Tabs */}
       <Tabs defaultValue="ingredients" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="ingredients">Active Ingredients</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-9 gap-1">
+          <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
           <TabsTrigger value="strategies">Strategies</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="risks">Risks</TabsTrigger>
-          <TabsTrigger value="pd">Professional Development</TabsTrigger>
+          <TabsTrigger value="pd">PD</TabsTrigger>
+          <TabsTrigger value="fidelity">Fidelity</TabsTrigger>
+          <TabsTrigger value="communication">Communication</TabsTrigger>
+          <TabsTrigger value="readiness">Readiness</TabsTrigger>
         </TabsList>
 
         {/* Active Ingredients Tab */}
@@ -781,7 +888,12 @@ export default function Plan() {
               {isLoadingRisks ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Loading risks...</p>
               ) : risks.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No risks documented yet. Add potential risks to plan ahead.</p>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">No risks documented yet.</p>
+                  <Button onClick={generateRisksFromDecisionBrief} disabled={isGeneratingRisks} variant="outline">
+                    {isGeneratingRisks ? "Generating..." : "Generate Risks from Feasibility Data"}
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {risks.map((risk) => {

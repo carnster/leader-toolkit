@@ -14,3 +14,12 @@ verify_jwt = false
 
 [functions.recommend-strategies]
 verify_jwt = false
+
+[functions.recommend-risks]
+verify_jwt = false
+
+[functions.recommend-timeline]
+verify_jwt = false
+
+[functions.recommend-pd]
+verify_jwt = false
