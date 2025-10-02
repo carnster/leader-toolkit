@@ -29,12 +29,11 @@ Design 5-7 professional development activities that build capacity for implement
 - **Fidelity-aligned**: Directly teach the "look-fors" for each ingredient
 
 Activity types to consider:
-- Initial training workshops
-- Coaching and mentoring
-- Learning communities/PLCs
-- Modeling and observation
-- Co-planning sessions
-- Feedback cycles
+- initial_training: Initial training workshops
+- ongoing_coaching: Coaching and mentoring
+- collaborative_learning: Learning communities/PLCs
+- external_workshop: Modeling and observation
+- self_directed: Co-planning and self-study sessions
 
 Each activity should include:
 - Title and type
@@ -96,7 +95,7 @@ Create a comprehensive PD plan that ensures fidelity to the active ingredients.`
                         title: { type: 'string' },
                         activity_type: { 
                           type: 'string',
-                          enum: ['workshop', 'coaching', 'modeling', 'community_of_practice', 'co_planning', 'other']
+                          enum: ['initial_training', 'ongoing_coaching', 'collaborative_learning', 'external_workshop', 'self_directed']
                         },
                         description: { type: 'string' },
                         target_audience: { type: 'array', items: { type: 'string' } },

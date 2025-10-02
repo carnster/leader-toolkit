@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { ReadinessChecklist } from "@/components/ReadinessChecklist";
+import { useNavigate } from "react-router-dom";
 
 interface OverviewSectionProps {
   activeIngredientsCount: number;
@@ -14,6 +15,7 @@ interface OverviewSectionProps {
   onGenerateFullPlan: () => void;
   isGenerating: boolean;
   nextStep: string;
+  initiativeId: string;
 }
 
 export function OverviewSection({
@@ -26,7 +28,9 @@ export function OverviewSection({
   onGenerateFullPlan,
   isGenerating,
   nextStep,
+  initiativeId,
 }: OverviewSectionProps) {
+  const navigate = useNavigate();
   const totalRequired = 6;
   const completed = [
     activeIngredientsCount,
@@ -134,6 +138,30 @@ export function OverviewSection({
         risksCount={risksCount}
         pdActivitiesCount={pdActivitiesCount}
       />
+
+      {/* Complete Planning Button */}
+      {isReady && (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Ready to Move to Implementation</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your comprehensive implementation plan is complete. You can now begin the Implement stage.
+                </p>
+              </div>
+              <Button
+                size="lg"
+                onClick={() => navigate(`/implement?initiative=${initiativeId}`)}
+                className="gap-2"
+              >
+                Move to Implement Stage
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

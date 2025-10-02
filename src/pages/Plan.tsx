@@ -46,9 +46,9 @@ export default function Plan() {
   const [isGeneratingFullPlan, setIsGeneratingFullPlan] = useState(false);
   
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
-  const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
-  const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
-  const { activities, isLoading: isLoadingActivities } = usePDActivities(effectiveInitiativeId);
+  const { milestones, isLoading: isLoadingMilestones, createMilestone, deleteMilestone } = useTimelineMilestones(effectiveInitiativeId);
+  const { risks, isLoading: isLoadingRisks, createRisk } = useImplementationRisks(effectiveInitiativeId);
+  const { activities, isLoading: isLoadingActivities, createActivity } = usePDActivities(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
   
   const { toast } = useToast();
@@ -250,8 +250,7 @@ export default function Plan() {
       
       if (data?.risks) {
         for (const risk of data.risks) {
-          await supabase.from("implementation_risks").insert({
-            initiative_id: effectiveInitiativeId,
+          createRisk({
             risk_description: risk.risk_description,
             risk_category: risk.risk_category,
             likelihood: risk.likelihood,
@@ -262,7 +261,6 @@ export default function Plan() {
           });
         }
         toast({ title: "Risks generated!", description: `${data.risks.length} risks identified from your feasibility data.` });
-        queryClient.invalidateQueries({ queryKey: ["implementation-risks", effectiveInitiativeId] });
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -283,8 +281,7 @@ export default function Plan() {
         for (const m of data.milestones) {
           const targetDate = new Date();
           targetDate.setMonth(targetDate.getMonth() + m.months_from_start);
-          await supabase.from("timeline_milestones").insert({
-            initiative_id: effectiveInitiativeId,
+          createMilestone({
             milestone: m.milestone,
             phase: m.phase,
             target_date: targetDate.toISOString().split('T')[0],
@@ -293,7 +290,6 @@ export default function Plan() {
           });
         }
         toast({ title: "Timeline generated!", description: `${data.milestones.length} milestones created.` });
-        queryClient.invalidateQueries({ queryKey: ["timeline-milestones", effectiveInitiativeId] });
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -311,8 +307,7 @@ export default function Plan() {
       
       if (data?.activities) {
         for (const act of data.activities) {
-          await supabase.from("pd_activities").insert({
-            initiative_id: effectiveInitiativeId,
+          createActivity({
             title: act.title,
             activity_type: act.activity_type,
             description: act.description,
@@ -324,7 +319,6 @@ export default function Plan() {
           });
         }
         toast({ title: "PD activities generated!", description: `${data.activities.length} activities created.` });
-        queryClient.invalidateQueries({ queryKey: ["pd-activities", effectiveInitiativeId] });
       }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -378,6 +372,7 @@ export default function Plan() {
             onGenerateFullPlan={generateFullPlan}
             isGenerating={isGeneratingFullPlan}
             nextStep={getNextStep()}
+            initiativeId={effectiveInitiativeId}
           />
         );
       
@@ -456,10 +451,7 @@ export default function Plan() {
               setEditingMilestone(milestone);
               setMilestoneDialogOpen(true);
             }}
-            onDeleteMilestone={async (id) => {
-              await supabase.from("timeline_milestones").delete().eq("id", id);
-              queryClient.invalidateQueries({ queryKey: ["timeline-milestones", effectiveInitiativeId] });
-            }}
+            onDeleteMilestone={deleteMilestone}
             onAddRisk={() => {
               setEditingRisk(null);
               setRiskDialogOpen(true);
@@ -478,7 +470,7 @@ export default function Plan() {
         return <QualityAssuranceSection activeIngredients={activeIngredients} />;
 
       default:
-        return <OverviewSection activeIngredientsCount={activeIngredients.length} strategiesCount={strategies.length} teamMembersCount={teamMembers.length} milestonesCount={milestones.length} risksCount={risks.length} pdActivitiesCount={activities.length} onGenerateFullPlan={generateFullPlan} isGenerating={isGeneratingFullPlan} nextStep={getNextStep()} />;
+        return <OverviewSection activeIngredientsCount={activeIngredients.length} strategiesCount={strategies.length} teamMembersCount={teamMembers.length} milestonesCount={milestones.length} risksCount={risks.length} pdActivitiesCount={activities.length} onGenerateFullPlan={generateFullPlan} isGenerating={isGeneratingFullPlan} nextStep={getNextStep()} initiativeId={effectiveInitiativeId} />;
     }
   };
 
