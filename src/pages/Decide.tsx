@@ -95,14 +95,17 @@ export default function Decide() {
   // Current initiative title for export
   const [initiativeTitle, setInitiativeTitle] = useState<string>("");
   
-  // Auto-calculate overall feasibility score
-  const calculatedFeasibilityScore = Math.round(
-    (feasibilityFactors.time_scheduling +
-     feasibilityFactors.staff_capacity +
-     feasibilityFactors.resources_budget +
-     feasibilityFactors.leadership_support +
-     feasibilityFactors.school_culture) / 5
-  );
+  // Auto-calculate overall feasibility score (1-5 scale for database)
+  const calculatedFeasibilityScore = (() => {
+    const sum = feasibilityFactors.time_scheduling +
+                feasibilityFactors.staff_capacity +
+                feasibilityFactors.resources_budget +
+                feasibilityFactors.leadership_support +
+                feasibilityFactors.school_culture;
+    
+    if (sum === 0) return 0; // No factors entered yet
+    return Math.max(1, Math.min(5, Math.round((sum / 5) / 2))); // Convert 0-10 avg to 1-5 scale
+  })();
   
   // Load initiative title
   useEffect(() => {
@@ -1142,7 +1145,7 @@ export default function Decide() {
                       <p className="text-muted-foreground text-sm">Auto-calculated from factors below</p>
                     </div>
                     <div className="text-4xl font-bold text-primary">
-                      {calculatedFeasibilityScore}/10
+                      {calculatedFeasibilityScore}/5
                     </div>
                   </div>
                 </div>
