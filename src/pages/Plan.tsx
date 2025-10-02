@@ -38,7 +38,8 @@ export default function Plan() {
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
-  const { activeIngredients, isLoading } = useActiveIngredients(effectiveInitiativeId);
+  const { activeIngredients, isLoading, createIngredient } = useActiveIngredients(effectiveInitiativeId);
+  const [isGeneratingIngredients, setIsGeneratingIngredients] = useState(false);
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
@@ -178,6 +179,68 @@ export default function Plan() {
     }
   };
 
+  const generateIngredientsFromApproach = async () => {
+    if (!effectiveInitiativeId) return;
+    
+    setIsGeneratingIngredients(true);
+    try {
+      // Fetch the decision brief to get chosen approach
+      const { data: brief, error: briefError } = await supabase
+        .from("decision_briefs")
+        .select("chosen_approach, evidence_base, problem_statement")
+        .eq("initiative_id", effectiveInitiativeId)
+        .single();
+
+      if (briefError || !brief?.chosen_approach) {
+        toast({
+          title: "No approach found",
+          description: "Please complete the Decide stage first with a chosen approach.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Call edge function to generate ingredients
+      const { data, error } = await supabase.functions.invoke("generate-active-ingredients", {
+        body: {
+          chosenApproach: brief.chosen_approach,
+          evidenceBase: brief.evidence_base,
+          problemStatement: brief.problem_statement,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.active_ingredients && data.active_ingredients.length > 0) {
+        // Create all ingredients
+        for (const ing of data.active_ingredients) {
+          await createIngredient({
+            name: ing.name,
+            description: ing.description,
+            is_core: ing.is_core,
+            category: ing.category,
+            look_fors: ing.look_fors || [],
+            adaptable_boundaries: ing.adaptable_boundaries || [],
+          });
+        }
+
+        toast({
+          title: "Active ingredients generated!",
+          description: `${data.active_ingredients.length} components added from your chosen approach.`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error generating ingredients:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate active ingredients.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingIngredients(false);
+    }
+  };
+
   const displayIngredients = activeIngredients;
 
   return (
@@ -229,7 +292,28 @@ export default function Plan() {
                   <Lightbulb className="h-5 w-5 text-primary" />
                   <CardTitle>Active Ingredients Mapper</CardTitle>
                 </div>
-                {effectiveInitiativeId && <AddActiveIngredientDialog initiativeId={effectiveInitiativeId} />}
+                <div className="flex gap-2">
+                  {displayIngredients.length === 0 && (
+                    <Button
+                      onClick={generateIngredientsFromApproach}
+                      disabled={isGeneratingIngredients}
+                      variant="outline"
+                    >
+                      {isGeneratingIngredients ? (
+                        <>
+                          <Lightbulb className="mr-2 h-4 w-4 animate-pulse" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Lightbulb className="mr-2 h-4 w-4" />
+                          Generate from Approach
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {effectiveInitiativeId && <AddActiveIngredientDialog initiativeId={effectiveInitiativeId} />}
+                </div>
               </div>
               <CardDescription>
                 Define core practices (non-negotiable) and adaptable elements. Each ingredient should have clear look-fors for fidelity monitoring.
@@ -239,7 +323,12 @@ export default function Plan() {
               {isLoading ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Loading active ingredients...</p>
               ) : displayIngredients.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No active ingredients yet. Add components to get started.</p>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">No active ingredients yet.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Click "Generate from Approach" to auto-populate based on your chosen intervention, or add manually.
+                  </p>
+                </div>
               ) : (
                 displayIngredients.map((ingredient) => {
                   const ing = ingredient as any;

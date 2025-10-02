@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.evaluate-goals]
 verify_jwt = false
+
+[functions.recommend-ebp]
+verify_jwt = false
+
+[functions.generate-active-ingredients]
+verify_jwt = false
