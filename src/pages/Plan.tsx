@@ -40,6 +40,7 @@ export default function Plan() {
   
   const { activeIngredients, isLoading, createIngredient } = useActiveIngredients(effectiveInitiativeId);
   const [isGeneratingIngredients, setIsGeneratingIngredients] = useState(false);
+  const [isGeneratingStrategies, setIsGeneratingStrategies] = useState(false);
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   const { risks, isLoading: isLoadingRisks } = useImplementationRisks(effectiveInitiativeId);
@@ -241,6 +242,67 @@ export default function Plan() {
     }
   };
 
+  const generateStrategiesFromDecisionBrief = async () => {
+    if (!effectiveInitiativeId) return;
+    
+    setIsGeneratingStrategies(true);
+    try {
+      // Fetch the decision brief
+      const { data: brief, error: briefError } = await supabase
+        .from("decision_briefs")
+        .select("*")
+        .eq("initiative_id", effectiveInitiativeId)
+        .single();
+
+      if (briefError || !brief) {
+        toast({
+          title: "No decision brief found",
+          description: "Please complete the Decide stage first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Call edge function to generate strategies
+      const { data, error } = await supabase.functions.invoke("recommend-strategies", {
+        body: { decisionBrief: brief },
+      });
+
+      if (error) throw error;
+
+      if (data?.strategies && data.strategies.length > 0) {
+        // Create all strategies
+        for (const strategy of data.strategies) {
+          createStrategy({
+            strategy_name: strategy.strategy_name,
+            eric_category: strategy.eric_category,
+            description: strategy.description,
+            target_barrier: strategy.target_barrier,
+            timeline: strategy.timeline || null,
+            resources_needed: strategy.resources_needed || null,
+            success_indicators: strategy.success_indicators || null,
+            responsible_party: null,
+            status: 'planned',
+          });
+        }
+
+        toast({
+          title: "Implementation strategies generated!",
+          description: `${data.strategies.length} ERIC strategies added based on your feasibility assessment.`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error generating strategies:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate implementation strategies.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingStrategies(false);
+    }
+  };
+
   const displayIngredients = activeIngredients;
 
   return (
@@ -408,13 +470,34 @@ export default function Plan() {
                   <Shield className="h-5 w-5 text-primary" />
                   <CardTitle>Implementation Strategies (ERIC Framework)</CardTitle>
                 </div>
-                <Button onClick={() => {
-                  setEditingStrategy(null);
-                  setStrategyDialogOpen(true);
-                }}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Strategy
-                </Button>
+                <div className="flex gap-2">
+                  {strategies.length === 0 && (
+                    <Button
+                      onClick={generateStrategiesFromDecisionBrief}
+                      disabled={isGeneratingStrategies}
+                      variant="outline"
+                    >
+                      {isGeneratingStrategies ? (
+                        <>
+                          <Shield className="mr-2 h-4 w-4 animate-pulse" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Generate ERIC Strategies
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  <Button onClick={() => {
+                    setEditingStrategy(null);
+                    setStrategyDialogOpen(true);
+                  }}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Strategy
+                  </Button>
+                </div>
               </div>
               <CardDescription>
                 Use the ERIC framework to plan strategies that Enable, Redesign, Integrate, and Create supports for implementation success.
@@ -424,14 +507,20 @@ export default function Plan() {
               {isLoadingStrategies ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Loading strategies...</p>
               ) : strategies.length === 0 ? (
-                <div className="text-center py-8 space-y-2">
-                  <p className="text-sm text-muted-foreground">No implementation strategies yet. Use the ERIC framework to plan:</p>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li><strong>Enable</strong> - Train, educate, provide tools</li>
-                    <li><strong>Redesign</strong> - Modify workflows, systems, structures</li>
-                    <li><strong>Integrate</strong> - Make it part of standard practice</li>
-                    <li><strong>Create</strong> - Develop new policies, teams, resources</li>
-                  </ul>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">No implementation strategies yet.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Click "Generate ERIC Strategies" to get AI recommendations based on your feasibility assessment, or add manually.
+                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1 mt-4">
+                    <p className="font-medium">ERIC Framework:</p>
+                    <ul className="space-y-1">
+                      <li><strong>Enable</strong> - Train, educate, provide tools</li>
+                      <li><strong>Redesign</strong> - Modify workflows, systems, structures</li>
+                      <li><strong>Integrate</strong> - Make it part of standard practice</li>
+                      <li><strong>Create</strong> - Develop new policies, teams, resources</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-6">
