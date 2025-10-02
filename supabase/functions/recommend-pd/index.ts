@@ -135,15 +135,81 @@ Create a comprehensive PD plan that ensures fidelity to the active ingredients.`
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
-    if (!toolCall) {
-      throw new Error('No PD activities returned');
+    // Try to extract tool call first (preferred)
+    const toolCalls = data.choices?.[0]?.message?.tool_calls ?? [];
+    let activitiesResult: any = null;
+
+    try {
+      const toolCall = toolCalls.find((tc: any) => tc?.function?.name === 'provide_pd_activities') || toolCalls[0];
+      if (toolCall?.function?.arguments) {
+        const parsed = JSON.parse(toolCall.function.arguments);
+        activitiesResult = parsed?.activities ? parsed : null;
+      }
+    } catch (e) {
+      console.error('Failed parsing tool call arguments:', e);
     }
 
-    const result = JSON.parse(toolCall.function.arguments);
+    // Fallback: try to parse JSON from the assistant content when no tool call is present
+    if (!activitiesResult) {
+      const content = data.choices?.[0]?.message?.content;
+      if (typeof content === 'string') {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed?.activities) {
+              activitiesResult = parsed;
+            }
+          } catch (e) {
+            console.error('Failed parsing JSON from content:', e);
+          }
+        }
+      }
+    }
+    
+    if (!activitiesResult?.activities || !Array.isArray(activitiesResult.activities)) {
+      console.error('No PD activities returned from AI. Raw response:', JSON.stringify(data, null, 2));
+      return new Response(JSON.stringify({ error: 'The AI did not return PD activities. Please try again.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify(result), {
+    // Sanitize and coerce fields to match frontend expectations
+    const allowedTypes = new Set(['initial_training', 'ongoing_coaching', 'collaborative_learning', 'external_workshop', 'self_directed']);
+    const typeMap: Record<string, string> = {
+      workshop: 'initial_training',
+      training: 'initial_training',
+      initial: 'initial_training',
+      coaching: 'ongoing_coaching',
+      mentoring: 'ongoing_coaching',
+      plc: 'collaborative_learning',
+      community_of_practice: 'collaborative_learning',
+      observation: 'external_workshop',
+      model_observation: 'external_workshop',
+      self_study: 'self_directed',
+      self_directed: 'self_directed',
+    };
+
+    const cleaned = {
+      activities: activitiesResult.activities.map((a: any) => {
+        let t = (a.activity_type || '').toString().toLowerCase().replace(/\s+/g, '_');
+        if (!allowedTypes.has(t)) t = typeMap[t] || 'initial_training';
+        const duration = typeof a.duration_minutes === 'string' ? parseInt(a.duration_minutes, 10) : a.duration_minutes;
+        return {
+          title: a.title || 'Professional Learning Session',
+          activity_type: t,
+          description: a.description || null,
+          target_audience: Array.isArray(a.target_audience) ? a.target_audience : (a.target_audience ? [String(a.target_audience)] : null),
+          duration_minutes: Number.isFinite(duration) ? duration : 60,
+          fidelity_focus: Array.isArray(a.fidelity_focus) ? a.fidelity_focus : (a.fidelity_focus ? [String(a.fidelity_focus)] : null),
+          facilitator: a.facilitator || null,
+        };
+      })
+    };
+
+    return new Response(JSON.stringify(cleaned), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
