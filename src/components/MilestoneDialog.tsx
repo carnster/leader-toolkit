@@ -104,11 +104,10 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
                   <SelectValue placeholder="Select implementation phase" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Exploration">Exploration</SelectItem>
-                  <SelectItem value="Installation">Installation</SelectItem>
-                  <SelectItem value="Initial Implementation">Initial Implementation</SelectItem>
-                  <SelectItem value="Full Implementation">Full Implementation</SelectItem>
-                  <SelectItem value="Sustainability">Sustainability</SelectItem>
+                  <SelectItem value="Decide">Decide</SelectItem>
+                  <SelectItem value="Plan and Prepare">Plan and Prepare</SelectItem>
+                  <SelectItem value="Implement">Implement</SelectItem>
+                  <SelectItem value="Spread and Sustain">Spread and Sustain</SelectItem>
                 </SelectContent>
               </Select>
             </div>
