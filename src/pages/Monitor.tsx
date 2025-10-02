@@ -57,32 +57,27 @@ export default function Monitor() {
                           implementMilestones[implementMilestones.length - 1]?.sub_stage;
   
   const subStageDetails = {
-    "Emerging (0–25%)": {
+    "Installation (0-25%)": {
       color: "bg-amber-500/10 border-amber-500/20",
+      description: "Setting up systems, training staff, preparing resources",
       fidelity: "Low",
       reach: "Low", 
       capacity: "Building",
       climate: "Mixed",
       impact: "Not yet visible"
     },
-    "Developing (26–50%)": {
+    "Initial Implementation (26-75%)": {
       color: "bg-blue-500/10 border-blue-500/20",
-      fidelity: "Partial",
-      reach: "Moderate",
-      capacity: "Growing", 
-      climate: "Positive buy-in",
-      impact: "Early signs"
+      description: "Beginning implementation with support, learning and adjusting",
+      fidelity: "Partial to High in pockets",
+      reach: "Moderate to Strong",
+      capacity: "Growing to Adequate",
+      climate: "Positive buy-in to Strong support",
+      impact: "Early signs to Moderate gains"
     },
-    "Established (51–75%)": {
-      color: "bg-purple-500/10 border-purple-500/20",
-      fidelity: "High in pockets",
-      reach: "Strong",
-      capacity: "Adequate",
-      climate: "Strong support",
-      impact: "Moderate gains"
-    },
-    "Embedded (76–100%)": {
+    "Full Implementation (76-100%)": {
       color: "bg-green-500/10 border-green-500/20",
+      description: "Fully operational with high fidelity and sustainability",
       fidelity: "High and consistent",
       reach: "Full",
       capacity: "Sustainable",
@@ -122,21 +117,21 @@ export default function Monitor() {
         </Card>
       </div>
 
-      {/* Implementation Sub-Stage Status */}
+      {/* Implementation Phase Status */}
       {currentSubStage && currentDetails && (
         <Card className={`border-2 ${currentDetails.color}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              Current Implementation Sub-Stage
+              Current Implementation Phase
             </CardTitle>
             <CardDescription>
-              Tracking maturity across five key dimensions
+              {currentDetails.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-2xl font-bold">{currentSubStage}</h3>
+              <h3 className="text-2xl font-bold">{currentSubStage.split(' (')[0]}</h3>
               <Badge variant="outline" className="text-base px-3 py-1">
                 {currentSubStage.match(/\(([^)]+)\)/)?.[1]}
               </Badge>
@@ -167,7 +162,7 @@ export default function Monitor() {
             
             <div className="pt-2 border-t">
               <p className="text-sm text-muted-foreground">
-                Set sub-stages in your <a href="/plan?section=timeline" className="underline hover:text-foreground">Implementation Timeline</a> to track progress
+                Set phases in your <a href="/plan?section=timeline" className="underline hover:text-foreground">Implementation Timeline</a> to track progress
               </p>
             </div>
           </CardContent>

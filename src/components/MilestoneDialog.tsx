@@ -118,20 +118,34 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
 
             {formData.phase === "Implement" && (
               <div className="space-y-2">
-                <Label htmlFor="sub_stage">Implementation Sub-Stage</Label>
+                <Label htmlFor="sub_stage">Implementation Phase</Label>
                 <Select value={formData.sub_stage} onValueChange={(value) => setFormData({ ...formData, sub_stage: value })}>
                   <SelectTrigger id="sub_stage">
-                    <SelectValue placeholder="Select sub-stage" />
+                    <SelectValue placeholder="Select implementation phase" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Emerging (0–25%)">Emerging (0–25%)</SelectItem>
-                    <SelectItem value="Developing (26–50%)">Developing (26–50%)</SelectItem>
-                    <SelectItem value="Established (51–75%)">Established (51–75%)</SelectItem>
-                    <SelectItem value="Embedded (76–100%)">Embedded (76–100%)</SelectItem>
+                    <SelectItem value="Installation (0-25%)">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Installation (0-25%)</span>
+                        <span className="text-xs text-muted-foreground">Setting up systems, training staff, preparing resources</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Initial Implementation (26-75%)">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Initial Implementation (26-75%)</span>
+                        <span className="text-xs text-muted-foreground">Beginning implementation with support, learning and adjusting</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Full Implementation (76-100%)">
+                      <div className="flex flex-col">
+                        <span className="font-medium">Full Implementation (76-100%)</span>
+                        <span className="text-xs text-muted-foreground">Fully operational with high fidelity and sustainability</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Track implementation maturity: Fidelity, Reach, Capacity, Climate, and Evidence of Impact
+                  Track implementation progress through key phases
                 </p>
               </div>
             )}
