@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ReadinessChecklistProps {
   activeIngredientsCount: number;
@@ -22,6 +24,58 @@ export function ReadinessChecklist({
   pdActivitiesCount,
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
+  const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
+
+  const checklistItemDetails = {
+    ingredients: {
+      definition: "Core ingredients are essential, non-negotiable components that must be implemented with fidelity. Adaptable ingredients can be modified to fit your context while maintaining effectiveness.",
+      examples: ["Clear definition of each active ingredient", "Observable indicators (look-fors) for each component", "Documentation of which ingredients are core vs. adaptable", "Alignment with evidence-based practices"]
+    },
+    strategies: {
+      definition: "Implementation strategies are methods to address barriers and support adoption. ERIC framework provides tested strategies for overcoming common implementation challenges.",
+      examples: ["Strategies matched to identified barriers", "Clear action plans for each strategy", "Assigned responsible parties", "Timeline for strategy deployment", "Success indicators defined"]
+    },
+    "team-assembled": {
+      definition: "A diverse team with complementary skills and clear responsibilities ensures coordinated implementation and sustained momentum.",
+      examples: ["Leadership representation", "Implementer participation", "Administrative support", "Data/evaluation expertise", "Clear roles and time commitments", "Regular meeting schedule established"]
+    },
+    timeline: {
+      definition: "A phased timeline breaks implementation into manageable stages with clear milestones to track progress and maintain accountability.",
+      examples: ["Installation phase milestones (0-25%)", "Initial implementation checkpoints (26-75%)", "Full implementation targets (76-100%)", "Realistic target dates", "Dependencies identified"]
+    },
+    risks: {
+      definition: "Proactive risk identification and mitigation planning prevents surprises and enables quick response when challenges arise.",
+      examples: ["Staff turnover contingencies", "Resource availability concerns", "Competing priorities", "Technical/logistical barriers", "Mitigation and contingency plans for each risk"]
+    },
+    "pd-plan": {
+      definition: "Comprehensive professional development ensures implementers have the knowledge and skills needed, with ongoing support to maintain quality.",
+      examples: ["Initial training schedule and content", "Coaching/support model defined", "Practice opportunities built in", "Feedback mechanisms established", "Refresher training planned"]
+    },
+    fidelity: {
+      definition: "Systematic monitoring ensures the practice is implemented as intended, providing data to guide support and improvement.",
+      examples: ["Observation schedule established", "Fidelity checklists developed", "Observer training completed", "Data collection tools ready", "Feedback process defined"]
+    },
+    communication: {
+      definition: "Strategic communication keeps all stakeholders informed, builds buy-in, and addresses concerns proactively.",
+      examples: ["Stakeholder map created", "Key messages defined", "Communication channels identified", "Timeline for updates", "Two-way feedback mechanisms"]
+    },
+    "resources-secured": {
+      definition: "Adequate resources ensure implementation can proceed without delays or quality compromises.",
+      examples: ["Budget approved and allocated", "Materials and supplies ordered", "Technology/tools secured", "Space/facilities arranged", "Sustainability funding identified"]
+    },
+    "training-complete": {
+      definition: "All implementers need foundational knowledge and skills before beginning implementation to ensure quality from day one.",
+      examples: ["Initial training sessions completed", "Implementers demonstrate understanding", "Practice opportunities provided", "Questions addressed", "Reference materials distributed"]
+    },
+    "buy-in": {
+      definition: "Leadership support and stakeholder commitment provide the political will and resources needed for success.",
+      examples: ["Leadership endorsement secured", "Union/staff representation involved", "Parent/community informed", "Board approval obtained", "Champions identified at all levels"]
+    },
+    "adaptation-protocol": {
+      definition: "Clear guidelines help teams make contextually appropriate adaptations while maintaining fidelity to core components.",
+      examples: ["Core vs. adaptable components documented", "Decision-making process for adaptations", "Documentation requirements", "Review/approval process", "Boundaries clearly defined"]
+    }
+  };
 
   const checklistItems = [
     {
@@ -114,6 +168,10 @@ export function ReadinessChecklist({
     setCheckedItems(prev => ({ ...prev, [id]: checked }));
   };
 
+  const toggleExpanded = (id: string) => {
+    setExpandedItems(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const requiredItems = checklistItems.filter(item => item.required);
   const completedRequired = requiredItems.filter(
     item => item.autoCheck || checkedItems[item.id]
@@ -180,37 +238,80 @@ export function ReadinessChecklist({
         )}
 
         {/* Checklist Items */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {checklistItems.map((item) => {
             const isChecked = item.autoCheck || checkedItems[item.id];
+            const isExpanded = expandedItems[item.id];
+            const details = checklistItemDetails[item.id as keyof typeof checklistItemDetails];
             
             return (
-              <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border">
-                <Checkbox
-                  id={item.id}
-                  checked={isChecked}
-                  onCheckedChange={(checked) => handleCheck(item.id, checked as boolean)}
-                  disabled={item.autoCheck}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <label
-                    htmlFor={item.id}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    {item.label}
-                    {item.required && (
-                      <Badge variant="outline" className="ml-2 text-xs">Required</Badge>
+              <Collapsible key={item.id} open={isExpanded} onOpenChange={() => toggleExpanded(item.id)}>
+                <div className="rounded-lg border">
+                  <div className="flex items-start gap-3 p-3">
+                    <Checkbox
+                      id={item.id}
+                      checked={isChecked}
+                      onCheckedChange={(checked) => handleCheck(item.id, checked as boolean)}
+                      disabled={item.autoCheck}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <label
+                          htmlFor={item.id}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {item.label}
+                          {item.required && (
+                            <Badge variant="outline" className="ml-2 text-xs">Required</Badge>
+                          )}
+                        </label>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0">
+                            {isExpanded ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <Info className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{item.section}</p>
+                      {item.autoCheck && (
+                        <Badge variant="secondary" className="mt-2 text-xs">
+                          Auto-verified
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <CollapsibleContent>
+                    {details && (
+                      <div className="px-3 pb-3 pt-0 border-t bg-muted/30 space-y-3">
+                        <div className="pt-3 space-y-2">
+                          <div className="flex items-start gap-2">
+                            <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                            <div className="space-y-2">
+                              <p className="text-sm text-muted-foreground">{details.definition}</p>
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-1.5">What this looks like:</p>
+                                <ul className="text-xs text-muted-foreground space-y-1">
+                                  {details.examples.map((example, idx) => (
+                                    <li key={idx} className="flex items-start gap-1.5">
+                                      <span className="text-primary mt-0.5">•</span>
+                                      <span>{example}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                  </label>
-                  <p className="text-xs text-muted-foreground mt-1">{item.section}</p>
-                  {item.autoCheck && (
-                    <Badge variant="secondary" className="mt-2 text-xs">
-                      Auto-verified
-                    </Badge>
-                  )}
+                  </CollapsibleContent>
                 </div>
-              </div>
+              </Collapsible>
             );
           })}
         </div>
