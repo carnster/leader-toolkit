@@ -30,6 +30,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
     status: milestone?.status || "pending",
     completion_date: milestone?.completion_date ? new Date(milestone.completion_date) : undefined,
     notes: milestone?.notes || "",
+    sub_stage: milestone?.sub_stage || "",
   });
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
         status: milestone.status,
         completion_date: milestone.completion_date ? new Date(milestone.completion_date) : undefined,
         notes: milestone.notes || "",
+        sub_stage: milestone.sub_stage || "",
       });
     } else {
       setFormData({
@@ -50,6 +52,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
         status: "pending",
         completion_date: undefined,
         notes: "",
+        sub_stage: "",
       });
     }
   }, [milestone, open]);
@@ -62,6 +65,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
       status: formData.status as TimelineMilestone["status"],
       completion_date: formData.completion_date ? format(formData.completion_date, "yyyy-MM-dd") : null,
       notes: formData.notes || null,
+      sub_stage: formData.phase === "Implement" ? formData.sub_stage || null : null,
     };
 
     if (milestone) {
@@ -99,7 +103,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phase">Implementation Phase *</Label>
-              <Select value={formData.phase} onValueChange={(value) => setFormData({ ...formData, phase: value })}>
+              <Select value={formData.phase} onValueChange={(value) => setFormData({ ...formData, phase: value, sub_stage: value === "Implement" ? formData.sub_stage : "" })}>
                 <SelectTrigger id="phase">
                   <SelectValue placeholder="Select implementation phase" />
                 </SelectTrigger>
@@ -111,6 +115,26 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.phase === "Implement" && (
+              <div className="space-y-2">
+                <Label htmlFor="sub_stage">Implementation Sub-Stage</Label>
+                <Select value={formData.sub_stage} onValueChange={(value) => setFormData({ ...formData, sub_stage: value })}>
+                  <SelectTrigger id="sub_stage">
+                    <SelectValue placeholder="Select sub-stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Emerging (0–25%)">Emerging (0–25%)</SelectItem>
+                    <SelectItem value="Developing (26–50%)">Developing (26–50%)</SelectItem>
+                    <SelectItem value="Established (51–75%)">Established (51–75%)</SelectItem>
+                    <SelectItem value="Embedded (76–100%)">Embedded (76–100%)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Track implementation maturity: Fidelity, Reach, Capacity, Climate, and Evidence of Impact
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="milestone">Milestone *</Label>

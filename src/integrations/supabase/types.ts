@@ -753,6 +753,7 @@ export type Database = {
           notes: string | null
           phase: string
           status: string
+          sub_stage: string | null
           target_date: string
           updated_at: string
         }
@@ -765,6 +766,7 @@ export type Database = {
           notes?: string | null
           phase: string
           status?: string
+          sub_stage?: string | null
           target_date: string
           updated_at?: string
         }
@@ -777,6 +779,7 @@ export type Database = {
           notes?: string | null
           phase?: string
           status?: string
+          sub_stage?: string | null
           target_date?: string
           updated_at?: string
         }

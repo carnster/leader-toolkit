@@ -11,6 +11,7 @@ export interface TimelineMilestone {
   status: "pending" | "in_progress" | "completed" | "at_risk";
   completion_date: string | null;
   notes: string | null;
+  sub_stage: string | null;
   created_at: string;
   updated_at: string;
 }
