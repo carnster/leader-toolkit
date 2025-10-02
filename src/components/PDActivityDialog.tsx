@@ -11,7 +11,10 @@ import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { usePDActivities, PDActivity } from "@/hooks/usePDActivities";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PDActivityDialogProps {
   activity?: PDActivity;
@@ -22,6 +25,7 @@ interface PDActivityDialogProps {
 
 export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }: PDActivityDialogProps) {
   const { createActivity, updateActivity, deleteActivity, isCreating, isUpdating, isDeleting } = usePDActivities(initiativeId);
+  const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     activity_type: activity?.activity_type || "initial_training",
@@ -267,40 +271,48 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }:
             </div>
 
             <div className="space-y-2">
-              <Label>Fidelity Focus Areas</Label>
-              {formData.fidelity_focus.map((focus, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={focus}
-                    onChange={(e) => {
-                      const newFocus = [...formData.fidelity_focus];
-                      newFocus[index] = e.target.value;
-                      setFormData({ ...formData, fidelity_focus: newFocus });
-                    }}
-                    placeholder={`Which active ingredients will this address?`}
-                  />
-                  {formData.fidelity_focus.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        const newFocus = formData.fidelity_focus.filter((_, i) => i !== index);
-                        setFormData({ ...formData, fidelity_focus: newFocus });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFormData({ ...formData, fidelity_focus: [...formData.fidelity_focus, ""] })}
-              >
-                <Plus className="mr-2 h-3 w-3" />
-                Add Focus Area
-              </Button>
+              <Label>Fidelity Focus Areas (Active Ingredients)</Label>
+              {isLoadingIngredients ? (
+                <p className="text-sm text-muted-foreground">Loading active ingredients...</p>
+              ) : activeIngredients.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No active ingredients defined yet. Add them in the Strategic Foundation section first.</p>
+              ) : (
+                <ScrollArea className="h-[200px] rounded-md border p-4">
+                  <div className="space-y-3">
+                    {activeIngredients.map((ingredient) => {
+                      const isChecked = formData.fidelity_focus.includes(ingredient.name);
+                      return (
+                        <div key={ingredient.id} className="flex items-start space-x-3">
+                          <Checkbox
+                            id={`ingredient-${ingredient.id}`}
+                            checked={isChecked}
+                            onCheckedChange={(checked) => {
+                              const newFocus = checked
+                                ? [...formData.fidelity_focus.filter(f => f !== ""), ingredient.name]
+                                : formData.fidelity_focus.filter(f => f !== ingredient.name);
+                              setFormData({ ...formData, fidelity_focus: newFocus.length > 0 ? newFocus : [""] });
+                            }}
+                          />
+                          <div className="flex-1 space-y-1">
+                            <label
+                              htmlFor={`ingredient-${ingredient.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {ingredient.name}
+                              {ingredient.is_core && (
+                                <span className="ml-2 text-xs text-primary">(Core)</span>
+                              )}
+                            </label>
+                            {ingredient.description && (
+                              <p className="text-xs text-muted-foreground">{ingredient.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
             </div>
 
             <div className="flex justify-between pt-4">
