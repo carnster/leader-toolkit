@@ -235,38 +235,114 @@ export type Database = {
           },
         ]
       }
-      fidelity_logs: {
+      fidelity_checklists: {
         Row: {
-          component_id: string | null
+          active_ingredient_id: string | null
+          checklist_items: Json
           created_at: string
+          description: string | null
           id: string
           initiative_id: string
+          name: string
+          rating_scale: Json
+          updated_at: string
+        }
+        Insert: {
+          active_ingredient_id?: string | null
+          checklist_items?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          initiative_id: string
+          name: string
+          rating_scale?: Json
+          updated_at?: string
+        }
+        Update: {
+          active_ingredient_id?: string | null
+          checklist_items?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          initiative_id?: string
+          name?: string
+          rating_scale?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fidelity_checklists_active_ingredient_id_fkey"
+            columns: ["active_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fidelity_checklists_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fidelity_logs: {
+        Row: {
+          checklist_id: string | null
+          checklist_responses: Json | null
+          component_id: string | null
+          created_at: string
+          duration_minutes: number | null
+          evidence_photos: string[] | null
+          id: string
+          initiative_id: string
+          location: string | null
           notes: string | null
           observed_at: string
           observer_id: string
           rating: number
+          schedule_id: string | null
         }
         Insert: {
+          checklist_id?: string | null
+          checklist_responses?: Json | null
           component_id?: string | null
           created_at?: string
+          duration_minutes?: number | null
+          evidence_photos?: string[] | null
           id?: string
           initiative_id: string
+          location?: string | null
           notes?: string | null
           observed_at?: string
           observer_id: string
           rating: number
+          schedule_id?: string | null
         }
         Update: {
+          checklist_id?: string | null
+          checklist_responses?: Json | null
           component_id?: string | null
           created_at?: string
+          duration_minutes?: number | null
+          evidence_photos?: string[] | null
           id?: string
           initiative_id?: string
+          location?: string | null
           notes?: string | null
           observed_at?: string
           observer_id?: string
           rating?: number
+          schedule_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fidelity_logs_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "fidelity_checklists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fidelity_logs_component_id_fkey"
             columns: ["component_id"]
@@ -286,6 +362,13 @@ export type Database = {
             columns: ["observer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fidelity_logs_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "observation_schedules"
             referencedColumns: ["id"]
           },
         ]
@@ -600,6 +683,75 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      observation_schedules: {
+        Row: {
+          active_ingredient_id: string | null
+          completed_observation_id: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          implementer_id: string | null
+          initiative_id: string
+          location: string | null
+          notes: string | null
+          observation_type: string
+          observer_id: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          active_ingredient_id?: string | null
+          completed_observation_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          implementer_id?: string | null
+          initiative_id: string
+          location?: string | null
+          notes?: string | null
+          observation_type: string
+          observer_id?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          active_ingredient_id?: string | null
+          completed_observation_id?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          implementer_id?: string | null
+          initiative_id?: string
+          location?: string | null
+          notes?: string | null
+          observation_type?: string
+          observer_id?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observation_schedules_active_ingredient_id_fkey"
+            columns: ["active_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "observation_schedules_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
             referencedColumns: ["id"]
           },
         ]

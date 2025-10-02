@@ -498,7 +498,7 @@ export default function Plan() {
 
       case "fidelity":
       case "adaptation":
-        return <QualityAssuranceSection activeIngredients={activeIngredients} />;
+        return <QualityAssuranceSection activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />;
 
       default:
         return <OverviewSection activeIngredientsCount={activeIngredients.length} strategiesCount={strategies.length} teamMembersCount={teamMembers.length} milestonesCount={milestones.length} risksCount={risks.length} pdActivitiesCount={activities.length} onGenerateFullPlan={generateFullPlan} isGenerating={isGeneratingFullPlan} nextStep={getNextStep()} initiativeId={effectiveInitiativeId} />;

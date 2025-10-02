@@ -11,6 +11,12 @@ export interface FidelityLog {
   notes: string | null;
   observed_at: string;
   created_at: string;
+  schedule_id: string | null;
+  checklist_id: string | null;
+  checklist_responses: any;
+  evidence_photos: string[];
+  duration_minutes: number | null;
+  location: string | null;
 }
 
 export function useFidelityLogs(initiativeId: string | undefined) {
@@ -34,9 +40,10 @@ export function useFidelityLogs(initiativeId: string | undefined) {
   });
 
   const createLog = useMutation({
-    mutationFn: async (log: Omit<FidelityLog, "id" | "created_at" | "observer_id">) => {
+    mutationFn: async (log: Omit<FidelityLog, "id" | "created_at" | "observed_at">) => {
       const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("Not authenticated");
+      const observerId = log.observer_id || userData.user?.id;
+      if (!observerId) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("fidelity_logs")
@@ -45,8 +52,14 @@ export function useFidelityLogs(initiativeId: string | undefined) {
           component_id: log.component_id,
           rating: log.rating,
           notes: log.notes,
-          observed_at: log.observed_at,
-          observer_id: userData.user.id,
+          observer_id: observerId,
+          observed_at: new Date().toISOString(),
+          schedule_id: log.schedule_id || null,
+          checklist_id: log.checklist_id || null,
+          checklist_responses: log.checklist_responses || {},
+          evidence_photos: log.evidence_photos || [],
+          duration_minutes: log.duration_minutes || null,
+          location: log.location || null,
         })
         .select()
         .single();
