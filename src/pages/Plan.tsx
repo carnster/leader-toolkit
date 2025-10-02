@@ -802,7 +802,28 @@ export default function Plan() {
               {isLoadingMilestones ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Loading milestones...</p>
               ) : milestones.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No milestones yet. Add milestones to track progress.</p>
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">
+                    No milestones yet. Generate AI recommendations or add manually.
+                  </p>
+                  <Button
+                    onClick={generateTimelineFromContext}
+                    disabled={isGeneratingTimeline}
+                    variant="outline"
+                  >
+                    {isGeneratingTimeline ? (
+                      <>
+                        <Lightbulb className="mr-2 h-4 w-4 animate-pulse" />
+                        Generating Timeline...
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb className="mr-2 h-4 w-4" />
+                        Generate Timeline from Context
+                      </>
+                    )}
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {milestones.map((milestone, index) => (
@@ -973,7 +994,28 @@ export default function Plan() {
               {isLoadingActivities ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Loading activities...</p>
               ) : activities.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No PD activities yet. Schedule training and support sessions.</p>
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">
+                    No PD activities yet. Generate AI recommendations or add manually.
+                  </p>
+                  <Button
+                    onClick={generatePDActivities}
+                    disabled={isGeneratingPD}
+                    variant="outline"
+                  >
+                    {isGeneratingPD ? (
+                      <>
+                        <Lightbulb className="mr-2 h-4 w-4 animate-pulse" />
+                        Generating PD Activities...
+                      </>
+                    ) : (
+                      <>
+                        <Lightbulb className="mr-2 h-4 w-4" />
+                        Generate PD Activities
+                      </>
+                    )}
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {activities.map((activity) => (
@@ -1052,6 +1094,30 @@ export default function Plan() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Fidelity Monitoring Tab */}
+        <TabsContent value="fidelity" className="space-y-6">
+          <FidelityMonitoringPlan activeIngredients={activeIngredients} />
+        </TabsContent>
+
+        {/* Communication & Resources Tab */}
+        <TabsContent value="communication" className="space-y-6">
+          <CommunicationPlan />
+          <ResourceAllocation />
+        </TabsContent>
+
+        {/* Readiness & Adaptation Tab */}
+        <TabsContent value="readiness" className="space-y-6">
+          <AdaptationProtocol activeIngredients={activeIngredients} />
+          <ReadinessChecklist 
+            activeIngredientsCount={activeIngredients.length}
+            strategiesCount={strategies.length}
+            teamMembersCount={teamMembers.length}
+            milestonesCount={milestones.length}
+            risksCount={risks.length}
+            pdActivitiesCount={activities.length}
+          />
         </TabsContent>
       </Tabs>
 
