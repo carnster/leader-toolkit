@@ -300,12 +300,30 @@ export default function Plan() {
 
   const generatePDActivities = async () => {
     if (!effectiveInitiativeId) return;
+    
+    console.log("Starting PD generation with:", { 
+      activeIngredientsCount: activeIngredients.length, 
+      teamMembersCount: teamMembers.length 
+    });
+    
     setIsGeneratingPD(true);
     try {
-      const { data, error } = await supabase.functions.invoke("recommend-pd", { body: { activeIngredients, teamMembers } });
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke("recommend-pd", { 
+        body: { 
+          activeIngredients, 
+          teamMembers 
+        } 
+      });
       
-      if (data?.activities) {
+      console.log("PD generation response:", { data, error });
+      
+      if (error) {
+        console.error("PD generation error:", error);
+        throw error;
+      }
+      
+      if (data?.activities && data.activities.length > 0) {
+        console.log(`Creating ${data.activities.length} PD activities`);
         for (const act of data.activities) {
           createActivity({
             title: act.title,
@@ -319,9 +337,13 @@ export default function Plan() {
           });
         }
         toast({ title: "PD activities generated!", description: `${data.activities.length} activities created.` });
+      } else {
+        console.warn("No activities returned from AI");
+        toast({ title: "No activities generated", description: "The AI didn't return any activities. Please try again.", variant: "destructive" });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error("PD generation failed:", error);
+      toast({ title: "Error generating PD activities", description: error.message || "An unknown error occurred", variant: "destructive" });
     } finally {
       setIsGeneratingPD(false);
     }
