@@ -99,12 +99,18 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phase">Implementation Phase *</Label>
-              <Input
-                id="phase"
-                value={formData.phase}
-                onChange={(e) => setFormData({ ...formData, phase: e.target.value })}
-                placeholder="e.g., Exploration, Installation, Initial Implementation"
-              />
+              <Select value={formData.phase} onValueChange={(value) => setFormData({ ...formData, phase: value })}>
+                <SelectTrigger id="phase">
+                  <SelectValue placeholder="Select implementation phase" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Exploration">Exploration</SelectItem>
+                  <SelectItem value="Installation">Installation</SelectItem>
+                  <SelectItem value="Initial Implementation">Initial Implementation</SelectItem>
+                  <SelectItem value="Full Implementation">Full Implementation</SelectItem>
+                  <SelectItem value="Sustainability">Sustainability</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
