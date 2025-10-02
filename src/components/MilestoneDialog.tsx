@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Trash2 } from "lucide-react";
+import { CalendarIcon, Trash2, Info } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTimelineMilestones, TimelineMilestone } from "@/hooks/useTimelineMilestones";
@@ -89,6 +89,25 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
     }
   };
 
+  const phaseInfo = {
+    "Decide": {
+      description: "Assess the problem, explore solutions, and make an informed decision about which evidence-based practice to implement.",
+      examples: ["Complete needs assessment", "Form decision-making team", "Review evidence for potential practices", "Select implementation approach", "Secure leadership commitment"]
+    },
+    "Plan and Prepare": {
+      description: "Develop detailed implementation plan, build team capacity, establish systems, and prepare resources.",
+      examples: ["Create implementation team", "Develop fidelity monitoring plan", "Establish data collection systems", "Create communication plan", "Secure necessary resources", "Conduct initial staff training"]
+    },
+    "Implement": {
+      description: "Launch and execute the initiative with ongoing support, monitoring, and adjustments to ensure quality implementation.",
+      examples: ["Begin practice implementation", "Conduct regular observations", "Provide coaching support", "Collect fidelity data", "Make data-based adjustments", "Hold team check-ins"]
+    },
+    "Spread and Sustain": {
+      description: "Expand successful implementation to additional contexts while embedding practices into ongoing operations.",
+      examples: ["Scale to additional classrooms/teams", "Embed into policies and procedures", "Develop onboarding for new staff", "Create sustainability plan", "Build internal capacity", "Evaluate long-term outcomes"]
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,6 +133,27 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
                   <SelectItem value="Spread and Sustain">Spread and Sustain</SelectItem>
                 </SelectContent>
               </Select>
+              
+              {formData.phase && phaseInfo[formData.phase as keyof typeof phaseInfo] && (
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <p className="text-sm text-muted-foreground">
+                        {phaseInfo[formData.phase as keyof typeof phaseInfo].description}
+                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">Example milestones:</p>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {phaseInfo[formData.phase as keyof typeof phaseInfo].examples.map((example, idx) => (
+                            <li key={idx}>• {example}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {formData.phase === "Implement" && (
