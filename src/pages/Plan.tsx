@@ -60,12 +60,15 @@ export default function Plan() {
   const [strategyDialogOpen, setStrategyDialogOpen] = useState(false);
   const [editingStrategy, setEditingStrategy] = useState<ImplementationStrategy | null>(null);
 
-  // Check for template and auto-populate active ingredients
+  // Check for template or AI recommendation and auto-populate active ingredients
   useEffect(() => {
     const templateId = sessionStorage.getItem("templateId");
+    const aiIngredients = sessionStorage.getItem("aiRecommendationIngredients");
     
     if (templateId && effectiveInitiativeId) {
       loadTemplateIngredients(templateId, effectiveInitiativeId);
+    } else if (aiIngredients && effectiveInitiativeId) {
+      loadAIIngredients(aiIngredients, effectiveInitiativeId);
     }
   }, [effectiveInitiativeId]);
 
@@ -123,6 +126,55 @@ export default function Plan() {
       sessionStorage.removeItem("templateId");
     } catch (error) {
       console.error("Error loading template ingredients:", error);
+    }
+  };
+
+  const loadAIIngredients = async (ingredientsJson: string, initiativeId: string) => {
+    try {
+      const ingredients = JSON.parse(ingredientsJson);
+      
+      // Check if this initiative already has ingredients
+      const { count, error: countError } = await supabase
+        .from("active_ingredients")
+        .select("id", { count: "exact", head: true })
+        .eq("initiative_id", initiativeId);
+      
+      if (countError) throw countError;
+      if ((count ?? 0) > 0) {
+        // Already populated; clear the marker and exit
+        sessionStorage.removeItem("aiRecommendationIngredients");
+        return;
+      }
+
+      // Create active ingredients from AI recommendation
+      const formattedIngredients = ingredients.map((ing: any) => ({
+        initiative_id: initiativeId,
+        name: ing.name,
+        description: ing.description,
+        is_core: ing.is_core,
+        category: ing.category || null,
+        look_fors: ing.look_fors || null,
+        adaptable_boundaries: ing.adaptable_boundaries || null,
+      }));
+
+      const { error: insertError } = await supabase
+        .from("active_ingredients")
+        .insert(formattedIngredients);
+
+      if (insertError) throw insertError;
+
+      // Invalidate and refetch the query
+      await queryClient.invalidateQueries({ queryKey: ["active-ingredients", initiativeId] });
+
+      toast({
+        title: "Active ingredients loaded",
+        description: `${formattedIngredients.length} components added from AI recommendation`,
+      });
+
+      // Clear sessionStorage after loading
+      sessionStorage.removeItem("aiRecommendationIngredients");
+    } catch (error) {
+      console.error("Error loading AI ingredients:", error);
     }
   };
 

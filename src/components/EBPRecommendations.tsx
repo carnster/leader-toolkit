@@ -6,12 +6,22 @@ import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DecisionBrief } from "@/hooks/useDecisionBrief";
 
+interface ActiveIngredient {
+  name: string;
+  description: string;
+  is_core: boolean;
+  category?: string;
+  look_fors?: string[];
+  adaptable_boundaries?: string[];
+}
+
 interface EBPRecommendation {
   name: string;
   description: string;
   evidence_level: 'Strong' | 'Moderate' | 'Emerging';
   fit_score: number;
   implementation_notes: string;
+  active_ingredients?: ActiveIngredient[];
 }
 
 interface EBPRecommendationsProps {
@@ -145,9 +155,15 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
                     onClick={() => {
                       setSelectedId(`${index}`);
                       onSelectRecommendation?.(rec);
+                      
+                      // Store active ingredients for Plan stage
+                      if (rec.active_ingredients) {
+                        sessionStorage.setItem('aiRecommendationIngredients', JSON.stringify(rec.active_ingredients));
+                      }
+                      
                       toast({
                         title: "Recommendation Selected",
-                        description: `${rec.name} has been noted for your initiative.`,
+                        description: `${rec.name} has been noted. Active ingredients will be loaded in Plan stage.`,
                       });
                     }}
                   >
@@ -161,6 +177,21 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
                   <p className="text-sm font-medium mb-1">Implementation Considerations:</p>
                   <p className="text-sm text-muted-foreground">{rec.implementation_notes}</p>
                 </div>
+                {rec.active_ingredients && rec.active_ingredients.length > 0 && (
+                  <div className="pt-2 border-t">
+                    <p className="text-sm font-medium mb-2">Active Ingredients ({rec.active_ingredients.length}):</p>
+                    <div className="space-y-1">
+                      {rec.active_ingredients.map((ing, idx) => (
+                        <div key={idx} className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Badge variant={ing.is_core ? "default" : "secondary"} className="text-xs">
+                            {ing.is_core ? "Core" : "Adaptable"}
+                          </Badge>
+                          <span>{ing.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

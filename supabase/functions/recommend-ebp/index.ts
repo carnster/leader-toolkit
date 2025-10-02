@@ -32,7 +32,12 @@ For each recommendation, provide:
 - Brief description (2-3 sentences)
 - Evidence level (Strong/Moderate/Emerging)
 - Fit score (1-100) based on alignment with the context
-- Key implementation considerations`;
+- Key implementation considerations
+- 4-6 Active Ingredients (the core practices that drive effectiveness):
+  * Mark 2-3 as "core" (non-negotiable elements)
+  * Mark the rest as adaptable
+  * Include specific "look-fors" - observable indicators of quality implementation
+  * Include "adaptable boundaries" - what can be modified while maintaining fidelity`;
 
     const userPrompt = `Based on this decision brief, recommend evidence-based practices:
 
@@ -76,9 +81,24 @@ Provide recommendations in a clear, structured format.`;
                         description: { type: 'string' },
                         evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
                         fit_score: { type: 'number', minimum: 1, maximum: 100 },
-                        implementation_notes: { type: 'string' }
+                        implementation_notes: { type: 'string' },
+                        active_ingredients: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              name: { type: 'string' },
+                              description: { type: 'string' },
+                              is_core: { type: 'boolean' },
+                              category: { type: 'string' },
+                              look_fors: { type: 'array', items: { type: 'string' } },
+                              adaptable_boundaries: { type: 'array', items: { type: 'string' } }
+                            },
+                            required: ['name', 'description', 'is_core']
+                          }
+                        }
                       },
-                      required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes'],
+                      required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes', 'active_ingredients'],
                       additionalProperties: false
                     }
                   }
