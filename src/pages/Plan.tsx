@@ -321,6 +321,13 @@ export default function Plan() {
         console.error("PD generation error:", error);
         throw error;
       }
+
+      if (data?.error) {
+        const msg = typeof data.error === 'string' ? data.error : (data.error.message || 'AI service error');
+        console.warn('PD generation returned error payload:', data);
+        toast({ title: 'AI temporarily unavailable', description: msg, variant: 'destructive' });
+        return;
+      }
       
       if (data?.activities && data.activities.length > 0) {
         console.log(`Creating ${data.activities.length} PD activities`);
