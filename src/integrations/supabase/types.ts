@@ -58,6 +58,53 @@ export type Database = {
           },
         ]
       }
+      budget_items: {
+        Row: {
+          actual_cost: number | null
+          category: string
+          created_at: string
+          description: string | null
+          estimated_cost: number
+          funding_source: string | null
+          id: string
+          initiative_id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          category: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number
+          funding_source?: string | null
+          id?: string
+          initiative_id: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number
+          funding_source?: string | null
+          id?: string
+          initiative_id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_activities: {
         Row: {
           activity_type: string
@@ -738,6 +785,50 @@ export type Database = {
             foreignKeyName: "sustainability_plans_initiative_id_fkey"
             columns: ["initiative_id"]
             isOneToOne: true
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_commitments: {
+        Row: {
+          created_at: string
+          description: string | null
+          hours_per_month: number | null
+          hours_per_week: number | null
+          id: string
+          initiative_id: string
+          notes: string | null
+          role_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          hours_per_month?: number | null
+          hours_per_week?: number | null
+          id?: string
+          initiative_id: string
+          notes?: string | null
+          role_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          hours_per_month?: number | null
+          hours_per_week?: number | null
+          id?: string
+          initiative_id?: string
+          notes?: string | null
+          role_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_commitments_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
             referencedRelation: "initiatives"
             referencedColumns: ["id"]
           },

@@ -21,6 +21,7 @@ interface ExecutionPlanningSectionProps {
   onEditRisk: (risk: ImplementationRisk) => void;
   onGenerateTimeline: () => void;
   onGenerateRisks: () => void;
+  initiativeId: string;
 }
 
 export function ExecutionPlanningSection({
@@ -37,6 +38,7 @@ export function ExecutionPlanningSection({
   onEditRisk,
   onGenerateTimeline,
   onGenerateRisks,
+  initiativeId,
 }: ExecutionPlanningSectionProps) {
   return (
     <div className="space-y-6">
@@ -255,7 +257,7 @@ export function ExecutionPlanningSection({
       </Card>
 
       {/* Resource Allocation */}
-      <ResourceAllocation />
+      <ResourceAllocation initiativeId={initiativeId} />
     </div>
   );
 }

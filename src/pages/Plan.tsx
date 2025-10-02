@@ -492,6 +492,7 @@ export default function Plan() {
             }}
             onGenerateTimeline={generateTimelineFromContext}
             onGenerateRisks={generateRisksFromDecisionBrief}
+            initiativeId={effectiveInitiativeId}
           />
         );
 

@@ -1,173 +1,218 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, Package, Users } from "lucide-react";
+import { DollarSign, Clock, Plus, Edit } from "lucide-react";
+import { useBudgetItems } from "@/hooks/useBudgetItems";
+import { useTimeCommitments } from "@/hooks/useTimeCommitments";
+import { BudgetItemDialog } from "@/components/BudgetItemDialog";
+import { TimeCommitmentDialog } from "@/components/TimeCommitmentDialog";
+import type { BudgetItem } from "@/hooks/useBudgetItems";
+import type { TimeCommitment } from "@/hooks/useTimeCommitments";
 
-export function ResourceAllocation() {
+interface ResourceAllocationProps {
+  initiativeId: string;
+}
+
+export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
+  const { budgetItems, isLoading: isLoadingBudget } = useBudgetItems(initiativeId);
+  const { timeCommitments, isLoading: isLoadingTime } = useTimeCommitments(initiativeId);
+  
+  const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
+  const [editingBudgetItem, setEditingBudgetItem] = useState<BudgetItem | undefined>(undefined);
+  const [timeDialogOpen, setTimeDialogOpen] = useState(false);
+  const [editingTimeCommitment, setEditingTimeCommitment] = useState<TimeCommitment | undefined>(undefined);
+
+  const totalEstimated = budgetItems.reduce((sum, item) => sum + item.estimated_cost, 0);
+  const totalActual = budgetItems.reduce((sum, item) => sum + (item.actual_cost || 0), 0);
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-primary" />
-          <CardTitle>Resource Allocation & Budget</CardTitle>
-        </div>
-        <CardDescription>
-          Detailed breakdown of resources, time commitments, and budget requirements
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Budget Categories */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <DollarSign className="h-4 w-4" />
-            Budget Breakdown
-          </h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center p-3 rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">Professional Development</p>
-                <p className="text-xs text-muted-foreground">Training, coaching, materials</p>
-              </div>
-              <Badge variant="outline">$___</Badge>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">Personnel Time</p>
-                <p className="text-xs text-muted-foreground">Release time, stipends, substitutes</p>
-              </div>
-              <Badge variant="outline">$___</Badge>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">Materials & Supplies</p>
-                <p className="text-xs text-muted-foreground">Curriculum, tools, technology</p>
-              </div>
-              <Badge variant="outline">$___</Badge>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">Technology & Infrastructure</p>
-                <p className="text-xs text-muted-foreground">Software, hardware, platforms</p>
-              </div>
-              <Badge variant="outline">$___</Badge>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border">
-              <div>
-                <p className="font-medium text-sm">Evaluation & Monitoring</p>
-                <p className="text-xs text-muted-foreground">Data collection, analysis tools</p>
-              </div>
-              <Badge variant="outline">$___</Badge>
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border bg-primary/5">
-              <p className="font-semibold">Total Estimated Cost</p>
-              <Badge variant="default">$___</Badge>
-            </div>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            <CardTitle>Resource Allocation & Budget</CardTitle>
           </div>
-        </div>
-
-        {/* Time Commitments */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Time Commitments by Role
-          </h4>
-          <div className="space-y-2">
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between mb-1">
-                <span className="font-medium text-sm">Direct Implementers</span>
-                <Badge variant="secondary">___ hrs/week</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">Delivery time + planning + PD participation</p>
+          <CardDescription>
+            Track budget, time commitments, and resource requirements
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Budget Categories */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Budget Breakdown
+              </h4>
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  setEditingBudgetItem(undefined);
+                  setBudgetDialogOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Budget Item
+              </Button>
             </div>
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between mb-1">
-                <span className="font-medium text-sm">Implementation Coach</span>
-                <Badge variant="secondary">___ hrs/week</Badge>
+            
+            {isLoadingBudget ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Loading budget items...</p>
+            ) : budgetItems.length === 0 ? (
+              <div className="text-center py-8 border rounded-lg bg-muted/20">
+                <p className="text-sm text-muted-foreground mb-2">No budget items yet</p>
+                <p className="text-xs text-muted-foreground">Add budget items to track costs for your initiative</p>
               </div>
-              <p className="text-xs text-muted-foreground">Observations, feedback, coordination</p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between mb-1">
-                <span className="font-medium text-sm">Team Lead/Coordinator</span>
-                <Badge variant="secondary">___ hrs/week</Badge>
+            ) : (
+              <div className="space-y-2">
+                {budgetItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center p-3 rounded-lg border">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{item.category}</p>
+                        {item.funding_source && (
+                          <Badge variant="outline" className="text-xs">{item.funding_source}</Badge>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <Badge variant="outline" className="font-mono">
+                          ${item.estimated_cost.toFixed(2)}
+                        </Badge>
+                        {item.actual_cost && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Actual: ${item.actual_cost.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingBudgetItem(item);
+                          setBudgetDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-between items-center p-3 rounded-lg border bg-primary/5">
+                  <p className="font-semibold">Total Estimated Cost</p>
+                  <Badge variant="default" className="font-mono">
+                    ${totalEstimated.toFixed(2)}
+                  </Badge>
+                </div>
+                {totalActual > 0 && (
+                  <div className="flex justify-between items-center p-3 rounded-lg border bg-secondary/5">
+                    <p className="font-semibold">Total Actual Cost</p>
+                    <Badge variant="secondary" className="font-mono">
+                      ${totalActual.toFixed(2)}
+                    </Badge>
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">Planning, data review, problem-solving</p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <div className="flex justify-between mb-1">
-                <span className="font-medium text-sm">School Leadership</span>
-                <Badge variant="secondary">___ hrs/month</Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">Check-ins, remove barriers, resource allocation</p>
-            </div>
+            )}
           </div>
-        </div>
 
-        {/* Materials & Supplies */}
-        <div>
-          <h4 className="font-semibold mb-3 flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Materials & Supplies Needed
-          </h4>
-          <div className="grid gap-2">
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm mb-1">Curriculum Materials</p>
-              <p className="text-xs text-muted-foreground">
-                • Intervention manuals/guides<br />
-                • Student workbooks/materials<br />
-                • Assessment tools
-              </p>
+          {/* Time Commitments */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Time Commitments by Role
+              </h4>
+              <Button 
+                size="sm" 
+                onClick={() => {
+                  setEditingTimeCommitment(undefined);
+                  setTimeDialogOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Time Commitment
+              </Button>
             </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm mb-1">Professional Development</p>
-              <p className="text-xs text-muted-foreground">
-                • Training materials<br />
-                • Fidelity observation tools<br />
-                • Coaching protocols
-              </p>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <p className="font-medium text-sm mb-1">Technology/Tools</p>
-              <p className="text-xs text-muted-foreground">
-                • Required software/platforms<br />
-                • Data tracking systems<br />
-                • Communication tools
-              </p>
-            </div>
+            
+            {isLoadingTime ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Loading time commitments...</p>
+            ) : timeCommitments.length === 0 ? (
+              <div className="text-center py-8 border rounded-lg bg-muted/20">
+                <p className="text-sm text-muted-foreground mb-2">No time commitments yet</p>
+                <p className="text-xs text-muted-foreground">Add time commitments to track role-based time allocations</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {timeCommitments.map((item) => (
+                  <div key={item.id} className="p-3 rounded-lg border">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-medium text-sm">{item.role_name}</span>
+                      <div className="flex items-center gap-2">
+                        {item.hours_per_week && (
+                          <Badge variant="secondary">{item.hours_per_week} hrs/week</Badge>
+                        )}
+                        {item.hours_per_month && (
+                          <Badge variant="secondary">{item.hours_per_month} hrs/month</Badge>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setEditingTimeCommitment(item);
+                            setTimeDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Funding Sources */}
-        <div>
-          <h4 className="font-semibold mb-3">Funding Sources & Strategy</h4>
-          <div className="space-y-2 text-sm">
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">School/District Budget: </span>
-              <span className="text-muted-foreground">General operating funds, professional development budget</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Grants: </span>
-              <span className="text-muted-foreground">Title I, Title II, state/federal competitive grants</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Reallocation: </span>
-              <span className="text-muted-foreground">Repurpose existing resources or staff time</span>
-            </div>
-            <div className="p-3 rounded-lg border">
-              <span className="font-medium">Community Partnerships: </span>
-              <span className="text-muted-foreground">Local businesses, nonprofits, volunteer support</span>
-            </div>
+          {/* Resource Protection */}
+          <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">Resource Protection Plan</h4>
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Critical:</strong> Identify resources that are essential and cannot be cut, even in budget constraints.
+              Establish contingency plans for maintaining core resources if funding is reduced.
+            </p>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Resource Protection */}
-        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-          <h4 className="font-semibold mb-2 text-amber-900 dark:text-amber-100">Resource Protection Plan</h4>
-          <p className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Critical:</strong> Identify resources that are essential and cannot be cut, even in budget constraints.
-            Establish contingency plans for maintaining core resources if funding is reduced.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Dialogs */}
+      <BudgetItemDialog
+        item={editingBudgetItem}
+        open={budgetDialogOpen}
+        onOpenChange={(open) => {
+          setBudgetDialogOpen(open);
+          if (!open) setEditingBudgetItem(undefined);
+        }}
+        initiativeId={initiativeId}
+      />
+
+      <TimeCommitmentDialog
+        item={editingTimeCommitment}
+        open={timeDialogOpen}
+        onOpenChange={(open) => {
+          setTimeDialogOpen(open);
+          if (!open) setEditingTimeCommitment(undefined);
+        }}
+        initiativeId={initiativeId}
+      />
+    </>
   );
 }
