@@ -1,10 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, AlertCircle, Info, ChevronUp, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Link, useSearchParams } from "react-router-dom";
 
 interface ReadinessChecklistProps {
   activeIngredientsCount: number;
@@ -25,6 +26,8 @@ export function ReadinessChecklist({
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
+  const [searchParams] = useSearchParams();
+  const initiativeId = searchParams.get("initiative");
 
   const checklistItemDetails = {
     ingredients: {
@@ -84,6 +87,8 @@ export function ReadinessChecklist({
       label: "All core and adaptable ingredients identified with clear look-fors",
       required: true,
       autoCheck: activeIngredientsCount > 0,
+      actionLink: `/plan?section=strategic-foundation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Define Active Ingredients"
     },
     {
       id: "strategies",
@@ -91,6 +96,8 @@ export function ReadinessChecklist({
       label: "ERIC strategies defined for addressing barriers",
       required: true,
       autoCheck: strategiesCount > 0,
+      actionLink: `/plan?section=execution${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Add Strategies"
     },
     {
       id: "team-assembled",
@@ -98,6 +105,8 @@ export function ReadinessChecklist({
       label: "Implementation team assembled with clear roles and responsibilities",
       required: true,
       autoCheck: teamMembersCount > 0,
+      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Build Team"
     },
     {
       id: "timeline",
@@ -105,6 +114,8 @@ export function ReadinessChecklist({
       label: "Phased timeline with key milestones established",
       required: true,
       autoCheck: milestonesCount > 0,
+      actionLink: `/plan?section=timeline${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Create Timeline"
     },
     {
       id: "risks",
@@ -112,6 +123,8 @@ export function ReadinessChecklist({
       label: "Potential risks identified with mitigation strategies",
       required: true,
       autoCheck: risksCount > 0,
+      actionLink: `/plan?section=execution${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Identify Risks"
     },
     {
       id: "pd-plan",
@@ -119,6 +132,8 @@ export function ReadinessChecklist({
       label: "PD plan includes initial training and ongoing coaching",
       required: true,
       autoCheck: pdActivitiesCount > 0,
+      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Plan PD Activities"
     },
     {
       id: "fidelity",
@@ -126,6 +141,8 @@ export function ReadinessChecklist({
       label: "Observation schedule and data collection methods defined",
       required: true,
       autoCheck: false,
+      actionLink: `/plan?section=quality-assurance${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Set Up Monitoring"
     },
     {
       id: "communication",
@@ -133,6 +150,8 @@ export function ReadinessChecklist({
       label: "Stakeholder communication plan in place",
       required: true,
       autoCheck: false,
+      actionLink: `/monitor${initiativeId ? `?initiative=${initiativeId}` : ''}`,
+      actionLabel: "Create Communication Plan"
     },
     {
       id: "resources-secured",
@@ -140,6 +159,8 @@ export function ReadinessChecklist({
       label: "Budget allocated and materials/supplies secured",
       required: true,
       autoCheck: false,
+      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Manage Budget"
     },
     {
       id: "training-complete",
@@ -147,6 +168,8 @@ export function ReadinessChecklist({
       label: "Initial training for all implementers completed",
       required: true,
       autoCheck: false,
+      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Schedule Training"
     },
     {
       id: "buy-in",
@@ -154,6 +177,8 @@ export function ReadinessChecklist({
       label: "Key stakeholders informed and supportive",
       required: false,
       autoCheck: false,
+      actionLink: `/decide${initiativeId ? `?initiative=${initiativeId}` : ''}`,
+      actionLabel: "Review Decision Brief"
     },
     {
       id: "adaptation-protocol",
@@ -161,6 +186,8 @@ export function ReadinessChecklist({
       label: "Guidelines for acceptable adaptations documented",
       required: false,
       autoCheck: false,
+      actionLink: `/plan?section=quality-assurance${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLabel: "Define Adaptation Protocol"
     },
   ];
 
@@ -288,10 +315,10 @@ export function ReadinessChecklist({
                   <CollapsibleContent>
                     {details && (
                       <div className="px-3 pb-3 pt-0 border-t bg-muted/30 space-y-3">
-                        <div className="pt-3 space-y-2">
+                        <div className="pt-3 space-y-3">
                           <div className="flex items-start gap-2">
                             <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                            <div className="space-y-2">
+                            <div className="space-y-2 flex-1">
                               <p className="text-sm text-muted-foreground">{details.definition}</p>
                               <div>
                                 <p className="text-xs font-medium text-muted-foreground mb-1.5">What this looks like:</p>
@@ -306,6 +333,17 @@ export function ReadinessChecklist({
                               </div>
                             </div>
                           </div>
+                          
+                          {item.actionLink && (
+                            <div className="flex justify-end pt-2">
+                              <Button asChild size="sm" variant="default">
+                                <Link to={item.actionLink}>
+                                  {item.actionLabel}
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
