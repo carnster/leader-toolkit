@@ -9,6 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useIndicators } from "@/hooks/useIndicators";
+import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 
 const mockIndicators = [
   { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
@@ -45,9 +46,52 @@ export default function Monitor() {
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
   const { indicators, isLoading: isLoadingIndicators } = useIndicators(effectiveInitiativeId);
+  const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
   const activeStrategies = strategies.filter(s => s.status === 'in_progress' || s.status === 'planned');
+  
+  // Get implementation milestones with sub-stages
+  const implementMilestones = milestones.filter(m => m.phase === "Implement" && m.sub_stage);
+  const currentSubStage = implementMilestones.find(m => m.status === "in_progress")?.sub_stage || 
+                          implementMilestones[implementMilestones.length - 1]?.sub_stage;
+  
+  const subStageDetails = {
+    "Emerging (0–25%)": {
+      color: "bg-amber-500/10 border-amber-500/20",
+      fidelity: "Low",
+      reach: "Low", 
+      capacity: "Building",
+      climate: "Mixed",
+      impact: "Not yet visible"
+    },
+    "Developing (26–50%)": {
+      color: "bg-blue-500/10 border-blue-500/20",
+      fidelity: "Partial",
+      reach: "Moderate",
+      capacity: "Growing", 
+      climate: "Positive buy-in",
+      impact: "Early signs"
+    },
+    "Established (51–75%)": {
+      color: "bg-purple-500/10 border-purple-500/20",
+      fidelity: "High in pockets",
+      reach: "Strong",
+      capacity: "Adequate",
+      climate: "Strong support",
+      impact: "Moderate gains"
+    },
+    "Embedded (76–100%)": {
+      color: "bg-green-500/10 border-green-500/20",
+      fidelity: "High and consistent",
+      reach: "Full",
+      capacity: "Sustainable",
+      climate: "Culturally embedded",
+      impact: "Clear impact"
+    }
+  };
+  
+  const currentDetails = currentSubStage ? subStageDetails[currentSubStage as keyof typeof subStageDetails] : null;
   
   return (
     <div className="space-y-8 max-w-7xl">
@@ -77,6 +121,58 @@ export default function Monitor() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Implementation Sub-Stage Status */}
+      {currentSubStage && currentDetails && (
+        <Card className={`border-2 ${currentDetails.color}`}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Current Implementation Sub-Stage
+            </CardTitle>
+            <CardDescription>
+              Tracking maturity across five key dimensions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-bold">{currentSubStage}</h3>
+              <Badge variant="outline" className="text-base px-3 py-1">
+                {currentSubStage.match(/\(([^)]+)\)/)?.[1]}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-2">
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Fidelity</p>
+                <p className="text-sm font-semibold">{currentDetails.fidelity}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Reach</p>
+                <p className="text-sm font-semibold">{currentDetails.reach}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Capacity</p>
+                <p className="text-sm font-semibold">{currentDetails.capacity}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Climate</p>
+                <p className="text-sm font-semibold">{currentDetails.climate}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase">Evidence of Impact</p>
+                <p className="text-sm font-semibold">{currentDetails.impact}</p>
+              </div>
+            </div>
+            
+            <div className="pt-2 border-t">
+              <p className="text-sm text-muted-foreground">
+                Set sub-stages in your <a href="/plan?section=timeline" className="underline hover:text-foreground">Implementation Timeline</a> to track progress
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Context from Plan Stage */}
       <div className="grid gap-4 md:grid-cols-2">
