@@ -14,6 +14,10 @@ interface ReadinessChecklistProps {
   milestonesCount: number;
   risksCount: number;
   pdActivitiesCount: number;
+  communicationActivitiesCount?: number;
+  budgetItemsCount?: number;
+  fidelityChecklistsCount?: number;
+  observationSchedulesCount?: number;
 }
 
 export function ReadinessChecklist({
@@ -23,6 +27,10 @@ export function ReadinessChecklist({
   milestonesCount,
   risksCount,
   pdActivitiesCount,
+  communicationActivitiesCount = 0,
+  budgetItemsCount = 0,
+  fidelityChecklistsCount = 0,
+  observationSchedulesCount = 0,
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
@@ -140,7 +148,7 @@ export function ReadinessChecklist({
       section: "Fidelity Monitoring",
       label: "Observation schedule and data collection methods defined",
       required: true,
-      autoCheck: false,
+      autoCheck: fidelityChecklistsCount > 0 || observationSchedulesCount > 0,
       actionLink: `/plan?section=quality-assurance${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Set Up Monitoring"
     },
@@ -149,7 +157,7 @@ export function ReadinessChecklist({
       section: "Communication",
       label: "Stakeholder communication plan in place",
       required: true,
-      autoCheck: false,
+      autoCheck: communicationActivitiesCount > 0,
       actionLink: `/plan?section=communication${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Create Communication Plan"
     },
@@ -158,7 +166,7 @@ export function ReadinessChecklist({
       section: "Resources",
       label: "Budget allocated and materials/supplies secured",
       required: true,
-      autoCheck: false,
+      autoCheck: budgetItemsCount > 0,
       actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Manage Budget"
     },
