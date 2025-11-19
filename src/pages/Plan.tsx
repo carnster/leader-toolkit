@@ -424,12 +424,8 @@ export default function Plan() {
               setStrategyDialogOpen(true);
             }}
             onDeleteStrategy={(id) => deleteStrategy(id)}
-            onAddStrategy={(strategy) => {
-              if (strategy) {
-                setEditingStrategy(strategy as any);
-              } else {
-                setEditingStrategy(null);
-              }
+            onAddStrategy={() => {
+              setEditingStrategy(null);
               setStrategyDialogOpen(true);
             }}
           />
