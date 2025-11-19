@@ -1,59 +1,60 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
-interface PDRecommendation {
-  activity_type: string;
-  title: string;
+interface StrategyRecommendation {
+  strategy_name: string;
+  eric_category: string;
   description: string;
-  facilitator: string;
-  target_audience: string[];
-  scheduled_date: string | null;
-  duration_minutes: number;
-  fidelity_focus: string[];
+  target_barrier: string;
+  resources_needed: string;
+  responsible_party: string;
+  timeline: string;
+  success_indicators: string;
 }
 
-interface PDRecommendationsProps {
+interface ImplementationStrategyRecommendationsProps {
   initiativeId: string;
+  decisionBrief: any;
   activeIngredients: Array<{
     name: string;
     is_core: boolean;
-    look_fors: string[] | null;
   }>;
-  teamMembers: Array<{
-    role_in_initiative: string;
-  }>;
-  onApplyRecommendations: (recommendations: PDRecommendation[]) => void;
+  onApplyRecommendation: (recommendation: StrategyRecommendation) => void;
 }
 
-const activityTypeLabels: Record<string, string> = {
-  initial_training: "Initial Training",
-  ongoing_coaching: "Ongoing Coaching",
-  collaborative_learning: "Collaborative Learning",
-  external_workshop: "External Workshop",
-  self_directed: "Self-Directed Learning"
+const ericCategoryLabels: Record<string, string> = {
+  evaluative_iterative: "Evaluative & Iterative",
+  provide_interactive_assistance: "Provide Interactive Assistance",
+  adapt_practice: "Adapt Practice",
+  develop_stakeholder_relationships: "Develop Stakeholder Relationships",
+  train_educate: "Train & Educate",
+  support_clinicians: "Support Clinicians",
+  engage_consumers: "Engage Consumers",
+  use_financial_strategies: "Use Financial Strategies",
+  change_infrastructure: "Change Infrastructure"
 };
 
-export function PDRecommendations({
+export function ImplementationStrategyRecommendations({
   initiativeId,
+  decisionBrief,
   activeIngredients,
-  teamMembers,
-  onApplyRecommendations,
-}: PDRecommendationsProps) {
+  onApplyRecommendation,
+}: ImplementationStrategyRecommendationsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [recommendations, setRecommendations] = useState<PDRecommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<StrategyRecommendation[]>([]);
   const [appliedIndices, setAppliedIndices] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   const handleGenerate = async () => {
-    if (activeIngredients.length === 0) {
+    if (!decisionBrief) {
       toast({
-        title: "Active ingredients needed",
-        description: "Please add active ingredients before generating PD recommendations.",
+        title: "Decision brief needed",
+        description: "Please complete the Decide stage before generating strategy recommendations.",
         variant: "destructive",
       });
       return;
@@ -62,31 +63,33 @@ export function PDRecommendations({
     setIsGenerating(true);
     setAppliedIndices(new Set());
     try {
-      const { data, error } = await supabase.functions.invoke("recommend-pd", {
+      const { data, error } = await supabase.functions.invoke("recommend-strategies", {
         body: {
+          decisionBrief: {
+            problem_statement: decisionBrief.problem_statement,
+            target_group: decisionBrief.target_group,
+            goals: decisionBrief.goals,
+            chosen_approach: decisionBrief.chosen_approach,
+          },
           activeIngredients: activeIngredients.map(ai => ({
             name: ai.name,
             is_core: ai.is_core,
-            look_fors: ai.look_fors || []
           })),
-          teamMembers: teamMembers.map(tm => ({
-            role_in_initiative: tm.role_in_initiative
-          }))
         },
       });
 
       if (error) throw error;
 
-      setRecommendations(data.activities || []);
+      setRecommendations(data.strategies || []);
       toast({
-        title: "PD activities generated",
-        description: `Generated ${data.activities?.length || 0} professional development recommendations.`,
+        title: "Strategies generated",
+        description: `Generated ${data.strategies?.length || 0} implementation strategy recommendations.`,
       });
     } catch (error: any) {
-      console.error("Error generating PD recommendations:", error);
+      console.error("Error generating strategy recommendations:", error);
       toast({
         title: "Generation failed",
-        description: error.message || "Failed to generate PD recommendations.",
+        description: error.message || "Failed to generate strategy recommendations.",
         variant: "destructive",
       });
     } finally {
@@ -94,14 +97,14 @@ export function PDRecommendations({
     }
   };
 
-  const handleApplyOne = (recommendation: PDRecommendation, index: number) => {
-    onApplyRecommendations([recommendation]);
+  const handleApplyOne = (recommendation: StrategyRecommendation, index: number) => {
+    onApplyRecommendation(recommendation);
     setAppliedIndices(prev => new Set(prev).add(index));
   };
 
   const handleApplyAll = () => {
     const unapplied = recommendations.filter((_, idx) => !appliedIndices.has(idx));
-    onApplyRecommendations(unapplied);
+    unapplied.forEach(rec => onApplyRecommendation(rec));
     setRecommendations([]);
     setAppliedIndices(new Set());
   };
@@ -118,10 +121,10 @@ export function PDRecommendations({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5" />
-          AI PD Recommendations
+          AI Strategy Recommendations
         </CardTitle>
         <CardDescription>
-          Generate professional development activities based on your active ingredients and team composition
+          Generate implementation strategies based on your problem statement, goals, and active ingredients
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -143,7 +146,7 @@ export function PDRecommendations({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {recommendations.length} activities generated • {appliedIndices.size} applied
+                {recommendations.length} strategies generated • {appliedIndices.size} applied
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleDiscard}>
@@ -158,71 +161,63 @@ export function PDRecommendations({
             </div>
 
             <div className="space-y-3">
-              {recommendations.map((activity, index) => {
+              {recommendations.map((strategy, index) => {
                 const isApplied = appliedIndices.has(index);
                 return (
                   <Card key={index} className={isApplied ? "opacity-50" : ""}>
                     <CardContent className="pt-4 space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
                             <Badge variant="outline">
-                              {activityTypeLabels[activity.activity_type] || activity.activity_type}
+                              {ericCategoryLabels[strategy.eric_category] || strategy.eric_category}
                             </Badge>
-                            {activity.duration_minutes && (
-                              <span className="text-xs text-muted-foreground">
-                                {activity.duration_minutes} min
-                              </span>
-                            )}
                             {isApplied && (
                               <Badge variant="secondary" className="gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
+                                <Check className="h-3 w-3" />
                                 Applied
                               </Badge>
                             )}
                           </div>
-                          <h4 className="font-medium">{activity.title}</h4>
-                          <p className="text-sm text-muted-foreground">{activity.description}</p>
-                          {activity.facilitator && (
+                          <h4 className="font-medium">{strategy.strategy_name}</h4>
+                          <p className="text-sm text-muted-foreground">{strategy.description}</p>
+                          {strategy.target_barrier && (
                             <p className="text-sm">
-                              <span className="font-medium">Facilitator:</span> {activity.facilitator}
+                              <span className="font-medium">Target Barrier:</span> {strategy.target_barrier}
                             </p>
                           )}
-                          {activity.target_audience && activity.target_audience.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              <span className="text-sm font-medium">Target:</span>
-                              {activity.target_audience.map((audience, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {audience}
-                                </Badge>
-                              ))}
-                            </div>
+                          {strategy.resources_needed && (
+                            <p className="text-sm">
+                              <span className="font-medium">Resources:</span> {strategy.resources_needed}
+                            </p>
                           )}
-                          {activity.fidelity_focus && activity.fidelity_focus.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              <span className="text-sm font-medium">Focus:</span>
-                              {activity.fidelity_focus.map((focus, i) => (
-                                <Badge key={i} variant="secondary" className="text-xs">
-                                  {focus}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
+                          <div className="flex gap-4 text-sm">
+                            {strategy.responsible_party && (
+                              <span>
+                                <span className="font-medium">Owner:</span> {strategy.responsible_party}
+                              </span>
+                            )}
+                            {strategy.timeline && (
+                              <span>
+                                <span className="font-medium">Timeline:</span> {strategy.timeline}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <Button
                           variant={isApplied ? "ghost" : "default"}
                           size="sm"
-                          onClick={() => handleApplyOne(activity, index)}
+                          onClick={() => handleApplyOne(strategy, index)}
                           disabled={isApplied}
                         >
                           {isApplied ? (
                             <>
-                              <CheckCircle2 className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                               Applied
                             </>
                           ) : (
                             <>
-                              <CheckCircle2 className="h-4 w-4" />
+                              <Check className="h-4 w-4" />
                               Accept
                             </>
                           )}
