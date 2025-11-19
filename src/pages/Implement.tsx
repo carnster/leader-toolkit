@@ -9,6 +9,7 @@ import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useSearchParams } from "react-router-dom";
+import { TimelineTracker } from "@/components/TimelineTracker";
 
 const mockFidelityLogs = [
   { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
@@ -61,6 +62,9 @@ export default function Implement() {
         </Card>
       </div>
 
+      {/* Timeline Tracker */}
+      <TimelineTracker initiativeId={effectiveInitiativeId} stage="implement" />
+      
       {/* Active Ingredients from Plan Stage */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
