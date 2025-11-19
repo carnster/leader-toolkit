@@ -14,6 +14,7 @@ import { ReadinessStatsWidget } from "@/components/dashboard/ReadinessStatsWidge
 import { BudgetTrackingChart } from "@/components/dashboard/BudgetTrackingChart";
 import { InitiativeHealthWidget } from "@/components/dashboard/InitiativeHealthWidget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TestNotifications } from "@/components/TestNotifications";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
@@ -148,6 +149,8 @@ export default function Dashboard() {
             <ReadinessStatsWidget />
             <BudgetTrackingChart />
           </div>
+
+          <TestNotifications />
         </TabsContent>
 
         <TabsContent value="initiatives" className="space-y-4">

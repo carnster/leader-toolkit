@@ -687,6 +687,53 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          initiative_id: string | null
+          message: string
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          initiative_id?: string | null
+          message: string
+          read?: boolean
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          initiative_id?: string | null
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       observation_schedules: {
         Row: {
           active_ingredient_id: string | null
@@ -1041,6 +1088,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_milestone_notifications: { Args: never; Returns: undefined }
+      create_observation_notifications: { Args: never; Returns: undefined }
+      create_pd_notifications: { Args: never; Returns: undefined }
       is_initiative_team_member: {
         Args: { _initiative_id: string; _user_id: string }
         Returns: boolean
