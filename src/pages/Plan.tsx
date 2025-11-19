@@ -11,6 +11,8 @@ import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { useBudgetItems } from "@/hooks/useBudgetItems";
 import { useTimeCommitments } from "@/hooks/useTimeCommitments";
 import { useInitiatives } from "@/hooks/useInitiatives";
+import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
+import { useObservationSchedules } from "@/hooks/useObservationSchedules";
 import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
 import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +67,8 @@ export default function Plan() {
   const { initiatives } = useInitiatives();
   const { activities: communicationActivities, isLoading: isLoadingCommunication } = useCommunicationActivities(effectiveInitiativeId);
   const { budgetItems } = useBudgetItems(effectiveInitiativeId);
+  const { checklists: fidelityChecklists } = useFidelityChecklists(effectiveInitiativeId);
+  const { schedules: observationSchedules } = useObservationSchedules(effectiveInitiativeId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -447,6 +451,9 @@ export default function Plan() {
             milestones={milestones}
             risks={risks}
             pdActivities={activities}
+            budgetItems={budgetItems || []}
+            fidelityChecklists={fidelityChecklists || []}
+            observationSchedules={observationSchedules || []}
           />
         );
       
@@ -580,6 +587,9 @@ export default function Plan() {
             milestones={milestones}
             risks={risks}
             pdActivities={activities}
+            budgetItems={budgetItems || []}
+            fidelityChecklists={fidelityChecklists || []}
+            observationSchedules={observationSchedules || []}
           />
         );
     }

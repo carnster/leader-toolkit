@@ -26,6 +26,9 @@ interface OverviewSectionProps {
   milestones: any[];
   risks: any[];
   pdActivities: any[];
+  budgetItems?: any[];
+  fidelityChecklists?: any[];
+  observationSchedules?: any[];
 }
 
 export function OverviewSection({
@@ -48,6 +51,9 @@ export function OverviewSection({
   milestones,
   risks,
   pdActivities,
+  budgetItems = [],
+  fidelityChecklists = [],
+  observationSchedules = [],
 }: OverviewSectionProps) {
   const navigate = useNavigate();
   const totalRequired = 6;
@@ -156,6 +162,10 @@ export function OverviewSection({
         milestonesCount={milestonesCount}
         risksCount={risksCount}
         pdActivitiesCount={pdActivitiesCount}
+        communicationActivitiesCount={communicationActivities.length}
+        budgetItemsCount={budgetItems.length}
+        fidelityChecklistsCount={fidelityChecklists.length}
+        observationSchedulesCount={observationSchedules.length}
       />
 
       {/* Export Implementation Plan */}
