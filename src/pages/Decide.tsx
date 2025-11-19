@@ -92,6 +92,8 @@ export default function Decide() {
   // Auto-save state
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isUserEditingRef = useRef(false);
+  const hasLoadedInitialDataRef = useRef(false);
   
   // Current initiative title for export
   const [initiativeTitle, setInitiativeTitle] = useState<string>("");
@@ -123,9 +125,10 @@ export default function Decide() {
     loadInitiativeTitle();
   }, [effectiveInitiativeId]);
   
-  // Load existing decision brief
+  // Load existing decision brief (only on initial mount, not after saves)
   useEffect(() => {
-    if (decisionBrief) {
+    if (decisionBrief && !hasLoadedInitialDataRef.current && !isUserEditingRef.current) {
+      hasLoadedInitialDataRef.current = true;
       setProblemStatement(decisionBrief.problem_statement || "");
       setTargetGroup(decisionBrief.target_group || "");
       setBaselineData(decisionBrief.baseline_data || "");
@@ -288,13 +291,23 @@ export default function Decide() {
     }
     
     autoSaveTimeoutRef.current = setTimeout(() => {
+      isUserEditingRef.current = false;
       handleSaveProgress().then((success) => {
         if (success) {
           setLastSaved(new Date());
         }
       });
-    }, 2000); // 2 second debounce
+    }, 5000); // 5 second debounce to give users more time to type
   }, [handleSaveProgress]);
+  
+  // Helper functions to track user editing state
+  const handleInputFocus = useCallback(() => {
+    isUserEditingRef.current = true;
+  }, []);
+  
+  const handleInputBlur = useCallback(() => {
+    triggerAutoSave();
+  }, [triggerAutoSave]);
   
   // Cleanup auto-save timeout on unmount
   useEffect(() => {
@@ -645,7 +658,8 @@ export default function Decide() {
                 rows={5}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 <strong>Be specific:</strong> State what's happening, for whom, and the measurable impact
@@ -659,7 +673,8 @@ export default function Decide() {
                 placeholder="Example: Year 9 students, particularly disadvantaged pupils in Sets 2 and 3 (approximately 65 students)"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 Specify year group, demographics, class/set, or other defining characteristics
@@ -674,7 +689,8 @@ export default function Decide() {
                 rows={4}
                 value={baselineData}
                 onChange={(e) => setBaselineData(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 Include quantitative data (test scores, attendance) and qualitative insights (observations, surveys)
@@ -701,7 +717,8 @@ export default function Decide() {
                 rows={4}
                 value={rootCauses}
                 onChange={(e) => setRootCauses(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 List underlying factors that contribute to the problem. Each should be evidence-based.
@@ -884,7 +901,8 @@ export default function Decide() {
                     setGoals(e.target.value);
                     setGoalsEvaluation(null); // Clear evaluation when goals change
                   }}
-                  onBlur={triggerAutoSave}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
@@ -1064,7 +1082,8 @@ export default function Decide() {
                 rows={4}
                 value={evidenceBase}
                 onChange={(e) => setEvidenceBase(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
                 <p className="text-sm text-muted-foreground">
                   Cite research, trials, or evidence that supports this approach
@@ -1131,7 +1150,8 @@ export default function Decide() {
                 rows={4}
                 value={stakeholderInput}
                 onChange={(e) => setStakeholderInput(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 Document stakeholder perspectives and organizational context
@@ -1142,11 +1162,13 @@ export default function Decide() {
               checked={equityChecked}
               onCheckedChange={(id, checked) => {
                 setEquityChecked(prev => ({ ...prev, [id]: checked }));
+                isUserEditingRef.current = false;
                 triggerAutoSave();
               }}
               notes={equityChecklistNotes}
               onNotesChange={(id, notes) => {
                 setEquityChecklistNotes(prev => ({ ...prev, [id]: notes }));
+                isUserEditingRef.current = false;
                 triggerAutoSave();
               }}
             />
@@ -1159,7 +1181,8 @@ export default function Decide() {
                 rows={4}
                 value={equityNotes}
                 onChange={(e) => setEquityNotes(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
                 Add any additional equity considerations not covered above
@@ -1253,7 +1276,8 @@ export default function Decide() {
                           ...feasibilityFactors,
                           [item.key]: parseInt(e.target.value) || 0
                         })}
-                        onBlur={triggerAutoSave}
+                        onFocus={handleInputFocus}
+                        onBlur={handleInputBlur}
                         className="w-20"
                       />
                     </div>
@@ -1313,7 +1337,8 @@ export default function Decide() {
                 rows={3}
                 value={leadingIndicators}
                 onChange={(e) => setLeadingIndicators(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
             </div>
 
@@ -1325,7 +1350,8 @@ export default function Decide() {
                 rows={3}
                 value={laggingIndicators}
                 onChange={(e) => setLaggingIndicators(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
             </div>
 
@@ -1336,7 +1362,8 @@ export default function Decide() {
                 placeholder="Example: Weekly fidelity checks, half-termly review meetings, termly outcome reporting to governors"
                 value={measurementTimeline}
                 onChange={(e) => setMeasurementTimeline(e.target.value)}
-                onBlur={triggerAutoSave}
+                onFocus={handleInputFocus}
+                onBlur={handleInputBlur}
               />
             </div>
             
