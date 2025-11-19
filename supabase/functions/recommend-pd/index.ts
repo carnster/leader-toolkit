@@ -1,9 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const requestSchema = z.object({
+  activeIngredients: z.array(z.object({
+    name: z.string().max(200),
+    is_core: z.boolean(),
+    look_fors: z.array(z.string()).optional(),
+  })).max(50),
+  teamMembers: z.array(z.object({
+    role_in_initiative: z.string().max(100),
+  })).optional(),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +23,8 @@ serve(async (req) => {
   }
 
   try {
-    const { activeIngredients, teamMembers } = await req.json();
+    const body = await req.json();
+    const { activeIngredients, teamMembers } = requestSchema.parse(body);
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {

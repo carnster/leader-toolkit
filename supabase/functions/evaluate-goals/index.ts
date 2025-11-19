@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,14 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { goals } = await req.json();
+    const requestSchema = z.object({
+      goals: z.string().trim().min(1, "Goals text is required").max(5000),
+    });
     
-    if (!goals || !goals.trim()) {
-      return new Response(
-        JSON.stringify({ error: "Goals text is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { goals } = requestSchema.parse(await req.json());
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
