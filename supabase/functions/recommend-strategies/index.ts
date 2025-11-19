@@ -37,14 +37,19 @@ serve(async (req) => {
 
 Your role is to recommend implementation strategies that address specific barriers and leverage enablers based on the school's context.
 
-The ERIC framework has 4 categories:
-- **Enable** - Build capacity (training, technical assistance, coaching, tools, resources)
-- **Redesign** - Modify context (change workflows, schedules, policies, structures)
-- **Integrate** - Embed in routine (link to existing practices, create implementation teams)
-- **Create** - Build new supports (develop new policies, funding, partnerships, incentives)
+The ERIC framework categories you can use:
+- **evaluative_iterative** - Assess and refine through ongoing evaluation
+- **provide_interactive_assistance** - Offer hands-on support and guidance
+- **adapt_practice** - Tailor and modify the intervention
+- **develop_stakeholder_relationships** - Build partnerships and buy-in
+- **train_educate** - Build knowledge and skills
+- **support_clinicians** - Help practitioners succeed
+- **engage_consumers** - Involve end users and beneficiaries
+- **use_financial_strategies** - Leverage funding and incentives
+- **change_infrastructure** - Modify systems and structures
 
 Analyze the feasibility data and context to recommend 6-8 specific, actionable strategies:
-- 2 strategies for each ERIC category
+- Mix strategies across different ERIC categories
 - Each strategy should directly address identified barriers or leverage enablers
 - Include specific target barriers, timelines, resources needed, and success indicators
 - Strategies should be practical and context-appropriate based on feasibility scores`;
@@ -107,7 +112,17 @@ Provide practical strategies that address the specific barriers and feasibility 
                         strategy_name: { type: 'string' },
                         eric_category: { 
                           type: 'string', 
-                          enum: ['enable', 'redesign', 'integrate', 'create'] 
+                          enum: [
+                            'evaluative_iterative',
+                            'provide_interactive_assistance', 
+                            'adapt_practice',
+                            'develop_stakeholder_relationships',
+                            'train_educate',
+                            'support_clinicians',
+                            'engage_consumers',
+                            'use_financial_strategies',
+                            'change_infrastructure'
+                          ]
                         },
                         description: { type: 'string' },
                         target_barrier: { type: 'string' },
@@ -130,33 +145,92 @@ Provide practical strategies that address the specific barriers and feasibility 
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error('Failed to get strategy recommendations from AI');
+      const msg = response.status === 429
+        ? 'Rate limit exceeded. Please try again later.'
+        : response.status === 402
+          ? 'AI credits exhausted. Please add credits to continue.'
+          : `AI gateway error (status: ${response.status})`;
+      console.error('AI gateway non-2xx for strategies:', response.status);
+      return new Response(JSON.stringify({ error: msg, code: response.status }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
-    if (!toolCall) {
-      throw new Error('No strategies returned');
+    // Try to extract tool call first (preferred)
+    const toolCalls = data.choices?.[0]?.message?.tool_calls ?? [];
+    let strategiesResult: any = null;
+
+    try {
+      const toolCall = toolCalls.find((tc: any) => tc?.function?.name === 'provide_strategies') || toolCalls[0];
+      if (toolCall?.function?.arguments) {
+        const parsed = JSON.parse(toolCall.function.arguments);
+        strategiesResult = parsed?.strategies ? parsed : null;
+      }
+    } catch (e) {
+      console.error('Failed parsing tool call arguments:', e);
     }
 
-    const result = JSON.parse(toolCall.function.arguments);
+    // Fallback: try to parse JSON from the assistant content when no tool call is present
+    if (!strategiesResult) {
+      const content = data.choices?.[0]?.message?.content;
+      if (typeof content === 'string') {
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed?.strategies) {
+              strategiesResult = parsed;
+            }
+          } catch (e) {
+            console.error('Failed parsing JSON from content:', e);
+          }
+        }
+      }
+    }
+    
+    if (!strategiesResult?.strategies || !Array.isArray(strategiesResult.strategies)) {
+      console.error('No strategies returned from AI. Raw response:', JSON.stringify(data, null, 2));
+      return new Response(JSON.stringify({ error: 'The AI did not return strategies. Please try again.' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify(result), {
+    // Sanitize and validate the strategies
+    const allowedCategories = new Set([
+      'evaluative_iterative',
+      'provide_interactive_assistance',
+      'adapt_practice',
+      'develop_stakeholder_relationships',
+      'train_educate',
+      'support_clinicians',
+      'engage_consumers',
+      'use_financial_strategies',
+      'change_infrastructure'
+    ]);
+    const cleaned = {
+      strategies: strategiesResult.strategies.map((s: any) => {
+        let category = (s.eric_category || '').toString().toLowerCase();
+        if (!allowedCategories.has(category)) {
+          category = 'train_educate'; // default fallback
+        }
+        return {
+          strategy_name: s.strategy_name || 'Implementation Strategy',
+          eric_category: category,
+          description: s.description || null,
+          target_barrier: s.target_barrier || null,
+          timeline: s.timeline || null,
+          resources_needed: s.resources_needed || null,
+          success_indicators: s.success_indicators || null,
+          responsible_party: s.responsible_party || null,
+        };
+      })
+    };
+
+    return new Response(JSON.stringify(cleaned), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
