@@ -285,7 +285,15 @@ export default function Plan() {
     setIsGeneratingTimeline(true);
     try {
       const { data: brief } = await supabase.from("decision_briefs").select("*").eq("initiative_id", effectiveInitiativeId).single();
-      const { data, error } = await supabase.functions.invoke("recommend-timeline", { body: { decisionBrief: brief, activeIngredients } });
+      const { data, error } = await supabase.functions.invoke("recommend-timeline", { 
+        body: { 
+          decisionBrief: brief, 
+          activeIngredients,
+          implementationStrategies: strategies,
+          pdActivities: activities,
+          communicationActivities
+        } 
+      });
       if (error) throw error;
       
       if (data?.milestones) {
