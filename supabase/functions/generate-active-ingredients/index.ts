@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const requestSchema = z.object({
+  chosenApproach: z.string().max(1000),
+  evidenceBase: z.string().max(2000).optional(),
+  problemStatement: z.string().max(2000),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +18,8 @@ serve(async (req) => {
   }
 
   try {
-    const { chosenApproach, evidenceBase, problemStatement } = await req.json();
+    const body = await req.json();
+    const { chosenApproach, evidenceBase, problemStatement } = requestSchema.parse(body);
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
