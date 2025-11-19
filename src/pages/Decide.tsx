@@ -395,11 +395,23 @@ export default function Decide() {
       return;
     }
     setStep(Math.min(6, step + 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const confirmSkipStep = () => {
     setStep(Math.min(6, step + 1));
     setSkipWarningOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleStepClick = (newStep: number) => {
+    setStep(newStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handlePreviousStep = () => {
+    setStep(Math.max(1, step - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleAdoptInitiative = async () => {
@@ -624,7 +636,7 @@ export default function Decide() {
           { number: 5, title: "Feasibility", completed: !!isStep5Complete },
           { number: 6, title: "Metrics", completed: !!isStep6Complete },
         ]}
-        onStepClick={setStep}
+        onStepClick={handleStepClick}
       />
 
       {/* Step 1: Problem Definition */}
@@ -1461,7 +1473,7 @@ export default function Decide() {
       <div className="flex items-center justify-between mt-8 pt-6 border-t">
         <Button
           variant="outline"
-          onClick={() => setStep(Math.max(1, step - 1))}
+          onClick={handlePreviousStep}
           disabled={step === 1}
           size="lg"
         >
