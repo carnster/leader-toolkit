@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Lightbulb, Plus, Edit, Loader2 } from "lucide-react";
+import { Users, Lightbulb, Plus, Edit, Loader2, UserCheck, UserX } from "lucide-react";
 import { PDRecommendations } from "@/components/PDRecommendations";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { usePDActivities } from "@/hooks/usePDActivities";
@@ -182,11 +182,22 @@ export function TeamCapacitySection({
                 <div key={activity.id} className="rounded-lg border p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium">{activity.title}</h4>
                         <Badge variant="outline" className="capitalize">
                           {activity.activity_type.replace('_', ' ')}
                         </Badge>
+                        {activity.facilitator_id ? (
+                          <Badge variant="outline" className="text-xs">
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            Assigned
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs">
+                            <UserX className="h-3 w-3 mr-1" />
+                            Unassigned
+                          </Badge>
+                        )}
                       </div>
                       {activity.description && (
                         <p className="text-sm text-muted-foreground">{activity.description}</p>

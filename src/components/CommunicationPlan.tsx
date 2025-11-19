@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle, CalendarDays } from "lucide-react";
+import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle, CalendarDays, UserCheck, UserX } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { CommunicationActivityDialog } from "./CommunicationActivityDialog";
@@ -198,6 +198,17 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
                                       {activity.channel && (
                                         <Badge variant="secondary" className="text-xs">
                                           {activity.channel}
+                                        </Badge>
+                                      )}
+                                      {activity.assigned_to_id ? (
+                                        <Badge variant="outline" className="text-xs">
+                                          <UserCheck className="h-3 w-3 mr-1" />
+                                          Assigned
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="destructive" className="text-xs">
+                                          <UserX className="h-3 w-3 mr-1" />
+                                          Unassigned
                                         </Badge>
                                       )}
                                       {activity.scheduled_date && (

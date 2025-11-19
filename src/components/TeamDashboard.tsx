@@ -8,6 +8,10 @@ import { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 import { TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import { CommunicationActivity } from "@/hooks/useCommunicationActivities";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface TeamDashboardProps {
   teamMembers: TeamMember[];
@@ -34,6 +38,13 @@ export function TeamDashboard({
   risks,
   communicationActivities,
 }: TeamDashboardProps) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetContent, setSheetContent] = useState<{
+    title: string;
+    member: TeamMember;
+    type: "strategies" | "milestones" | "risks" | "communications";
+  } | null>(null);
+
   const getCapacityLevel = (total: number): MemberWorkload["capacityLevel"] => {
     if (total === 0) return "low";
     if (total <= 3) return "moderate";
@@ -81,6 +92,33 @@ export function TeamDashboard({
   const totalAssignments = strategies.length + milestones.length + risks.length + communicationActivities.length;
   const assignedItems = workloadData.reduce((sum, w) => sum + w.total, 0);
   const unassignedItems = totalAssignments - assignedItems;
+
+  const handleOpenSheet = (member: TeamMember, type: "strategies" | "milestones" | "risks" | "communications") => {
+    setSheetContent({
+      title: type.charAt(0).toUpperCase() + type.slice(1),
+      member,
+      type,
+    });
+    setSheetOpen(true);
+  };
+
+  const getFilteredItems = () => {
+    if (!sheetContent) return [];
+    const { member, type } = sheetContent;
+    
+    switch (type) {
+      case "strategies":
+        return strategies.filter(s => s.responsible_party_id === member.id);
+      case "milestones":
+        return milestones.filter(m => m.owner_id === member.id);
+      case "risks":
+        return risks.filter(r => r.owner_id === member.id);
+      case "communications":
+        return communicationActivities.filter(c => c.assigned_to_id === member.id);
+      default:
+        return [];
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -180,31 +218,35 @@ export function TeamDashboard({
 
                     {/* Assignment Breakdown */}
                     {workload.total > 0 && (
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t text-sm">
-                        {workload.strategies > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{workload.strategies} {workload.strategies === 1 ? 'Strategy' : 'Strategies'}</span>
-                          </div>
-                        )}
-                        {workload.milestones > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{workload.milestones} {workload.milestones === 1 ? 'Milestone' : 'Milestones'}</span>
-                          </div>
-                        )}
-                        {workload.risks > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{workload.risks} {workload.risks === 1 ? 'Risk' : 'Risks'}</span>
-                          </div>
-                        )}
-                        {workload.communications > 0 && (
-                          <div className="flex items-center gap-1.5">
-                            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{workload.communications} {workload.communications === 1 ? 'Activity' : 'Activities'}</span>
-                          </div>
-                        )}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                        <button
+                          onClick={() => handleOpenSheet(workload.member, "strategies")}
+                          className="flex items-center gap-1.5 text-sm hover:bg-accent/50 p-1.5 rounded transition-colors text-left"
+                        >
+                          <Target className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">{workload.strategies} {workload.strategies === 1 ? 'Strategy' : 'Strategies'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenSheet(workload.member, "milestones")}
+                          className="flex items-center gap-1.5 text-sm hover:bg-accent/50 p-1.5 rounded transition-colors text-left"
+                        >
+                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">{workload.milestones} {workload.milestones === 1 ? 'Milestone' : 'Milestones'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenSheet(workload.member, "risks")}
+                          className="flex items-center gap-1.5 text-sm hover:bg-accent/50 p-1.5 rounded transition-colors text-left"
+                        >
+                          <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">{workload.risks} {workload.risks === 1 ? 'Risk' : 'Risks'}</span>
+                        </button>
+                        <button
+                          onClick={() => handleOpenSheet(workload.member, "communications")}
+                          className="flex items-center gap-1.5 text-sm hover:bg-accent/50 p-1.5 rounded transition-colors text-left"
+                        >
+                          <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-muted-foreground">{workload.communications} {workload.communications === 1 ? 'Activity' : 'Activities'}</span>
+                        </button>
                       </div>
                     )}
 
@@ -239,6 +281,49 @@ export function TeamDashboard({
           </div>
         </CardContent>
       </Card>
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
+              {sheetContent?.member.name}'s {sheetContent?.title}
+            </SheetTitle>
+            <SheetDescription>
+              Assigned {sheetContent?.type} for this team member
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-3">
+            {getFilteredItems().length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No {sheetContent?.type} assigned
+              </p>
+            ) : (
+              getFilteredItems().map((item: any) => (
+                <div key={item.id} className="border rounded-lg p-4 space-y-2">
+                  <div className="font-medium">
+                    {item.strategy_name || item.milestone || item.risk_description || item.description}
+                  </div>
+                  {item.eric_category && (
+                    <Badge variant="outline" className="text-xs">
+                      {item.eric_category.toUpperCase()}
+                    </Badge>
+                  )}
+                  {item.target_date && (
+                    <div className="text-sm text-muted-foreground">
+                      Due: {new Date(item.target_date).toLocaleDateString()}
+                    </div>
+                  )}
+                  {item.status && (
+                    <Badge variant={item.status === "completed" ? "default" : "secondary"}>
+                      {item.status}
+                    </Badge>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

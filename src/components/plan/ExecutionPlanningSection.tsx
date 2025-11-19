@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Shield, Plus, Edit, Lightbulb, Loader2 } from "lucide-react";
+import { Calendar, Shield, Plus, Edit, Lightbulb, Loader2, UserCheck, UserX } from "lucide-react";
 import { ResourceAllocation } from "@/components/ResourceAllocation";
 import { RiskStrategyMapping } from "@/components/RiskStrategyMapping";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
@@ -115,6 +115,17 @@ export function ExecutionPlanningSection({
                         <p className="text-sm text-muted-foreground">{milestone.milestone}</p>
                       </div>
                       <div className="flex gap-2">
+                        {milestone.owner_id ? (
+                          <Badge variant="outline" className="text-xs">
+                            <UserCheck className="h-3 w-3 mr-1" />
+                            Assigned
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive" className="text-xs">
+                            <UserX className="h-3 w-3 mr-1" />
+                            Unassigned
+                          </Badge>
+                        )}
                         <Badge variant={
                           milestone.status === "completed" ? "default" :
                           milestone.status === "in_progress" ? "secondary" :
@@ -213,6 +224,17 @@ export function ExecutionPlanningSection({
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-medium">{risk.risk_description}</h4>
                           <Badge variant="outline">{risk.risk_category}</Badge>
+                          {risk.owner_id ? (
+                            <Badge variant="outline" className="text-xs">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              Assigned
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="text-xs">
+                              <UserX className="h-3 w-3 mr-1" />
+                              Unassigned
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>Likelihood: <span className="capitalize font-medium">{risk.likelihood}</span></span>
