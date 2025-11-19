@@ -910,6 +910,7 @@ export type Database = {
           description: string | null
           duration_minutes: number | null
           facilitator: string | null
+          facilitator_id: string | null
           fidelity_focus: string[] | null
           id: string
           initiative_id: string
@@ -926,6 +927,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           facilitator?: string | null
+          facilitator_id?: string | null
           fidelity_focus?: string[] | null
           id?: string
           initiative_id: string
@@ -942,6 +944,7 @@ export type Database = {
           description?: string | null
           duration_minutes?: number | null
           facilitator?: string | null
+          facilitator_id?: string | null
           fidelity_focus?: string[] | null
           id?: string
           initiative_id?: string
@@ -951,6 +954,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pd_activities_facilitator_id_fkey"
+            columns: ["facilitator_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pd_activities_initiative_id_fkey"
             columns: ["initiative_id"]

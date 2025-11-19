@@ -21,9 +21,10 @@ interface PDActivityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
+  teamMembers?: Array<{ id: string; name: string | null; role_in_initiative: string }>;
 }
 
-export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }: PDActivityDialogProps) {
+export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, teamMembers = [] }: PDActivityDialogProps) {
   const { createActivity, updateActivity, deleteActivity, isCreating, isUpdating, isDeleting } = usePDActivities(initiativeId);
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -32,6 +33,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }:
     title: activity?.title || "",
     description: activity?.description || "",
     facilitator: activity?.facilitator || "",
+    facilitator_id: activity?.facilitator_id || "",
     target_audience: activity?.target_audience || [""],
     scheduled_date: activity?.scheduled_date ? new Date(activity.scheduled_date) : undefined,
     duration_minutes: activity?.duration_minutes || undefined,
@@ -47,6 +49,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }:
         title: activity.title,
         description: activity.description || "",
         facilitator: activity.facilitator || "",
+        facilitator_id: activity.facilitator_id || "",
         target_audience: activity.target_audience && activity.target_audience.length > 0 ? activity.target_audience : [""],
         scheduled_date: activity.scheduled_date ? new Date(activity.scheduled_date) : undefined,
         duration_minutes: activity.duration_minutes || undefined,
@@ -60,6 +63,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }:
         title: "",
         description: "",
         facilitator: "",
+        facilitator_id: "",
         target_audience: [""],
         scheduled_date: undefined,
         duration_minutes: undefined,
@@ -76,6 +80,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId }:
       title: formData.title,
       description: formData.description || null,
       facilitator: formData.facilitator || null,
+      facilitator_id: formData.facilitator_id || null,
       target_audience: formData.target_audience.filter(a => a.trim() !== ""),
       scheduled_date: formData.scheduled_date ? format(formData.scheduled_date, "yyyy-MM-dd") : null,
       duration_minutes: formData.duration_minutes || null,

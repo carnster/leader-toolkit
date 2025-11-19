@@ -8,6 +8,12 @@ import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { usePDActivities } from "@/hooks/usePDActivities";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
+import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
+import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
+import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -54,6 +60,7 @@ export default function Plan() {
   const { activities, isLoading: isLoadingActivities, createActivity } = usePDActivities(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
   const { activities: communicationActivities, isLoading: isLoadingCommunication } = useCommunicationActivities(effectiveInitiativeId);
+  const { checklists: fidelityChecklists } = useFidelityChecklists(effectiveInitiativeId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -391,22 +398,119 @@ export default function Plan() {
   };
 
   // Section rendering
+  const overallProgress = calculateOverallProgress({
+    ingredients: activeIngredients.length,
+    strategies: strategies.length,
+    team: teamMembers.length,
+    timeline: milestones.length,
+    risks: risks.length,
+    pd: activities.length,
+    communication: communicationActivities.length,
+    fidelity: fidelityChecklists?.length || 0,
+  });
+
   const renderSection = () => {
     switch (currentSection) {
       case "overview":
         return (
-          <OverviewSection
-            activeIngredientsCount={activeIngredients.length}
-            strategiesCount={strategies.length}
-            teamMembersCount={teamMembers.length}
-            milestonesCount={milestones.length}
-            risksCount={risks.length}
-            pdActivitiesCount={activities.length}
-            onGenerateFullPlan={generateFullPlan}
-            isGenerating={isGeneratingFullPlan}
-            nextStep={getNextStep()}
-            initiativeId={effectiveInitiativeId}
-          />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">Implementation Plan Overview</CardTitle>
+                <CardDescription>
+                  Track your progress and complete key planning components
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Overall Progress</span>
+                    <span className="text-2xl font-bold text-primary">{overallProgress}%</span>
+                  </div>
+                  <Progress value={overallProgress} className="h-3" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {activeIngredients.length > 0 && strategies.length > 0 ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      Strategic Foundation
+                    </h3>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                      <li>Active Ingredients: {activeIngredients.length}</li>
+                      <li>Implementation Strategies: {strategies.length}</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {teamMembers.length > 0 && activities.length > 0 ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      Team & Capacity
+                    </h3>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                      <li>Team Members: {teamMembers.length}</li>
+                      <li>PD Activities: {activities.length}</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {communicationActivities.length > 0 ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      Communication
+                    </h3>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                      <li>Communication Activities: {communicationActivities.length}</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="font-medium flex items-center gap-2">
+                      {milestones.length > 0 && risks.length > 0 ? (
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      Execution Planning
+                    </h3>
+                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                      <li>Milestones: {milestones.length}</li>
+                      <li>Risks: {risks.length}</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <PlanProgressSuggestions 
+              counts={{
+                ingredients: activeIngredients.length,
+                strategies: strategies.length,
+                team: teamMembers.length,
+                timeline: milestones.length,
+                risks: risks.length,
+                pd: activities.length,
+                communication: communicationActivities.length,
+                fidelity: fidelityChecklists?.length || 0,
+              }}
+              onNavigate={(section) => {
+                const params = new URLSearchParams(searchParams);
+                params.set("section", section);
+                window.location.search = params.toString();
+              }}
+            />
+          </div>
         );
       
       case "ingredients":
@@ -453,12 +557,8 @@ export default function Plan() {
               setEditingTeamMember(member);
               setTeamDialogOpen(true);
             }}
-            onAddPDActivity={(activity) => {
-              if (activity) {
-                setEditingActivity(activity as any);
-              } else {
-                setEditingActivity(null);
-              }
+            onAddPDActivity={() => {
+              setEditingActivity(null);
               setPdDialogOpen(true);
             }}
             onEditPDActivity={(activity) => {
@@ -538,6 +638,7 @@ export default function Plan() {
             risks: risks.length,
             pd: activities.length,
             communication: communicationActivities.length,
+            fidelity: fidelityChecklists?.length || 0,
           }}
         />
 
