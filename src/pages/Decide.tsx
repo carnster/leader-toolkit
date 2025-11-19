@@ -17,7 +17,9 @@ import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { EBPRecommendations } from "@/components/EBPRecommendations";
 import { MetricsRecommendations } from "@/components/MetricsRecommendations";
+import { MonitorPreview } from "@/components/MonitorPreview";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { migrateIndicatorsFromDecisionBrief } from "@/lib/indicatorMigration";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DecideQuickNav } from "@/components/DecideQuickNav";
@@ -430,6 +432,12 @@ export default function Decide() {
     // Save final decision brief (ensures initiative exists too)
     const saved = await handleSaveProgress();
     if (!saved) return;
+    
+    // Migrate indicators from decision brief to structured format
+    const migrationResult = await migrateIndicatorsFromDecisionBrief(effectiveInitiativeId);
+    if (migrationResult.success && migrationResult.count > 0) {
+      console.log(`Migrated ${migrationResult.count} indicators to Monitor stage`);
+    }
     
     // Update initiative stage to plan
     const { error } = await supabase
@@ -1441,6 +1449,14 @@ export default function Decide() {
             isUserEditingRef.current = false;
             triggerAutoSave();
           }}
+        />
+      )}
+
+      {/* Monitor Stage Preview */}
+      {step === 6 && (
+        <MonitorPreview
+          leadingIndicators={leadingIndicators}
+          laggingIndicators={laggingIndicators}
         />
       )}
 
