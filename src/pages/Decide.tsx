@@ -68,7 +68,7 @@ export default function Decide() {
   const [stakeholderInput, setStakeholderInput] = useState("");
   const [chosenApproach, setChosenApproach] = useState("");
   const [evidenceBase, setEvidenceBase] = useState("");
-  const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
+  const [feasibilityScore, setFeasibilityScore] = useState<number | null>(null);
   const [leadingIndicators, setLeadingIndicators] = useState("");
   const [laggingIndicators, setLaggingIndicators] = useState("");
   const [measurementTimeline, setMeasurementTimeline] = useState("");
@@ -103,7 +103,7 @@ export default function Decide() {
                 feasibilityFactors.leadership_support +
                 feasibilityFactors.school_culture;
     
-    if (sum === 0) return 0; // No factors entered yet
+    if (sum === 0) return null; // No factors entered yet - return null instead of 0
     return Math.max(1, Math.min(5, Math.round((sum / 5) / 2))); // Convert 0-10 avg to 1-5 scale
   })();
   
@@ -134,7 +134,7 @@ export default function Decide() {
       setStakeholderInput(decisionBrief.stakeholder_input || "");
       setChosenApproach(decisionBrief.chosen_approach || "");
       setEvidenceBase(decisionBrief.evidence_base || "");
-      setFeasibilityScore(decisionBrief.feasibility_score || 0);
+      setFeasibilityScore(decisionBrief.feasibility_score || null);
       setLeadingIndicators(decisionBrief.leading_indicators?.join(", ") || "");
       setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
       setMeasurementTimeline(decisionBrief.measurement_timeline || "");
@@ -230,7 +230,7 @@ export default function Decide() {
   const isStep2Complete = teamMembers.length > 0; // Team Assembly
   const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
-  const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore > 0; // Readiness & Feasibility
+  const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
   
   // Step completion validation
@@ -1164,7 +1164,7 @@ export default function Decide() {
                       <p className="text-muted-foreground text-sm">Auto-calculated from factors below</p>
                     </div>
                     <div className="text-4xl font-bold text-primary">
-                      {calculatedFeasibilityScore}/5
+                      {calculatedFeasibilityScore !== null ? `${calculatedFeasibilityScore}/5` : 'Not assessed'}
                     </div>
                   </div>
                 </div>
