@@ -84,7 +84,11 @@ export function TimeCommitmentDialog({ item, open, onOpenChange, initiativeId }:
           <DialogHeader>
             <DialogTitle>{item ? "Edit Time Commitment" : "Add Time Commitment"}</DialogTitle>
             <DialogDescription>
-              {item ? "Update time commitment details" : "Add a new time commitment by role"}
+              {item 
+                ? item.description?.includes("Auto-calculated")
+                  ? "This time commitment was auto-calculated based on team assignments. You can adjust the values as needed."
+                  : "Update time commitment details"
+                : "Add a manual time commitment. Tip: Use the 'Auto-Calculate' button to generate time commitments based on team assignments across the plan."}
             </DialogDescription>
           </DialogHeader>
 

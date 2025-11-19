@@ -2,21 +2,34 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, Plus, Edit } from "lucide-react";
+import { DollarSign, Clock, Plus, Edit, Calculator, Loader2 } from "lucide-react";
 import { useBudgetItems } from "@/hooks/useBudgetItems";
 import { useTimeCommitments } from "@/hooks/useTimeCommitments";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { useImplementationRisks } from "@/hooks/useImplementationRisks";
+import { usePDActivities } from "@/hooks/usePDActivities";
 import { BudgetItemDialog } from "@/components/BudgetItemDialog";
 import { TimeCommitmentDialog } from "@/components/TimeCommitmentDialog";
+import { calculateTimeCommitments } from "@/lib/timeCommitmentCalculator";
 import type { BudgetItem } from "@/hooks/useBudgetItems";
 import type { TimeCommitment } from "@/hooks/useTimeCommitments";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResourceAllocationProps {
   initiativeId: string;
 }
 
 export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
+  const { toast } = useToast();
   const { budgetItems, isLoading: isLoadingBudget } = useBudgetItems(initiativeId);
-  const { timeCommitments, isLoading: isLoadingTime } = useTimeCommitments(initiativeId);
+  const { timeCommitments, autoGenerateTimeCommitments, isAutoGenerating, isLoading: isLoadingTime } = useTimeCommitments(initiativeId);
+  const { teamMembers } = useTeamMembers(initiativeId);
+  const { strategies } = useImplementationStrategies(initiativeId);
+  const { milestones } = useTimelineMilestones(initiativeId);
+  const { risks } = useImplementationRisks(initiativeId);
+  const { activities: pdActivities } = usePDActivities(initiativeId);
   
   const [budgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [editingBudgetItem, setEditingBudgetItem] = useState<BudgetItem | undefined>(undefined);
@@ -25,6 +38,55 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
 
   const totalEstimated = budgetItems.reduce((sum, item) => sum + item.estimated_cost, 0);
   const totalActual = budgetItems.reduce((sum, item) => sum + (item.actual_cost || 0), 0);
+
+  const handleAutoCalculate = async () => {
+    if (!teamMembers.length) {
+      toast({
+        title: "No team members",
+        description: "Add team members before auto-calculating time commitments.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const calculated = await calculateTimeCommitments(
+        initiativeId,
+        teamMembers,
+        strategies,
+        milestones,
+        risks,
+        pdActivities
+      );
+
+      if (calculated.length === 0) {
+        toast({
+          title: "No assignments found",
+          description: "Assign team members to strategies, milestones, risks, PD activities, or communication activities first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      autoGenerateTimeCommitments(
+        calculated.map((c) => ({
+          initiative_id: initiativeId,
+          role_name: c.role_name,
+          hours_per_week: c.hours_per_week,
+          hours_per_month: c.hours_per_month,
+          description: c.description,
+          notes: null,
+        }))
+      );
+    } catch (error) {
+      console.error("Error calculating time commitments:", error);
+      toast({
+        title: "Calculation error",
+        description: "Failed to calculate time commitments. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <>
@@ -129,16 +191,36 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
                 <Clock className="h-4 w-4" />
                 Time Commitments by Role
               </h4>
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  setEditingTimeCommitment(undefined);
-                  setTimeDialogOpen(true);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Time Commitment
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleAutoCalculate}
+                  disabled={isAutoGenerating}
+                >
+                  {isAutoGenerating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Calculating...
+                    </>
+                  ) : (
+                    <>
+                      <Calculator className="mr-2 h-4 w-4" />
+                      Auto-Calculate
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    setEditingTimeCommitment(undefined);
+                    setTimeDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Manual
+                </Button>
+              </div>
             </div>
             
             {isLoadingTime ? (
@@ -146,7 +228,9 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
             ) : timeCommitments.length === 0 ? (
               <div className="text-center py-8 border rounded-lg bg-muted/20">
                 <p className="text-sm text-muted-foreground mb-2">No time commitments yet</p>
-                <p className="text-xs text-muted-foreground">Add time commitments to track role-based time allocations</p>
+                <p className="text-xs text-muted-foreground">
+                  Click "Auto-Calculate" to generate time commitments based on team assignments, or add manual entries
+                </p>
               </div>
             ) : (
               <div className="space-y-2">

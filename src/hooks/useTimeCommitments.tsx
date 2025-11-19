@@ -114,14 +114,51 @@ export function useTimeCommitments(initiativeId: string | undefined) {
     },
   });
 
+  const autoGenerateTimeCommitments = useMutation({
+    mutationFn: async (commitments: Array<Omit<TimeCommitment, "id" | "created_at" | "updated_at">>) => {
+      // First, delete all existing auto-calculated time commitments
+      const { error: deleteError } = await supabase
+        .from("time_commitments")
+        .delete()
+        .eq("initiative_id", initiativeId);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert the new auto-calculated commitments
+      const { data, error } = await supabase
+        .from("time_commitments")
+        .insert(commitments)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["time-commitments", initiativeId] });
+      toast({
+        title: "Time commitments auto-calculated",
+        description: "Time commitments have been calculated based on team assignments.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error auto-calculating time commitments",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     timeCommitments: timeCommitments || [],
     isLoading,
     createTimeCommitment: createTimeCommitment.mutate,
     updateTimeCommitment: updateTimeCommitment.mutate,
     deleteTimeCommitment: deleteTimeCommitment.mutate,
+    autoGenerateTimeCommitments: autoGenerateTimeCommitments.mutate,
     isCreating: createTimeCommitment.isPending,
     isUpdating: updateTimeCommitment.isPending,
     isDeleting: deleteTimeCommitment.isPending,
+    isAutoGenerating: autoGenerateTimeCommitments.isPending,
   };
 }
