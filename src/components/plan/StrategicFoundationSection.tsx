@@ -51,22 +51,9 @@ export function StrategicFoundationSection({
 
   const handleApplyStrategyRecommendation = async (recommendation: any) => {
     try {
-      // Map the ERIC category names from recommendations to the database enum values
-      const ericCategoryMap: Record<string, "evaluative_iterative" | "provide_interactive_assistance" | "adapt_practice" | "develop_stakeholder_relationships" | "train_educate" | "support_clinicians" | "engage_consumers" | "use_financial_strategies" | "change_infrastructure"> = {
-        evaluative_iterative: "evaluative_iterative",
-        provide_interactive_assistance: "provide_interactive_assistance",
-        adapt_practice: "adapt_practice",
-        develop_stakeholder_relationships: "develop_stakeholder_relationships",
-        train_educate: "train_educate",
-        support_clinicians: "support_clinicians",
-        engage_consumers: "engage_consumers",
-        use_financial_strategies: "use_financial_strategies",
-        change_infrastructure: "change_infrastructure"
-      };
-      
       await createStrategy({
         strategy_name: recommendation.strategy_name,
-        eric_category: ericCategoryMap[recommendation.eric_category] || recommendation.eric_category,
+        eric_category: recommendation.eric_category,
         description: recommendation.description,
         target_barrier: recommendation.target_barrier,
         timeline: recommendation.timeline,
