@@ -219,31 +219,10 @@ export function StrategicFoundationSection({
               <Target className="h-5 w-5 text-primary" />
               <CardTitle>Implementation Strategies (ERIC Framework)</CardTitle>
             </div>
-            <div className="flex gap-2">
-              {strategies.length === 0 && (
-                <Button
-                  onClick={onGenerateStrategies}
-                  disabled={isGeneratingStrategies}
-                  variant="outline"
-                >
-                  {isGeneratingStrategies ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Lightbulb className="mr-2 h-4 w-4" />
-                      Generate ERIC Strategies
-                    </>
-                  )}
-                </Button>
-              )}
-              <Button onClick={onAddStrategy} variant="outline">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Strategy
-              </Button>
-            </div>
+            <Button onClick={onAddStrategy} variant="outline">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Strategy
+            </Button>
           </div>
           <CardDescription>
             Select implementation strategies that address your feasibility barriers using the ERIC framework.
