@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Clock, Plus, Edit, Calculator, Loader2 } from "lucide-react";
+import { DollarSign, Clock, Plus, Edit, Calculator, Loader2, Sparkles } from "lucide-react";
 import { useBudgetItems } from "@/hooks/useBudgetItems";
 import { useTimeCommitments } from "@/hooks/useTimeCommitments";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -12,6 +12,7 @@ import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { usePDActivities } from "@/hooks/usePDActivities";
 import { BudgetItemDialog } from "@/components/BudgetItemDialog";
 import { TimeCommitmentDialog } from "@/components/TimeCommitmentDialog";
+import { BudgetRecommendations } from "@/components/BudgetRecommendations";
 import { calculateTimeCommitments } from "@/lib/timeCommitmentCalculator";
 import type { BudgetItem } from "@/hooks/useBudgetItems";
 import type { TimeCommitment } from "@/hooks/useTimeCommitments";
@@ -35,6 +36,7 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
   const [editingBudgetItem, setEditingBudgetItem] = useState<BudgetItem | undefined>(undefined);
   const [timeDialogOpen, setTimeDialogOpen] = useState(false);
   const [editingTimeCommitment, setEditingTimeCommitment] = useState<TimeCommitment | undefined>(undefined);
+  const [showBudgetRecommendations, setShowBudgetRecommendations] = useState(false);
 
   const totalEstimated = budgetItems.reduce((sum, item) => sum + item.estimated_cost, 0);
   const totalActual = budgetItems.reduce((sum, item) => sum + (item.actual_cost || 0), 0);
@@ -90,42 +92,60 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-primary" />
-            <CardTitle>Resource Allocation & Budget</CardTitle>
-          </div>
-          <CardDescription>
-            Track budget, time commitments, and resource requirements
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Budget Categories */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                Budget Breakdown
-              </h4>
-              <Button 
-                size="sm" 
-                onClick={() => {
-                  setEditingBudgetItem(undefined);
-                  setBudgetDialogOpen(true);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Budget Item
-              </Button>
+      {showBudgetRecommendations ? (
+        <BudgetRecommendations 
+          initiativeId={initiativeId}
+          onClose={() => setShowBudgetRecommendations(false)}
+        />
+      ) : (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-primary" />
+              <CardTitle>Resource Allocation & Budget</CardTitle>
             </div>
+            <CardDescription>
+              Track budget, time commitments, and resource requirements
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Budget Categories */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Budget Breakdown
+                </h4>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowBudgetRecommendations(true)}
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI Recommendations
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      setEditingBudgetItem(undefined);
+                      setBudgetDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Manual
+                  </Button>
+                </div>
+              </div>
             
             {isLoadingBudget ? (
               <p className="text-sm text-muted-foreground text-center py-4">Loading budget items...</p>
             ) : budgetItems.length === 0 ? (
               <div className="text-center py-8 border rounded-lg bg-muted/20">
                 <p className="text-sm text-muted-foreground mb-2">No budget items yet</p>
-                <p className="text-xs text-muted-foreground">Add budget items to track costs for your initiative</p>
+                <p className="text-xs text-muted-foreground">
+                  Click "AI Recommendations" to generate budget suggestions based on your initiative, or add items manually
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -276,6 +296,7 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Dialogs */}
       <BudgetItemDialog

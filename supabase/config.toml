@@ -30,5 +30,8 @@ verify_jwt = false
 [functions.recommend-communication]
 verify_jwt = false
 
+[functions.recommend-budget]
+verify_jwt = false
+
 [functions.ai-copilot-chat]
 verify_jwt = false
