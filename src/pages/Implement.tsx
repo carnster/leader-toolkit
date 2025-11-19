@@ -14,6 +14,9 @@ import { useSearchParams } from "react-router-dom";
 import { TimelineTracker } from "@/components/TimelineTracker";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
 import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
+import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
+import { FidelityTrendsChart } from "@/components/dashboard/FidelityTrendsChart";
+import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
 
 const mockFidelityLogs = [
@@ -107,6 +110,18 @@ export default function Implement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Timeline Tracker */}
+      <TimelineTracker initiativeId={effectiveInitiativeId} stage="implement" />
+
+      {/* Fidelity Trends */}
+      <FidelityTrendsChart />
+
+      {/* PDSA Cycle Assistant */}
+      <PDSACycleAssistant initiativeId={effectiveInitiativeId} />
+
+      {/* PD Completion Tracker */}
+      <PDCompletionTracker initiativeId={effectiveInitiativeId} />
 
       {/* Observation Mode Selector */}
       <ObservationModeSelector onSelectMode={(mode) => setObservationMode(mode)} />
