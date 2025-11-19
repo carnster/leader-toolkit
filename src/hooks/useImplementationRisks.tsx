@@ -11,8 +11,8 @@ export interface ImplementationRisk {
   impact: "low" | "medium" | "high";
   mitigation_strategy: string;
   contingency_plan: string | null;
+  status: "active" | "mitigated" | "occurred" | "resolved";
   owner_id: string | null;
-  status: "active" | "mitigated" | "realized";
   created_at: string;
   updated_at: string;
 }

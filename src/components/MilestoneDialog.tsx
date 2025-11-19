@@ -12,15 +12,17 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTimelineMilestones, TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TeamMember } from "@/hooks/useTeamMembers";
 
 interface MilestoneDialogProps {
   milestone?: TimelineMilestone;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
+  teamMembers?: TeamMember[];
 }
 
-export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }: MilestoneDialogProps) {
+export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, teamMembers = [] }: MilestoneDialogProps) {
   const { createMilestone, updateMilestone, deleteMilestone, isCreating, isUpdating, isDeleting } = useTimelineMilestones(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,6 +33,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
     completion_date: milestone?.completion_date ? new Date(milestone.completion_date) : undefined,
     notes: milestone?.notes || "",
     sub_stage: milestone?.sub_stage || "",
+    owner_id: milestone?.owner_id || "",
   });
 
   useEffect(() => {
@@ -43,6 +46,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
         completion_date: milestone.completion_date ? new Date(milestone.completion_date) : undefined,
         notes: milestone.notes || "",
         sub_stage: milestone.sub_stage || "",
+        owner_id: milestone.owner_id || "",
       });
     } else {
       setFormData({
@@ -53,6 +57,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
         completion_date: undefined,
         notes: "",
         sub_stage: "",
+        owner_id: "",
       });
     }
   }, [milestone, open]);
@@ -66,6 +71,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
       completion_date: formData.completion_date ? format(formData.completion_date, "yyyy-MM-dd") : null,
       notes: formData.notes || null,
       sub_stage: formData.phase === "Implement" ? formData.sub_stage || null : null,
+      owner_id: formData.owner_id || null,
     };
 
     if (milestone) {
@@ -272,6 +278,26 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId }:
                 </Popover>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="owner_id">Milestone Owner</Label>
+              <Select 
+                value={formData.owner_id || ""} 
+                onValueChange={(value) => setFormData({ ...formData, owner_id: value || "" })}
+              >
+                <SelectTrigger id="owner_id">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name || member.profiles?.full_name || "Unnamed Member"}
+                  </SelectItem>
+                ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>

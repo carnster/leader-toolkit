@@ -13,6 +13,7 @@ export interface CommunicationActivity {
   completed: boolean;
   completed_date: string | null;
   notes: string | null;
+  assigned_to_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +52,7 @@ export function useCommunicationActivities(initiativeId: string | undefined) {
           completed: activity.completed ?? false,
           completed_date: activity.completed_date,
           notes: activity.notes,
+          assigned_to_id: activity.assigned_to_id,
         })
         .select()
         .single();

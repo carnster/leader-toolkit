@@ -7,12 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, HelpCircle } from "lucide-react";
+import { TeamMember } from "@/hooks/useTeamMembers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ImplementationStrategyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (strategy: Partial<ImplementationStrategy>) => void;
   strategy?: ImplementationStrategy | null;
+  teamMembers?: TeamMember[];
 }
 
 const ericCategories = [
@@ -81,7 +84,7 @@ const statusOptions = [
   { value: "on_hold", label: "On Hold" },
 ];
 
-export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strategy }: ImplementationStrategyDialogProps) {
+export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strategy, teamMembers = [] }: ImplementationStrategyDialogProps) {
   const [formData, setFormData] = useState<Partial<ImplementationStrategy>>({
     eric_category: "enable",
     strategy_name: "",
@@ -91,6 +94,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
     resources_needed: "",
     success_indicators: "",
     status: "planned",
+    responsible_party_id: "",
   });
   const [showExamples, setShowExamples] = useState(false);
 
@@ -107,6 +111,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
         resources_needed: "",
         success_indicators: "",
         status: "planned",
+        responsible_party_id: "",
       });
     }
   }, [strategy, open]);
@@ -243,6 +248,26 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="responsible_party_id">Responsible Party</Label>
+            <Select 
+              value={formData.responsible_party_id || ""} 
+              onValueChange={(value) => setFormData({ ...formData, responsible_party_id: value || "" })}
+            >
+              <SelectTrigger id="responsible_party_id">
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name || member.profiles?.full_name || "Unnamed Member"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

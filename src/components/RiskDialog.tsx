@@ -8,15 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2 } from "lucide-react";
 import { useImplementationRisks, ImplementationRisk } from "@/hooks/useImplementationRisks";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TeamMember } from "@/hooks/useTeamMembers";
 
 interface RiskDialogProps {
   risk?: ImplementationRisk;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
+  teamMembers?: TeamMember[];
 }
 
-export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialogProps) {
+export function RiskDialog({ risk, open, onOpenChange, initiativeId, teamMembers = [] }: RiskDialogProps) {
   const { createRisk, updateRisk, deleteRisk, isCreating, isUpdating, isDeleting } = useImplementationRisks(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,6 +29,7 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
     mitigation_strategy: risk?.mitigation_strategy || "",
     contingency_plan: risk?.contingency_plan || "",
     status: risk?.status || "active",
+    owner_id: risk?.owner_id || "",
   });
 
   useEffect(() => {
@@ -39,6 +42,7 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
         mitigation_strategy: risk.mitigation_strategy,
         contingency_plan: risk.contingency_plan || "",
         status: risk.status,
+        owner_id: risk.owner_id || "",
       });
     } else {
       setFormData({
@@ -49,6 +53,7 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
         mitigation_strategy: "",
         contingency_plan: "",
         status: "active",
+        owner_id: "",
       });
     }
   }, [risk, open]);
@@ -62,6 +67,7 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
       mitigation_strategy: formData.mitigation_strategy,
       contingency_plan: formData.contingency_plan || null,
       status: formData.status as ImplementationRisk["status"],
+      owner_id: formData.owner_id || null,
     };
 
     if (risk) {
@@ -183,6 +189,26 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="owner_id">Risk Owner</Label>
+              <Select 
+                value={formData.owner_id || ""} 
+                onValueChange={(value) => setFormData({ ...formData, owner_id: value || "" })}
+              >
+                <SelectTrigger id="owner_id">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name || member.profiles?.full_name || "Unnamed Member"}
+                  </SelectItem>
+                ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value as ImplementationRisk["status"] })}>
                 <SelectTrigger id="status">
@@ -191,7 +217,8 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId }: RiskDialo
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="mitigated">Mitigated</SelectItem>
-                  <SelectItem value="realized">Realized</SelectItem>
+                  <SelectItem value="occurred">Occurred</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
                 </SelectContent>
               </Select>
             </div>

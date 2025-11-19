@@ -222,7 +222,7 @@ export function ExecutionPlanningSection({
                       <div className="flex gap-2">
                         <Badge variant={
                           risk.status === "mitigated" ? "default" :
-                          risk.status === "realized" ? "destructive" :
+                          risk.status === "occurred" ? "destructive" :
                           "secondary"
                         }>
                           {risk.status}
