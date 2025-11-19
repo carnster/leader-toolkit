@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen } from "lucide-react";
+import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen, Network } from "lucide-react";
 import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
 import { ImplementationStrategyRecommendations } from "@/components/ImplementationStrategyRecommendations";
+import { StrategyIngredientConnections } from "@/components/StrategyIngredientConnections";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 
@@ -248,88 +250,108 @@ export function StrategicFoundationSection({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* ERIC Library Toggle */}
-          <Collapsible open={showERICLibrary} onOpenChange={setShowERICLibrary}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full mb-4">
-                <BookOpen className="mr-2 h-4 w-4" />
-                {showERICLibrary ? "Hide" : "Show"} ERIC Strategy Reference Library
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="mb-6">
-                <ERICStrategySelector />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="list">Strategy List</TabsTrigger>
+              <TabsTrigger value="connections">
+                <Network className="h-4 w-4 mr-2" />
+                Visual Connections
+              </TabsTrigger>
+            </TabsList>
 
-          {isLoadingStrategies ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Loading strategies...</p>
-          ) : strategies.length === 0 ? (
-            <div className="text-center py-8 space-y-3">
-              <p className="text-sm text-muted-foreground">No implementation strategies yet.</p>
-              <p className="text-xs text-muted-foreground">
-                Generate AI recommendations based on your feasibility assessment or browse the ERIC library.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(strategiesByCategory).map(([category, categoryStrategies]) => {
-                if (categoryStrategies.length === 0) return null;
-                return (
-                  <div key={category} className="space-y-3">
-                    <h4 className="font-semibold capitalize flex items-center gap-2">
-                      <Badge variant="outline">{category}</Badge>
-                      {categoryStrategies.length} {categoryStrategies.length === 1 ? "Strategy" : "Strategies"}
-                    </h4>
-                    <div className="space-y-3">
-                      {categoryStrategies.map((strategy) => (
-                        <div key={strategy.id} className="rounded-lg border p-4 space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">{strategy.strategy_name}</h4>
-                                <Badge
-                                  variant={
-                                    strategy.status === "completed"
-                                      ? "default"
-                                      : strategy.status === "in_progress"
-                                      ? "secondary"
-                                      : "outline"
-                                  }
-                                >
-                                  {strategy.status.replace("_", " ")}
-                                </Badge>
-                              </div>
-                              {strategy.description && (
-                                <p className="text-sm text-muted-foreground mt-1">{strategy.description}</p>
-                              )}
-                            </div>
-                            <div className="flex gap-1 ml-4">
-                              <Button variant="ghost" size="sm" onClick={() => onEditStrategy(strategy)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  if (confirm("Delete this strategy?")) {
-                                    onDeleteStrategy(strategy.id);
-                                  }
-                                }}
-                              >
-                                <Trash className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+            <TabsContent value="list" className="mt-0">
+              {/* ERIC Library Toggle */}
+              <Collapsible open={showERICLibrary} onOpenChange={setShowERICLibrary}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="w-full mb-4">
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    {showERICLibrary ? "Hide" : "Show"} ERIC Strategy Reference Library
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="mb-6">
+                    <ERICStrategySelector />
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </CollapsibleContent>
+              </Collapsible>
+
+              {isLoadingStrategies ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Loading strategies...</p>
+              ) : strategies.length === 0 ? (
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-sm text-muted-foreground">No implementation strategies yet.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Generate AI recommendations based on your feasibility assessment or browse the ERIC library.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(strategiesByCategory).map(([category, categoryStrategies]) => {
+                    if (categoryStrategies.length === 0) return null;
+                    return (
+                      <div key={category} className="space-y-3">
+                        <h4 className="font-semibold capitalize flex items-center gap-2">
+                          <Badge variant="outline">{category}</Badge>
+                          {categoryStrategies.length} {categoryStrategies.length === 1 ? "Strategy" : "Strategies"}
+                        </h4>
+                        <div className="space-y-3">
+                          {categoryStrategies.map((strategy) => (
+                            <div key={strategy.id} className="rounded-lg border p-4 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium">{strategy.strategy_name}</h4>
+                                    <Badge
+                                      variant={
+                                        strategy.status === "completed"
+                                          ? "default"
+                                          : strategy.status === "in_progress"
+                                          ? "secondary"
+                                          : "outline"
+                                      }
+                                    >
+                                      {strategy.status.replace("_", " ")}
+                                    </Badge>
+                                  </div>
+                                  {strategy.description && (
+                                    <p className="text-sm text-muted-foreground mt-1">{strategy.description}</p>
+                                  )}
+                                </div>
+                                <div className="flex gap-1 ml-4">
+                                  <Button variant="ghost" size="sm" onClick={() => onEditStrategy(strategy)}>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (confirm("Delete this strategy?")) {
+                                        onDeleteStrategy(strategy.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="connections" className="mt-0">
+              <StrategyIngredientConnections
+                activeIngredients={activeIngredients}
+                strategies={strategies}
+                onEditStrategy={onEditStrategy}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
