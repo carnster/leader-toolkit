@@ -282,8 +282,8 @@ export function FlexibleObservationDialog({
             </p>
           </div>
 
-          {/* Follow-up Actions (detailed mode only) */}
-          {mode === 'detailed' && (
+          {/* Follow-up Actions - Detailed & Team modes */}
+          {config.showFollowUp && (
             <div className="space-y-2">
               <Label>{mode === 'team' ? 'Action Items & Next Steps' : 'Follow-up Actions'}</Label>
               <div className="flex gap-2">
