@@ -15,13 +15,14 @@ import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TeamMember } from "@/hooks/useTeamMembers";
 
 interface PDActivityDialogProps {
   activity?: PDActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
-  teamMembers?: Array<{ id: string; name: string | null; role_in_initiative: string }>;
+  teamMembers?: TeamMember[];
 }
 
 export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, teamMembers = [] }: PDActivityDialogProps) {
@@ -159,27 +160,42 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, t
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="facilitator">Facilitator</Label>
-                <Input
-                  id="facilitator"
-                  value={formData.facilitator}
-                  onChange={(e) => setFormData({ ...formData, facilitator: e.target.value })}
-                  placeholder="Who is leading this?"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="facilitator_id">Facilitator (Team Member)</Label>
+              <Select 
+                value={formData.facilitator_id || "unassigned"} 
+                onValueChange={(value) => {
+                  const selectedMember = teamMembers.find(m => m.id === value);
+                  setFormData({ 
+                    ...formData, 
+                    facilitator_id: value === "unassigned" ? "" : value,
+                    facilitator: value === "unassigned" ? "" : (selectedMember?.name || selectedMember?.profiles?.full_name || "")
+                  });
+                }}
+              >
+                <SelectTrigger id="facilitator_id">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">None</SelectItem>
+                  {teamMembers.map(member => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name || member.profiles?.full_name || "Unnamed Member"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="duration">Duration (minutes)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={formData.duration_minutes || ""}
-                  onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value ? parseInt(e.target.value) : undefined })}
-                  placeholder="60"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration (minutes)</Label>
+              <Input
+                id="duration"
+                type="number"
+                value={formData.duration_minutes || ""}
+                onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value ? parseInt(e.target.value) : undefined })}
+                placeholder="60"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
