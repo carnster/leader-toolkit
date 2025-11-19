@@ -139,12 +139,12 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
           {selectedIngredientId && checklists.filter(c => c.active_ingredient_id === selectedIngredientId).length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="checklist">Use Observation Checklist (Optional)</Label>
-              <Select value={selectedChecklistId} onValueChange={setSelectedChecklistId}>
+              <Select value={selectedChecklistId || "none"} onValueChange={(value) => setSelectedChecklistId(value === "none" ? "" : value)}>
                 <SelectTrigger id="checklist">
                   <SelectValue placeholder="Select a checklist" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Checklist (Manual Rating)</SelectItem>
+                  <SelectItem value="none">No Checklist (Manual Rating)</SelectItem>
                   {checklists
                     .filter(c => c.active_ingredient_id === selectedIngredientId)
                     .map((checklist) => (

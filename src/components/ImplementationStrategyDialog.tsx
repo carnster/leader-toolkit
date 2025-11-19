@@ -252,22 +252,22 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
 
           <div className="space-y-2">
             <Label htmlFor="responsible_party_id">Responsible Party</Label>
-            <Select 
-              value={formData.responsible_party_id || ""} 
-              onValueChange={(value) => setFormData({ ...formData, responsible_party_id: value || "" })}
-            >
-              <SelectTrigger id="responsible_party_id">
-                <SelectValue placeholder="Select team member" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {teamMembers.map(member => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name || member.profiles?.full_name || "Unnamed Member"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Select 
+            value={formData.responsible_party_id || "unassigned"} 
+            onValueChange={(value) => setFormData({ ...formData, responsible_party_id: value === "unassigned" ? null : value })}
+          >
+            <SelectTrigger id="responsible_party_id">
+              <SelectValue placeholder="Select team member" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="unassigned">None</SelectItem>
+              {teamMembers.map(member => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name || member.profiles?.full_name || "Unnamed Member"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           </div>
 
           <div className="space-y-2">

@@ -190,22 +190,22 @@ export function RiskDialog({ risk, open, onOpenChange, initiativeId, teamMembers
 
             <div className="space-y-2">
               <Label htmlFor="owner_id">Risk Owner</Label>
-              <Select 
-                value={formData.owner_id || ""} 
-                onValueChange={(value) => setFormData({ ...formData, owner_id: value || "" })}
-              >
-                <SelectTrigger id="owner_id">
-                  <SelectValue placeholder="Select team member" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                {teamMembers.map(member => (
-                  <SelectItem key={member.id} value={member.id}>
-                    {member.name || member.profiles?.full_name || "Unnamed Member"}
-                  </SelectItem>
-                ))}
-                </SelectContent>
-              </Select>
+            <Select 
+              value={formData.owner_id || "unassigned"} 
+              onValueChange={(value) => setFormData({ ...formData, owner_id: value === "unassigned" ? null : value })}
+            >
+              <SelectTrigger id="owner_id">
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">None</SelectItem>
+              {teamMembers.map(member => (
+                <SelectItem key={member.id} value={member.id}>
+                  {member.name || member.profiles?.full_name || "Unnamed Member"}
+                </SelectItem>
+              ))}
+              </SelectContent>
+            </Select>
             </div>
 
             <div className="space-y-2">
