@@ -16,6 +16,7 @@ import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { EBPRecommendations } from "@/components/EBPRecommendations";
+import { MetricsRecommendations } from "@/components/MetricsRecommendations";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -1380,9 +1381,9 @@ export default function Decide() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="timeline">Measurement Timeline</Label>
+              <Label htmlFor="timeline">Data Collection Activities</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Add timeline activities with their frequency. Select from common frequencies or choose custom.
+                How will you collect measurement data? Add activities with their frequency. Examples: Weekly fidelity walkthroughs, Monthly student surveys, Termly standardized assessments
               </p>
               <TimelineItemInput
                 items={measurementTimeline}
@@ -1391,6 +1392,9 @@ export default function Decide() {
                   isUserEditingRef.current = false;
                   triggerAutoSave();
                 }}
+                placeholder="e.g., Weekly fidelity observations"
+                itemClassName="bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
+                itemTypeName="data collection activity"
               />
             </div>
             
@@ -1401,15 +1405,6 @@ export default function Decide() {
               laggingIndicators={laggingIndicators}
             />
             
-            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
-              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
-                <span className="text-lg">✓</span> Ready to Move Forward?
-              </p>
-              <p className="text-sm text-muted-foreground">
-                With all metrics defined, you're ready to <strong>complete your decision brief and move to the Plan stage</strong> where you'll develop your detailed implementation plan.
-              </p>
-            </div>
-            
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
@@ -1417,6 +1412,36 @@ export default function Decide() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* AI Recommendations for Metrics */}
+      {step === 6 && (
+        <MetricsRecommendations
+          decisionBrief={decisionBrief}
+          onApplyRecommendations={(recs) => {
+            // Format and apply leading indicators
+            const formattedLeading = recs.leading_indicators.map(item => 
+              `${item.indicator} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+            );
+            setLeadingIndicators(formattedLeading);
+
+            // Format and apply lagging indicators
+            const formattedLagging = recs.lagging_indicators.map(item => 
+              `${item.indicator} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+            );
+            setLaggingIndicators(formattedLagging);
+
+            // Format and apply data collection activities
+            const formattedActivities = recs.data_collection_activities.map(item => 
+              `${item.activity} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+            );
+            setMeasurementTimeline(formattedActivities);
+
+            // Trigger auto-save
+            isUserEditingRef.current = false;
+            triggerAutoSave();
+          }}
+        />
       )}
 
       {/* Master Checklist - Decide stage */}
