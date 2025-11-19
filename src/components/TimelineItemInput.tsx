@@ -9,6 +9,9 @@ interface TimelineItemInputProps {
   items: string[];
   onChange: (items: string[]) => void;
   className?: string;
+  itemClassName?: string;
+  placeholder?: string;
+  itemTypeName?: string;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -27,7 +30,10 @@ const FREQUENCY_OPTIONS = [
 export function TimelineItemInput({
   items,
   onChange,
-  className
+  className,
+  itemClassName = "bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800",
+  placeholder = "e.g., Fidelity checks, Review meetings, Outcome reporting",
+  itemTypeName = "timeline activity"
 }: TimelineItemInputProps) {
   const [selectedFrequency, setSelectedFrequency] = useState<string>("");
   const [activityDescription, setActivityDescription] = useState("");
@@ -80,7 +86,7 @@ export function TimelineItemInput({
             value={activityDescription}
             onChange={(e) => setActivityDescription(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="e.g., Fidelity checks, Review meetings, Outcome reporting"
+            placeholder={placeholder}
             className="flex-1"
           />
         </div>
@@ -123,7 +129,10 @@ export function TimelineItemInput({
           {items.map((item, index) => (
             <div
               key={index}
-              className="flex items-start gap-2 p-3 rounded-md border bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
+              className={cn(
+                "flex items-start gap-2 p-3 rounded-md border",
+                itemClassName
+              )}
             >
               <span className="flex-1 text-sm">{item}</span>
               <Button
@@ -143,7 +152,7 @@ export function TimelineItemInput({
       {/* Count */}
       {items.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          {items.length} {items.length === 1 ? "timeline activity" : "timeline activities"} added
+          {items.length} {items.length === 1 ? itemTypeName : `${itemTypeName}s`} added
         </p>
       )}
     </div>

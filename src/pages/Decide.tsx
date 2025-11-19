@@ -1346,36 +1346,36 @@ export default function Decide() {
             <div className="space-y-2">
               <Label htmlFor="leading">Leading Indicators (early signals)</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Add indicators one at a time. Examples: Teacher completion of mastery lesson plans (weekly), Student attendance at intervention sessions (weekly), Fidelity observations using our rubric (fortnightly)
+                Add indicators with their measurement frequency. Examples: Teacher lesson plan completion, Student attendance at interventions, Fidelity observations
               </p>
-              <MultiItemInput
+              <TimelineItemInput
                 items={leadingIndicators}
                 onChange={(items) => {
                   setLeadingIndicators(items);
                   isUserEditingRef.current = false;
                   triggerAutoSave();
                 }}
-                placeholder="e.g., Teacher completion of lesson plans (weekly)"
-                addButtonText="Add Leading Indicator"
+                placeholder="e.g., Teacher completion of lesson plans"
                 itemClassName="bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-800"
+                itemTypeName="leading indicator"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="lagging">Lagging Indicators (outcome measures)</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Add indicators one at a time. Examples: End of half-term maths assessments (% at expected standard), Student confidence surveys (termly), Progress data vs autumn baseline
+                Add indicators with their measurement frequency. Examples: End of half-term assessments, Student confidence surveys, Progress data
               </p>
-              <MultiItemInput
+              <TimelineItemInput
                 items={laggingIndicators}
                 onChange={(items) => {
                   setLaggingIndicators(items);
                   isUserEditingRef.current = false;
                   triggerAutoSave();
                 }}
-                placeholder="e.g., End of half-term assessments (% at expected)"
-                addButtonText="Add Lagging Indicator"
+                placeholder="e.g., End of half-term assessments"
                 itemClassName="bg-green-50 text-green-900 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800"
+                itemTypeName="lagging indicator"
               />
             </div>
 
