@@ -13,6 +13,7 @@ import { useTimeCommitments } from "@/hooks/useTimeCommitments";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
 import { useObservationSchedules } from "@/hooks/useObservationSchedules";
+import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
 import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,6 +52,7 @@ export default function Plan() {
   const currentSection = searchParams.get("section") || "overview";
   
   const { activeIngredients, isLoading, createIngredient } = useActiveIngredients(effectiveInitiativeId);
+  const { decisionBrief } = useDecisionBrief(effectiveInitiativeId);
   const [isGeneratingIngredients, setIsGeneratingIngredients] = useState(false);
   const [isGeneratingStrategies, setIsGeneratingStrategies] = useState(false);
   const [isGeneratingRisks, setIsGeneratingRisks] = useState(false);
@@ -454,6 +456,7 @@ export default function Plan() {
             budgetItems={budgetItems || []}
             fidelityChecklists={fidelityChecklists || []}
             observationSchedules={observationSchedules || []}
+            decisionBrief={decisionBrief}
           />
         );
       
@@ -590,6 +593,7 @@ export default function Plan() {
             budgetItems={budgetItems || []}
             fidelityChecklists={fidelityChecklists || []}
             observationSchedules={observationSchedules || []}
+            decisionBrief={decisionBrief}
           />
         );
     }

@@ -19,6 +19,7 @@ interface ReadinessChecklistProps {
   fidelityChecklistsCount?: number;
   observationSchedulesCount?: number;
   activeIngredients?: any[];
+  decisionBrief?: any;
 }
 
 export function ReadinessChecklist({
@@ -33,6 +34,7 @@ export function ReadinessChecklist({
   fidelityChecklistsCount = 0,
   observationSchedulesCount = 0,
   activeIngredients = [],
+  decisionBrief = null,
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
@@ -183,7 +185,7 @@ export function ReadinessChecklist({
       section: "Training",
       label: "Initial training for all implementers completed",
       required: true,
-      autoCheck: false,
+      autoCheck: pdActivitiesCount > 0,
       actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Schedule Training"
     },
@@ -192,17 +194,17 @@ export function ReadinessChecklist({
       section: "Stakeholder Buy-in",
       label: "Key stakeholders informed and supportive",
       required: false,
-      autoCheck: false,
+      autoCheck: decisionBrief?.stakeholder_input && decisionBrief.stakeholder_input.trim() !== '',
       actionLink: `/decide${initiativeId ? `?initiative=${initiativeId}` : ''}`,
-      actionLabel: "Review Decision Brief"
+      actionLabel: "Document Stakeholder Input"
     },
     {
       id: "adaptation-protocol",
       section: "Adaptation",
       label: "Guidelines for acceptable adaptations documented",
       required: false,
-      autoCheck: false,
-      actionLink: `/plan?section=quality-assurance${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      autoCheck: activeIngredients.some(ing => ing.adaptable_boundaries && ing.adaptable_boundaries.length > 0),
+      actionLink: `/plan?section=strategic-foundation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Define Adaptation Protocol"
     },
   ];

@@ -29,6 +29,7 @@ interface OverviewSectionProps {
   budgetItems?: any[];
   fidelityChecklists?: any[];
   observationSchedules?: any[];
+  decisionBrief?: any;
 }
 
 export function OverviewSection({
@@ -54,6 +55,7 @@ export function OverviewSection({
   budgetItems = [],
   fidelityChecklists = [],
   observationSchedules = [],
+  decisionBrief = null,
 }: OverviewSectionProps) {
   const navigate = useNavigate();
   const totalRequired = 6;
@@ -167,6 +169,7 @@ export function OverviewSection({
         fidelityChecklistsCount={fidelityChecklists.length}
         observationSchedulesCount={observationSchedules.length}
         activeIngredients={activeIngredients}
+        decisionBrief={decisionBrief}
       />
 
       {/* Export Implementation Plan */}
