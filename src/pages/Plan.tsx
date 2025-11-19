@@ -421,108 +421,33 @@ export default function Plan() {
     budget: budgetItems?.length || 0,
   });
 
+  const currentInitiative = initiatives?.find(i => i.id === effectiveInitiativeId);
+
   const renderSection = () => {
     switch (currentSection) {
       case "overview":
         return (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Implementation Plan Overview</CardTitle>
-                <CardDescription>
-                  Track your progress and complete key planning components
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Overall Progress</span>
-                    <span className="text-2xl font-bold text-primary">{overallProgress}%</span>
-                  </div>
-                  <Progress value={overallProgress} className="h-3" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      {activeIngredients.length > 0 && strategies.length > 0 ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      Strategic Foundation
-                    </h3>
-                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                      <li>Active Ingredients: {activeIngredients.length}</li>
-                      <li>Implementation Strategies: {strategies.length}</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      {teamMembers.length > 0 && activities.length > 0 ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      Team & Capacity
-                    </h3>
-                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                      <li>Team Members: {teamMembers.length}</li>
-                      <li>PD Activities: {activities.length}</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      {communicationActivities.length > 0 ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      Communication
-                    </h3>
-                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                      <li>Communication Activities: {communicationActivities.length}</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h3 className="font-medium flex items-center gap-2">
-                      {milestones.length > 0 && risks.length > 0 ? (
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      Execution Planning
-                    </h3>
-                    <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                      <li>Milestones: {milestones.length}</li>
-                      <li>Risks: {risks.length}</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <PlanProgressSuggestions 
-              counts={{
-                ingredients: activeIngredients.length,
-                strategies: strategies.length,
-                team: teamMembers.length,
-                timeline: milestones.length,
-                risks: risks.length,
-                pd: activities.length,
-                communication: communicationActivities.length,
-                budget: budgetItems?.length || 0,
-              }}
-              onNavigate={(section) => {
-                const params = new URLSearchParams(searchParams);
-                params.set("section", section);
-                window.location.search = params.toString();
-              }}
-            />
-          </div>
+          <OverviewSection
+            activeIngredientsCount={activeIngredients.length}
+            strategiesCount={strategies.length}
+            teamMembersCount={teamMembers.length}
+            milestonesCount={milestones.length}
+            risksCount={risks.length}
+            pdActivitiesCount={activities.length}
+            onGenerateFullPlan={generateFullPlan}
+            isGenerating={isGeneratingFullPlan}
+            nextStep={getNextStep()}
+            initiativeId={effectiveInitiativeId}
+            initiativeTitle={currentInitiative?.title || ""}
+            activeIngredients={activeIngredients}
+            strategies={strategies}
+            teamMembers={teamMembers}
+            timeCommitments={timeCommitments || []}
+            communicationActivities={communicationActivities}
+            milestones={milestones}
+            risks={risks}
+            pdActivities={activities}
+          />
         );
       
       case "ingredients":
@@ -634,7 +559,6 @@ export default function Plan() {
         return <QualityAssuranceSection activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />;
 
       default:
-        const currentInitiative = initiatives.find(i => i.id === effectiveInitiativeId);
         return (
           <OverviewSection
             activeIngredientsCount={activeIngredients.length}
@@ -651,7 +575,7 @@ export default function Plan() {
             activeIngredients={activeIngredients}
             strategies={strategies}
             teamMembers={teamMembers}
-            timeCommitments={timeCommitments}
+            timeCommitments={timeCommitments || []}
             communicationActivities={communicationActivities}
             milestones={milestones}
             risks={risks}
