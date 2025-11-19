@@ -19,6 +19,21 @@ const requestSchema = z.object({
     is_core: z.boolean(),
     description: z.string().max(1000).optional(),
   })).max(50),
+  implementationStrategies: z.array(z.object({
+    strategy_name: z.string().max(200),
+    eric_category: z.string(),
+    timeline: z.string().max(500).optional().nullable(),
+  })).max(50).optional(),
+  pdActivities: z.array(z.object({
+    title: z.string().max(200),
+    activity_type: z.string(),
+    scheduled_date: z.string().nullable().optional(),
+  })).max(50).optional(),
+  communicationActivities: z.array(z.object({
+    description: z.string().max(500),
+    stakeholder_group: z.string().max(200),
+    scheduled_date: z.string().nullable().optional(),
+  })).max(50).optional(),
 });
 
 serve(async (req) => {
@@ -28,7 +43,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { decisionBrief, activeIngredients } = requestSchema.parse(body);
+    const { decisionBrief, activeIngredients, implementationStrategies, pdActivities, communicationActivities } = requestSchema.parse(body);
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
@@ -76,11 +91,20 @@ ${decisionBrief.measurement_timeline?.join('\n') || 'Not specified'}
 **Active Ingredients to Implement:**
 ${activeIngredients?.map((ing: any) => `- ${ing.name} (${ing.is_core ? 'Core' : 'Adaptable'})`).join('\n') || 'None specified'}
 
+**Implementation Strategies (${implementationStrategies?.length || 0} total):**
+${implementationStrategies?.map((s: any) => `- ${s.strategy_name} (${s.eric_category.toUpperCase()})${s.timeline ? ` - Timeline: ${s.timeline}` : ''}`).join('\n') || 'None specified'}
+
+**Professional Development Activities (${pdActivities?.length || 0} total):**
+${pdActivities?.map((p: any) => `- ${p.title} (${p.activity_type})${p.scheduled_date ? ` - Scheduled: ${p.scheduled_date}` : ''}`).join('\n') || 'None specified'}
+
+**Communication Activities (${communicationActivities?.length || 0} total):**
+${communicationActivities?.map((c: any) => `- ${c.description} (Target: ${c.stakeholder_group})${c.scheduled_date ? ` - Scheduled: ${c.scheduled_date}` : ''}`).join('\n') || 'None specified'}
+
 **Context:**
 Target Group: ${decisionBrief.target_group || 'Not specified'}
 Goals: ${decisionBrief.goals || 'Not specified'}
 
-Create a phased timeline with specific, actionable milestones.`;
+Create a phased timeline with specific, actionable milestones that coordinates with the strategies, PD activities, and communication activities listed above.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
