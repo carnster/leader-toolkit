@@ -8,7 +8,7 @@ import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { usePDActivities } from "@/hooks/usePDActivities";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
-import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
+import { useBudgetItems } from "@/hooks/useBudgetItems";
 import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
 import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +60,7 @@ export default function Plan() {
   const { activities, isLoading: isLoadingActivities, createActivity } = usePDActivities(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
   const { activities: communicationActivities, isLoading: isLoadingCommunication } = useCommunicationActivities(effectiveInitiativeId);
-  const { checklists: fidelityChecklists } = useFidelityChecklists(effectiveInitiativeId);
+  const { budgetItems } = useBudgetItems(effectiveInitiativeId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -414,7 +414,7 @@ export default function Plan() {
     risks: risks.length,
     pd: activities.length,
     communication: communicationActivities.length,
-    fidelity: fidelityChecklists?.length || 0,
+    budget: budgetItems?.length || 0,
   });
 
   const renderSection = () => {
@@ -510,7 +510,7 @@ export default function Plan() {
                 risks: risks.length,
                 pd: activities.length,
                 communication: communicationActivities.length,
-                fidelity: fidelityChecklists?.length || 0,
+                budget: budgetItems?.length || 0,
               }}
               onNavigate={(section) => {
                 const params = new URLSearchParams(searchParams);
@@ -646,7 +646,7 @@ export default function Plan() {
             risks: risks.length,
             pd: activities.length,
             communication: communicationActivities.length,
-            fidelity: fidelityChecklists?.length || 0,
+            budget: budgetItems?.length || 0,
           }}
         />
 
