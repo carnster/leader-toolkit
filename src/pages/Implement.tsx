@@ -8,8 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useFidelityLogs } from "@/hooks/useFidelityLogs";
 import { useSearchParams } from "react-router-dom";
 import { TimelineTracker } from "@/components/TimelineTracker";
+import { ObservationModeSelector } from "@/components/ObservationModeSelector";
+import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
+import { useState } from "react";
 
 const mockFidelityLogs = [
   { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
@@ -30,6 +35,10 @@ export default function Implement() {
   
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
+  const { teamMembers } = useTeamMembers(effectiveInitiativeId);
+  const { fidelityLogs, createLog, isCreating } = useFidelityLogs(effectiveInitiativeId);
+  
+  const [observationMode, setObservationMode] = useState<'quick' | 'detailed' | 'team' | null>(null);
   
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
 
@@ -99,53 +108,8 @@ export default function Implement() {
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-primary/50 bg-primary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">60-Second Fidelity Log</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Quick check: Are core components happening as planned?
-            </p>
-            <Button className="w-full">Start Quick Log</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-secondary/50 bg-secondary/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-secondary" />
-              <CardTitle className="text-lg">Coach Observation</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Detailed observation with feedback notes
-            </p>
-            <Button variant="secondary" className="w-full">New Observation</Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-accent/50 bg-accent/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-accent" />
-              <CardTitle className="text-lg">Team Check-In</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Log team reflections and adjustments
-            </p>
-            <Button variant="outline" className="w-full">Record Check-In</Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Observation Mode Selector */}
+      <ObservationModeSelector onSelectMode={(mode) => setObservationMode(mode)} />
 
       {/* Implementation Nudges */}
       <Card>
@@ -194,28 +158,56 @@ export default function Implement() {
                 </div>
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-success" />
-                  <span className="text-sm font-medium">Avg: 4.0/5</span>
+                  <span className="text-sm font-medium">
+                    Avg: {fidelityLogs.length > 0 
+                      ? (fidelityLogs.reduce((sum, log) => sum + log.rating, 0) / fidelityLogs.length).toFixed(1)
+                      : '0'}/5
+                  </span>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockFidelityLogs.map((log) => (
-                  <div key={log.id} className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-1">
-                      <p className="font-medium">{log.component}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(log.date).toLocaleDateString()} • Observed by {log.observer}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "destructive"}>
-                        {log.rating}/5
-                      </Badge>
-                      <Button variant="ghost" size="sm">View</Button>
-                    </div>
+                {fidelityLogs.length > 0 ? (
+                  fidelityLogs.slice(0, 5).map((log) => {
+                    const ingredient = activeIngredients.find(ing => ing.id === log.component_id);
+                    const logTypeLabels = {
+                      quick: '60s Quick',
+                      detailed: 'Coach Obs',
+                      team: 'Team Check',
+                      standard: 'Standard'
+                    };
+                    
+                    return (
+                      <div key={log.id} className="flex items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{ingredient?.name || 'Unknown Component'}</p>
+                            <Badge variant="outline" className="text-xs">
+                              {logTypeLabels[log.log_type]}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(log.observed_at).toLocaleDateString()} at {new Date(log.observed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {log.notes && (
+                            <p className="text-xs text-muted-foreground line-clamp-1">{log.notes}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "destructive"}>
+                            {log.rating}/5
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">No observations recorded yet</p>
+                    <p className="text-xs mt-1">Use one of the observation modes above to get started</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -293,6 +285,17 @@ export default function Implement() {
           <ImplementationBehaviors />
         </TabsContent>
       </Tabs>
+
+      {/* Flexible Observation Dialog */}
+      <FlexibleObservationDialog
+        open={!!observationMode}
+        onOpenChange={(open) => !open && setObservationMode(null)}
+        mode={observationMode || 'quick'}
+        activeIngredients={activeIngredients}
+        teamMembers={teamMembers}
+        onSubmit={createLog}
+        isSubmitting={isCreating}
+      />
     </div>
   );
 }
