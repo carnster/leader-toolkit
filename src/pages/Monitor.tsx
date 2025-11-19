@@ -5,6 +5,7 @@ import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, Check
 import { Progress } from "@/components/ui/progress";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
+import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
@@ -100,6 +101,12 @@ export default function Monitor() {
         <p className="text-muted-foreground mt-2">
           Assess and adjust continuously using data and improvement cycles
         </p>
+        
+        {/* Indicator Import Banner */}
+        <div className="mt-4">
+          <IndicatorImportBanner initiativeId={effectiveInitiativeId} />
+        </div>
+        
         <Card className="mt-4 border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
