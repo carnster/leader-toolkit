@@ -24,5 +24,8 @@ verify_jwt = false
 [functions.recommend-pd]
 verify_jwt = false
 
+[functions.recommend-metrics]
+verify_jwt = false
+
 [functions.ai-copilot-chat]
 verify_jwt = false
