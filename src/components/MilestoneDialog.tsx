@@ -23,7 +23,7 @@ interface MilestoneDialogProps {
 }
 
 export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, teamMembers = [] }: MilestoneDialogProps) {
-  const { createMilestone, updateMilestone, deleteMilestone, isCreating, isUpdating, isDeleting } = useTimelineMilestones(initiativeId);
+  const { createMilestone, updateMilestone, deleteMilestone, isCreating, isUpdating, isDeleting, milestones } = useTimelineMilestones(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     phase: milestone?.phase || "",
@@ -34,6 +34,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
     notes: milestone?.notes || "",
     sub_stage: milestone?.sub_stage || "",
     owner_id: milestone?.owner_id || "",
+    depends_on: milestone?.depends_on || [],
   });
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
         notes: milestone.notes || "",
         sub_stage: milestone.sub_stage || "",
         owner_id: milestone.owner_id || "",
+        depends_on: milestone.depends_on || [],
       });
     } else {
       setFormData({
@@ -58,6 +60,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
         notes: "",
         sub_stage: "",
         owner_id: "",
+        depends_on: [],
       });
     }
   }, [milestone, open]);
@@ -72,6 +75,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
       notes: formData.notes || null,
       sub_stage: formData.phase === "Implement" ? formData.sub_stage || null : null,
       owner_id: formData.owner_id || null,
+      depends_on: formData.depends_on.length > 0 ? formData.depends_on : null,
     };
 
     if (milestone) {
@@ -297,6 +301,51 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
               ))}
               </SelectContent>
             </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dependencies">Dependencies (Optional)</Label>
+              <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Select milestones that must be completed before this one can begin:
+                </p>
+                {milestones
+                  .filter(m => m.id !== milestone?.id)
+                  .map((m) => (
+                    <label key={m.id} className="flex items-start gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                      <input
+                        type="checkbox"
+                        checked={formData.depends_on.includes(m.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              depends_on: [...formData.depends_on, m.id]
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              depends_on: formData.depends_on.filter(id => id !== m.id)
+                            });
+                          }
+                        }}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm">{m.milestone}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {m.phase} • {format(new Date(m.target_date), "MMM d, yyyy")}
+                          {m.status === "completed" && " • ✓ Completed"}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                {milestones.length <= 1 && (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    No other milestones available
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">

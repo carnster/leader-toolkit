@@ -1154,6 +1154,7 @@ export type Database = {
         Row: {
           completion_date: string | null
           created_at: string
+          depends_on: string[] | null
           id: string
           initiative_id: string
           milestone: string
@@ -1168,6 +1169,7 @@ export type Database = {
         Insert: {
           completion_date?: string | null
           created_at?: string
+          depends_on?: string[] | null
           id?: string
           initiative_id: string
           milestone: string
@@ -1182,6 +1184,7 @@ export type Database = {
         Update: {
           completion_date?: string | null
           created_at?: string
+          depends_on?: string[] | null
           id?: string
           initiative_id?: string
           milestone?: string
