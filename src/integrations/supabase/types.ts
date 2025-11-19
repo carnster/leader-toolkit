@@ -241,7 +241,7 @@ export type Database = {
           initiative_id: string
           lagging_indicators: string[] | null
           leading_indicators: string[] | null
-          measurement_timeline: string | null
+          measurement_timeline: string[] | null
           problem_statement: string
           root_causes: string[] | null
           stakeholder_input: string | null
@@ -263,7 +263,7 @@ export type Database = {
           initiative_id: string
           lagging_indicators?: string[] | null
           leading_indicators?: string[] | null
-          measurement_timeline?: string | null
+          measurement_timeline?: string[] | null
           problem_statement: string
           root_causes?: string[] | null
           stakeholder_input?: string | null
@@ -285,7 +285,7 @@ export type Database = {
           initiative_id?: string
           lagging_indicators?: string[] | null
           leading_indicators?: string[] | null
-          measurement_timeline?: string | null
+          measurement_timeline?: string[] | null
           problem_statement?: string
           root_causes?: string[] | null
           stakeholder_input?: string | null

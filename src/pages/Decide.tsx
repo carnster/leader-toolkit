@@ -73,7 +73,7 @@ export default function Decide() {
   const [feasibilityScore, setFeasibilityScore] = useState<number | null>(null);
   const [leadingIndicators, setLeadingIndicators] = useState<string[]>([]);
   const [laggingIndicators, setLaggingIndicators] = useState<string[]>([]);
-  const [measurementTimeline, setMeasurementTimeline] = useState("");
+  const [measurementTimeline, setMeasurementTimeline] = useState<string[]>([]);
   const [goalsEvaluation, setGoalsEvaluation] = useState<any>(null);
   const [isEvaluatingGoals, setIsEvaluatingGoals] = useState(false);
   
@@ -142,7 +142,7 @@ export default function Decide() {
       setFeasibilityScore(decisionBrief.feasibility_score || null);
       setLeadingIndicators(decisionBrief.leading_indicators || []);
       setLaggingIndicators(decisionBrief.lagging_indicators || []);
-      setMeasurementTimeline(decisionBrief.measurement_timeline || "");
+      setMeasurementTimeline(decisionBrief.measurement_timeline || []);
       setGoalsEvaluation(decisionBrief.goals_feedback || null);
       
       // Load feasibility factors
@@ -164,7 +164,7 @@ export default function Decide() {
   const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
   const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
-  const isStep6Complete = leadingIndicators.length > 0 && laggingIndicators.length > 0 && measurementTimeline; // Success Metrics
+  const isStep6Complete = leadingIndicators.length > 0 && laggingIndicators.length > 0 && measurementTimeline.length > 0; // Success Metrics
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
@@ -276,7 +276,7 @@ export default function Decide() {
       feasibility_factors: feasibilityFactors,
       leading_indicators: leadingIndicators.length > 0 ? leadingIndicators : null,
       lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
-      measurement_timeline: measurementTimeline,
+      measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
       checklist_completed: completionRate === 100,
     });
     
@@ -503,7 +503,7 @@ export default function Decide() {
         const brief = templateData.decision_brief_template;
         setProblemStatement(brief.problem_statement || "");
         setTargetGroup(brief.target_group || "");
-        setMeasurementTimeline(brief.measurement_timeline || "");
+        setMeasurementTimeline(brief.measurement_timeline || []);
         setLeadingIndicators(brief.leading_indicators || []);
         setLaggingIndicators(brief.lagging_indicators || []);
       }
@@ -1380,13 +1380,19 @@ export default function Decide() {
 
             <div className="space-y-2">
               <Label htmlFor="timeline">Measurement Timeline</Label>
-              <Input
-                id="timeline"
-                placeholder="Example: Weekly fidelity checks, half-termly review meetings, termly outcome reporting to governors"
-                value={measurementTimeline}
-                onChange={(e) => setMeasurementTimeline(e.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+              <p className="text-sm text-muted-foreground mb-2">
+                Add timeline activities one at a time. Examples: Weekly fidelity checks, Half-termly review meetings, Termly outcome reporting to governors
+              </p>
+              <MultiItemInput
+                items={measurementTimeline}
+                onChange={(items) => {
+                  setMeasurementTimeline(items);
+                  isUserEditingRef.current = false;
+                  triggerAutoSave();
+                }}
+                placeholder="e.g., Weekly fidelity checks"
+                addButtonText="Add Timeline Activity"
+                itemClassName="bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
               />
             </div>
             

@@ -18,7 +18,7 @@ export interface DecisionBrief {
   feasibility_factors: any | null;
   leading_indicators: string[] | null;
   lagging_indicators: string[] | null;
-  measurement_timeline: string | null;
+  measurement_timeline: string[] | null;
   checklist_completed: boolean | null;
   goals_feedback: any | null;
   created_at: string;
