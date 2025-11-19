@@ -9,6 +9,8 @@ import { usePDActivities } from "@/hooks/usePDActivities";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { useBudgetItems } from "@/hooks/useBudgetItems";
+import { useTimeCommitments } from "@/hooks/useTimeCommitments";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
 import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +61,8 @@ export default function Plan() {
   const { risks, isLoading: isLoadingRisks, createRisk } = useImplementationRisks(effectiveInitiativeId);
   const { activities, isLoading: isLoadingActivities, createActivity } = usePDActivities(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
+  const { timeCommitments } = useTimeCommitments(effectiveInitiativeId);
+  const { initiatives } = useInitiatives();
   const { activities: communicationActivities, isLoading: isLoadingCommunication } = useCommunicationActivities(effectiveInitiativeId);
   const { budgetItems } = useBudgetItems(effectiveInitiativeId);
   
@@ -630,7 +634,30 @@ export default function Plan() {
         return <QualityAssuranceSection activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />;
 
       default:
-        return <OverviewSection activeIngredientsCount={activeIngredients.length} strategiesCount={strategies.length} teamMembersCount={teamMembers.length} milestonesCount={milestones.length} risksCount={risks.length} pdActivitiesCount={activities.length} onGenerateFullPlan={generateFullPlan} isGenerating={isGeneratingFullPlan} nextStep={getNextStep()} initiativeId={effectiveInitiativeId} />;
+        const currentInitiative = initiatives.find(i => i.id === effectiveInitiativeId);
+        return (
+          <OverviewSection
+            activeIngredientsCount={activeIngredients.length}
+            strategiesCount={strategies.length}
+            teamMembersCount={teamMembers.length}
+            milestonesCount={milestones.length}
+            risksCount={risks.length}
+            pdActivitiesCount={activities.length}
+            onGenerateFullPlan={generateFullPlan}
+            isGenerating={isGeneratingFullPlan}
+            nextStep={getNextStep()}
+            initiativeId={effectiveInitiativeId}
+            initiativeTitle={currentInitiative?.title || "Untitled Initiative"}
+            activeIngredients={activeIngredients}
+            strategies={strategies}
+            teamMembers={teamMembers}
+            timeCommitments={timeCommitments}
+            communicationActivities={communicationActivities}
+            milestones={milestones}
+            risks={risks}
+            pdActivities={activities}
+          />
+        );
     }
   };
 
