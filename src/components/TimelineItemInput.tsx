@@ -47,19 +47,31 @@ export function TimelineItemInput({
   const handleAdd = () => {
     if (!activityDescription.trim()) return;
 
-    let timelineEntry: string;
+    // Split by commas to handle multiple entries
+    const descriptions = activityDescription.split(',').map(desc => desc.trim()).filter(desc => desc);
     
-    if (selectedFrequency === "custom" || !selectedFrequency) {
-      // Just use the activity description if custom or no frequency selected
-      timelineEntry = activityDescription.trim();
-    } else {
-      // Combine frequency with activity description
-      const frequencyLabel = FREQUENCY_OPTIONS.find(opt => opt.value === selectedFrequency)?.label || "";
-      timelineEntry = `${activityDescription.trim()} (${frequencyLabel})`;
-    }
+    const newEntries: string[] = [];
+    
+    descriptions.forEach(desc => {
+      let timelineEntry: string;
+      
+      if (selectedFrequency === "custom" || !selectedFrequency) {
+        // Just use the activity description if custom or no frequency selected
+        timelineEntry = desc;
+      } else {
+        // Combine frequency with activity description
+        const frequencyLabel = FREQUENCY_OPTIONS.find(opt => opt.value === selectedFrequency)?.label || "";
+        timelineEntry = `${desc} (${frequencyLabel})`;
+      }
 
-    if (!items.includes(timelineEntry)) {
-      onChange([...items, timelineEntry]);
+      // Only add if not already in the list
+      if (!items.includes(timelineEntry) && !newEntries.includes(timelineEntry)) {
+        newEntries.push(timelineEntry);
+      }
+    });
+
+    if (newEntries.length > 0) {
+      onChange([...items, ...newEntries]);
       setActivityDescription("");
       setSelectedFrequency("");
       setShowCustomInput(false);
