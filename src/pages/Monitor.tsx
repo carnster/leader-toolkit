@@ -1,7 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
@@ -48,10 +58,12 @@ export default function Monitor() {
   
   const [editingIndicator, setEditingIndicator] = useState<Indicator | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deletingIndicatorId, setDeletingIndicatorId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
-  const { indicators, isLoading: isLoadingIndicators, updateIndicator } = useIndicators(effectiveInitiativeId);
+  const { indicators, isLoading: isLoadingIndicators, updateIndicator, deleteIndicator } = useIndicators(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   
   const handleEditIndicator = (indicator: Indicator) => {
@@ -61,6 +73,19 @@ export default function Monitor() {
   
   const handleSaveIndicator = (id: string, updates: Partial<Indicator>) => {
     updateIndicator({ id, updates });
+  };
+
+  const handleDeleteIndicator = (indicatorId: string) => {
+    setDeletingIndicatorId(indicatorId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteIndicator = () => {
+    if (deletingIndicatorId) {
+      deleteIndicator(deletingIndicatorId);
+      setDeleteDialogOpen(false);
+      setDeletingIndicatorId(null);
+    }
   };
   
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
@@ -261,14 +286,24 @@ export default function Monitor() {
                     {indicator.type}
                   </Badge>
                   {indicators.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditIndicator(indicator)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditIndicator(indicator)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteIndicator(indicator.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
@@ -437,6 +472,27 @@ export default function Monitor() {
         onOpenChange={setEditDialogOpen}
         onSave={handleSaveIndicator}
       />
+
+      {/* Delete Indicator Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Indicator</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this indicator? This will also remove all recorded values for this indicator. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteIndicator} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
