@@ -9,12 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Flag, Clock, CheckCircle2, AlertCircle, Pencil, CalendarIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Flag, Clock, CheckCircle2, AlertCircle, Pencil, CalendarIcon, Network } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { MilestoneDependencyFlow } from "./MilestoneDependencyFlow";
 
 interface TimelineTrackerProps {
   initiativeId: string;
@@ -167,17 +169,31 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
   };
 
   return (
-    <Card className="border-primary/30 bg-primary/5">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Flag className="h-5 w-5 text-primary" />
-          <CardTitle>Implementation Timeline (from Plan Stage)</CardTitle>
-        </div>
-        <CardDescription>
-          Track milestone progress and key dates from your implementation plan
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
+      <Card className="border-primary/30 bg-primary/5">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Flag className="h-5 w-5 text-primary" />
+            <CardTitle>Implementation Timeline (from Plan Stage)</CardTitle>
+          </div>
+          <CardDescription>
+            Track milestone progress and key dates from your implementation plan
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="list">
+                <Flag className="h-4 w-4 mr-2" />
+                List View
+              </TabsTrigger>
+              <TabsTrigger value="flow">
+                <Network className="h-4 w-4 mr-2" />
+                Dependency Flow
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="list" className="space-y-6">
         {/* Overall Progress */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
@@ -280,7 +296,17 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
             </div>
           )}
         </div>
-      </CardContent>
+            </TabsContent>
+
+            <TabsContent value="flow">
+              <MilestoneDependencyFlow 
+                milestones={relevantMilestones}
+                onMilestoneClick={(milestone) => handleEditMilestone(milestone)}
+              />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Completion Dialog */}
       <Dialog open={!!completingMilestone} onOpenChange={(open) => !open && handleCancelComplete()}>
@@ -471,6 +497,6 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 }
