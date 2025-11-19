@@ -93,6 +93,64 @@ export function useIndicators(initiativeId: string | undefined) {
     },
   });
 
+  const updateIndicator = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Indicator> }) => {
+      const { data, error } = await supabase
+        .from("indicators")
+        .update({
+          name: updates.name,
+          schedule: updates.schedule,
+          target_value: updates.target_value,
+          source: updates.source,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });
+      toast({
+        title: "Indicator updated",
+        description: "Indicator has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating indicator",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteIndicator = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("indicators")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });
+      toast({
+        title: "Indicator deleted",
+        description: "Indicator has been removed.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting indicator",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const addIndicatorValue = useMutation({
     mutationFn: async (value: Omit<IndicatorValue, "id">) => {
       const { data, error } = await supabase
@@ -125,8 +183,12 @@ export function useIndicators(initiativeId: string | undefined) {
     indicatorValues: indicatorValues || [],
     isLoading,
     createIndicator: createIndicator.mutate,
+    updateIndicator: updateIndicator.mutate,
+    deleteIndicator: deleteIndicator.mutate,
     addIndicatorValue: addIndicatorValue.mutate,
     isCreating: createIndicator.isPending,
+    isUpdating: updateIndicator.isPending,
+    isDeleting: deleteIndicator.isPending,
     isAddingValue: addIndicatorValue.isPending,
   };
 }
