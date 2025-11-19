@@ -5,6 +5,8 @@ import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import { FidelityDashboard } from "@/components/FidelityDashboard";
 import { ObservationCalendar } from "@/components/ObservationCalendar";
 import { ConductObservationDialog } from "@/components/ConductObservationDialog";
+import { FidelityChecklistTemplates } from "@/components/FidelityChecklistTemplates";
+import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
 import { Button } from "@/components/ui/button";
 
 interface FidelityMonitoringPlanProps {
@@ -14,6 +16,7 @@ interface FidelityMonitoringPlanProps {
 
 export function FidelityMonitoringPlan({ activeIngredients, initiativeId }: FidelityMonitoringPlanProps) {
   const [conductDialogOpen, setConductDialogOpen] = useState(false);
+  const { createChecklist } = useFidelityChecklists(initiativeId);
 
   return (
     <div className="space-y-6">
@@ -51,6 +54,13 @@ export function FidelityMonitoringPlan({ activeIngredients, initiativeId }: Fide
         </TabsContent>
 
         <TabsContent value="plan" className="space-y-6 mt-6">
+          {/* Fidelity Checklist Templates */}
+          <FidelityChecklistTemplates
+            activeIngredients={activeIngredients}
+            onApplyTemplate={createChecklist}
+            initiativeId={initiativeId}
+          />
+
           {/* Static monitoring plan content for reference */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Observation Schedule Framework */}
