@@ -8,11 +8,11 @@ const corsHeaders = {
 
 const requestSchema = z.object({
   decisionBrief: z.object({
-    problem_statement: z.string().max(2000),
-    target_group: z.string().max(500),
-    goals: z.string().max(5000).optional(),
-    evidence_base: z.string().max(2000).optional(),
-    equity_notes: z.string().max(2000).optional(),
+    problem_statement: z.string().max(5000),
+    target_group: z.string().max(1000),
+    goals: z.string().max(10000).optional(),
+    evidence_base: z.string().max(5000).optional(),
+    equity_notes: z.string().max(5000).optional(),
     feasibility_factors: z.any().optional(),
     root_causes: z.array(z.string()).optional(),
     feasibility_score: z.number().nullable().optional(),
