@@ -5,6 +5,7 @@ import { Users, Lightbulb, Plus, Edit, Loader2 } from "lucide-react";
 import { CommunicationPlan } from "@/components/CommunicationPlan";
 import { PDRecommendations } from "@/components/PDRecommendations";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { usePDActivities } from "@/hooks/usePDActivities";
 import { useToast } from "@/hooks/use-toast";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { PDActivity } from "@/hooks/usePDActivities";
@@ -37,22 +38,45 @@ export function TeamCapacitySection({
   onGeneratePD,
 }: TeamCapacitySectionProps) {
   const { activeIngredients } = useActiveIngredients(initiativeId);
+  const { createActivity } = usePDActivities(initiativeId);
   const { toast } = useToast();
 
   const handleApplyPDRecommendations = async (recommendations: any[]) => {
-    try {
-      for (const activity of recommendations) {
-        await onAddPDActivity(activity);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const activity of recommendations) {
+      try {
+        await createActivity({
+          activity_type: activity.activity_type,
+          title: activity.title,
+          description: activity.description,
+          facilitator: activity.facilitator,
+          target_audience: activity.target_audience,
+          scheduled_date: activity.scheduled_date,
+          duration_minutes: activity.duration_minutes,
+          completion_status: "planned",
+          attendance_count: activity.attendance_count,
+          fidelity_focus: activity.fidelity_focus,
+        });
+        successCount++;
+      } catch (error) {
+        console.error("Error creating PD activity:", error);
+        errorCount++;
       }
+    }
+
+    if (successCount > 0) {
       toast({
         title: "PD activities created",
-        description: `Successfully added ${recommendations.length} professional development activities.`,
+        description: `Successfully added ${successCount} professional development ${successCount === 1 ? 'activity' : 'activities'}.`,
       });
-    } catch (error) {
-      console.error("Error applying PD recommendations:", error);
+    }
+
+    if (errorCount > 0) {
       toast({
-        title: "Error",
-        description: "Failed to create some PD activities.",
+        title: "Some activities failed",
+        description: `Failed to create ${errorCount} ${errorCount === 1 ? 'activity' : 'activities'}.`,
         variant: "destructive",
       });
     }

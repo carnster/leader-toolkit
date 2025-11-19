@@ -8,6 +8,7 @@ import { ImplementationStrategyRecommendations } from "@/components/Implementati
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
+import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useToast } from "@/hooks/use-toast";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
@@ -25,7 +26,7 @@ interface StrategicFoundationSectionProps {
   onEditIngredient: (ingredient: ActiveIngredient) => void;
   onEditStrategy: (strategy: ImplementationStrategy) => void;
   onDeleteStrategy: (id: string) => void;
-  onAddStrategy: (strategy?: Partial<ImplementationStrategy>) => void;
+  onAddStrategy: () => void;
 }
 
 export function StrategicFoundationSection({
@@ -45,28 +46,43 @@ export function StrategicFoundationSection({
 }: StrategicFoundationSectionProps) {
   const [showERICLibrary, setShowERICLibrary] = useState(false);
   const { decisionBrief } = useDecisionBrief(initiativeId);
+  const { createStrategy } = useImplementationStrategies(initiativeId);
   const { toast } = useToast();
 
   const handleApplyStrategyRecommendation = async (recommendation: any) => {
-    // Map the ERIC category names from recommendations to the database enum values
-    const ericCategoryMap: Record<string, "evaluative_iterative" | "provide_interactive_assistance" | "adapt_practice" | "develop_stakeholder_relationships" | "train_educate" | "support_clinicians" | "engage_consumers" | "use_financial_strategies" | "change_infrastructure"> = {
-      evaluative_iterative: "evaluative_iterative",
-      provide_interactive_assistance: "provide_interactive_assistance",
-      adapt_practice: "adapt_practice",
-      develop_stakeholder_relationships: "develop_stakeholder_relationships",
-      train_educate: "train_educate",
-      support_clinicians: "support_clinicians",
-      engage_consumers: "engage_consumers",
-      use_financial_strategies: "use_financial_strategies",
-      change_infrastructure: "change_infrastructure"
-    };
-    
-    const mappedStrategy = {
-      ...recommendation,
-      eric_category: ericCategoryMap[recommendation.eric_category] || recommendation.eric_category
-    };
-    
-    onAddStrategy(mappedStrategy);
+    try {
+      // Map the ERIC category names from recommendations to the database enum values
+      const ericCategoryMap: Record<string, "evaluative_iterative" | "provide_interactive_assistance" | "adapt_practice" | "develop_stakeholder_relationships" | "train_educate" | "support_clinicians" | "engage_consumers" | "use_financial_strategies" | "change_infrastructure"> = {
+        evaluative_iterative: "evaluative_iterative",
+        provide_interactive_assistance: "provide_interactive_assistance",
+        adapt_practice: "adapt_practice",
+        develop_stakeholder_relationships: "develop_stakeholder_relationships",
+        train_educate: "train_educate",
+        support_clinicians: "support_clinicians",
+        engage_consumers: "engage_consumers",
+        use_financial_strategies: "use_financial_strategies",
+        change_infrastructure: "change_infrastructure"
+      };
+      
+      await createStrategy({
+        strategy_name: recommendation.strategy_name,
+        eric_category: ericCategoryMap[recommendation.eric_category] || recommendation.eric_category,
+        description: recommendation.description,
+        target_barrier: recommendation.target_barrier,
+        timeline: recommendation.timeline,
+        resources_needed: recommendation.resources_needed,
+        success_indicators: recommendation.success_indicators,
+        responsible_party: recommendation.responsible_party,
+        status: "planned",
+      });
+    } catch (error) {
+      console.error("Error creating strategy:", error);
+      toast({
+        title: "Error creating strategy",
+        description: error instanceof Error ? error.message : "Failed to create strategy.",
+        variant: "destructive",
+      });
+    }
   };
 
   const coreIngredients = activeIngredients.filter((ing) => ing.is_core);
@@ -234,7 +250,7 @@ export function StrategicFoundationSection({
                   )}
                 </Button>
               )}
-              <Button onClick={() => onAddStrategy()} variant="outline">
+              <Button onClick={onAddStrategy} variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Strategy
               </Button>
