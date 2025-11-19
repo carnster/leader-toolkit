@@ -6,12 +6,13 @@ export interface TimelineMilestone {
   id: string;
   initiative_id: string;
   phase: string;
+  sub_stage: string | null;
   milestone: string;
   target_date: string;
   status: "pending" | "in_progress" | "completed" | "at_risk";
   completion_date: string | null;
   notes: string | null;
-  sub_stage: string | null;
+  owner_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,10 +44,12 @@ export function useTimelineMilestones(initiativeId: string | undefined) {
         .insert({
           initiative_id: initiativeId!,
           phase: milestone.phase!,
+          sub_stage: milestone.sub_stage,
           milestone: milestone.milestone!,
           target_date: milestone.target_date!,
           status: milestone.status || "pending",
           notes: milestone.notes,
+          owner_id: milestone.owner_id,
         })
         .select()
         .single();

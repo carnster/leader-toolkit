@@ -13,12 +13,14 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useCommunicationActivities, CommunicationActivity } from "@/hooks/useCommunicationActivities";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TeamMember } from "@/hooks/useTeamMembers";
 
 interface CommunicationActivityDialogProps {
   activity?: CommunicationActivity;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
+  teamMembers?: TeamMember[];
 }
 
 const STAKEHOLDER_GROUPS = [
@@ -51,7 +53,7 @@ const CHANNELS = [
   "Other"
 ];
 
-export function CommunicationActivityDialog({ activity, open, onOpenChange, initiativeId }: CommunicationActivityDialogProps) {
+export function CommunicationActivityDialog({ activity, open, onOpenChange, initiativeId, teamMembers = [] }: CommunicationActivityDialogProps) {
   const { createActivity, updateActivity, deleteActivity, isCreating, isUpdating, isDeleting } = useCommunicationActivities(initiativeId);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -63,6 +65,7 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
     completed: activity?.completed || false,
     completed_date: activity?.completed_date ? new Date(activity.completed_date) : undefined,
     notes: activity?.notes || "",
+    assigned_to_id: activity?.assigned_to_id || "",
   });
 
   useEffect(() => {
@@ -76,6 +79,7 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
         completed: activity.completed,
         completed_date: activity.completed_date ? new Date(activity.completed_date) : undefined,
         notes: activity.notes || "",
+        assigned_to_id: activity.assigned_to_id || "",
       });
     } else {
       setFormData({
@@ -87,6 +91,7 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
         completed: false,
         completed_date: undefined,
         notes: "",
+        assigned_to_id: "",
       });
     }
   }, [activity, open]);
@@ -101,6 +106,7 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
       completed: formData.completed,
       completed_date: formData.completed && formData.completed_date ? format(formData.completed_date, "yyyy-MM-dd") : null,
       notes: formData.notes || null,
+      assigned_to_id: formData.assigned_to_id || null,
     };
 
     if (activity) {
@@ -218,6 +224,26 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assigned_to_id">Assigned To</Label>
+              <Select 
+                value={formData.assigned_to_id || ""} 
+                onValueChange={(value) => setFormData({ ...formData, assigned_to_id: value || "" })}
+              >
+                <SelectTrigger id="assigned_to_id">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {teamMembers.map(member => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name || member.profiles?.full_name || "Unnamed Member"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-4 p-4 rounded-lg border">

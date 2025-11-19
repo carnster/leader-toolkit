@@ -581,6 +581,7 @@ export default function Plan() {
               if (!open) setEditingMilestone(null);
             }}
             initiativeId={effectiveInitiativeId}
+            teamMembers={teamMembers}
           />
           
           <RiskDialog
@@ -591,6 +592,7 @@ export default function Plan() {
               if (!open) setEditingRisk(null);
             }}
             initiativeId={effectiveInitiativeId}
+            teamMembers={teamMembers}
           />
           
           <PDActivityDialog
@@ -617,6 +619,7 @@ export default function Plan() {
                 createStrategy(strategy);
               }
             }}
+            teamMembers={teamMembers}
           />
         </>
       )}

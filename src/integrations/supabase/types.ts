@@ -175,6 +175,7 @@ export type Database = {
       communication_activities: {
         Row: {
           activity_type: string
+          assigned_to_id: string | null
           channel: string | null
           completed: boolean
           completed_date: string | null
@@ -189,6 +190,7 @@ export type Database = {
         }
         Insert: {
           activity_type: string
+          assigned_to_id?: string | null
           channel?: string | null
           completed?: boolean
           completed_date?: string | null
@@ -203,6 +205,7 @@ export type Database = {
         }
         Update: {
           activity_type?: string
+          assigned_to_id?: string | null
           channel?: string | null
           completed?: boolean
           completed_date?: string | null
@@ -216,6 +219,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "communication_activities_assigned_to_id_fkey"
+            columns: ["assigned_to_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "communication_activities_initiative_id_fkey"
             columns: ["initiative_id"]
@@ -491,6 +501,13 @@ export type Database = {
             referencedRelation: "initiatives"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "implementation_risks_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
         ]
       }
       implementation_strategies: {
@@ -502,6 +519,7 @@ export type Database = {
           initiative_id: string
           resources_needed: string | null
           responsible_party: string | null
+          responsible_party_id: string | null
           status: string
           strategy_name: string
           success_indicators: string | null
@@ -517,6 +535,7 @@ export type Database = {
           initiative_id: string
           resources_needed?: string | null
           responsible_party?: string | null
+          responsible_party_id?: string | null
           status?: string
           strategy_name: string
           success_indicators?: string | null
@@ -532,6 +551,7 @@ export type Database = {
           initiative_id?: string
           resources_needed?: string | null
           responsible_party?: string | null
+          responsible_party_id?: string | null
           status?: string
           strategy_name?: string
           success_indicators?: string | null
@@ -539,7 +559,15 @@ export type Database = {
           timeline?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "implementation_strategies_responsible_party_id_fkey"
+            columns: ["responsible_party_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       indicator_values: {
         Row: {
@@ -1111,6 +1139,7 @@ export type Database = {
           initiative_id: string
           milestone: string
           notes: string | null
+          owner_id: string | null
           phase: string
           status: string
           sub_stage: string | null
@@ -1124,6 +1153,7 @@ export type Database = {
           initiative_id: string
           milestone: string
           notes?: string | null
+          owner_id?: string | null
           phase: string
           status?: string
           sub_stage?: string | null
@@ -1137,6 +1167,7 @@ export type Database = {
           initiative_id?: string
           milestone?: string
           notes?: string | null
+          owner_id?: string | null
           phase?: string
           status?: string
           sub_stage?: string | null
@@ -1149,6 +1180,13 @@ export type Database = {
             columns: ["initiative_id"]
             isOneToOne: false
             referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_milestones_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
             referencedColumns: ["id"]
           },
         ]

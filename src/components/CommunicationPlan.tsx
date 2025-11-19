@@ -241,6 +241,7 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initiativeId={initiativeId}
+        teamMembers={teamMembers}
       />
     </>
   );

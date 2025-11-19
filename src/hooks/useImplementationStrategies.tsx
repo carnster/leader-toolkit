@@ -10,6 +10,7 @@ export interface ImplementationStrategy {
   description: string | null;
   target_barrier: string | null;
   responsible_party: string | null;
+  responsible_party_id: string | null;
   timeline: string | null;
   resources_needed: string | null;
   success_indicators: string | null;
@@ -49,6 +50,7 @@ export function useImplementationStrategies(initiativeId: string | undefined) {
           description: strategy.description,
           target_barrier: strategy.target_barrier,
           responsible_party: strategy.responsible_party,
+          responsible_party_id: strategy.responsible_party_id,
           timeline: strategy.timeline,
           resources_needed: strategy.resources_needed,
           success_indicators: strategy.success_indicators,
