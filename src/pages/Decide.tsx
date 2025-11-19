@@ -28,6 +28,7 @@ import { TimelineVisualization } from "@/components/TimelineVisualization";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
 import { DecideStepperNav } from "@/components/DecideStepperNav";
 import { MultiItemInput } from "@/components/MultiItemInput";
+import { TimelineItemInput } from "@/components/TimelineItemInput";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target pupils defined", required: true },
@@ -1381,18 +1382,15 @@ export default function Decide() {
             <div className="space-y-2">
               <Label htmlFor="timeline">Measurement Timeline</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Add timeline activities one at a time. Examples: Weekly fidelity checks, Half-termly review meetings, Termly outcome reporting to governors
+                Add timeline activities with their frequency. Select from common frequencies or choose custom.
               </p>
-              <MultiItemInput
+              <TimelineItemInput
                 items={measurementTimeline}
                 onChange={(items) => {
                   setMeasurementTimeline(items);
                   isUserEditingRef.current = false;
                   triggerAutoSave();
                 }}
-                placeholder="e.g., Weekly fidelity checks"
-                addButtonText="Add Timeline Activity"
-                itemClassName="bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
               />
             </div>
             
