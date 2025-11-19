@@ -25,6 +25,7 @@ import { TeamCapacitySection } from "@/components/plan/TeamCapacitySection";
 import { CommunicationSection } from "@/components/plan/CommunicationSection";
 import { ExecutionPlanningSection } from "@/components/plan/ExecutionPlanningSection";
 import { QualityAssuranceSection } from "@/components/plan/QualityAssuranceSection";
+import { TeamDashboard } from "@/components/TeamDashboard";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
@@ -465,6 +466,17 @@ export default function Plan() {
               setPdDialogOpen(true);
             }}
             onGeneratePD={generatePDActivities}
+          />
+        );
+
+      case "team-dashboard":
+        return (
+          <TeamDashboard
+            teamMembers={teamMembers}
+            strategies={strategies}
+            milestones={milestones}
+            risks={risks}
+            communicationActivities={communicationActivities}
           />
         );
 

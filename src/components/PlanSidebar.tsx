@@ -162,6 +162,15 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
+                          onClick={() => setSection("team-dashboard")}
+                          className={getNavClass("team-dashboard")}
+                        >
+                          <Target className="h-3 w-3" />
+                          <span className="text-sm">Team Dashboard</span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton
                           onClick={() => setSection("team")}
                           className={getNavClass("team")}
                         >
