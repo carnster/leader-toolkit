@@ -63,8 +63,8 @@ export function ResourceAllocation({ initiativeId }: ResourceAllocationProps) {
 
       if (calculated.length === 0) {
         toast({
-          title: "No assignments found",
-          description: "Assign team members to strategies, milestones, risks, PD activities, or communication activities first.",
+          title: "No Team Member Assignments",
+          description: "To calculate time commitments, assign team members to your planning activities. Open each Strategy, Milestone, Risk, PD Activity, and Communication Activity and select a team member from the dropdown.",
           variant: "destructive",
         });
         return;
