@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle } from "lucide-react";
-import { format } from "date-fns";
+import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle, CalendarDays } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { CommunicationActivityDialog } from "./CommunicationActivityDialog";
 import { CommunicationRecommendations } from "./CommunicationRecommendations";
@@ -12,6 +12,8 @@ import type { CommunicationActivity } from "@/hooks/useCommunicationActivities";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useToast } from "@/hooks/use-toast";
+import { PlanCalendarView } from "./PlanCalendarView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CommunicationPlanProps {
   initiativeId: string;
@@ -75,6 +77,17 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
   }, {} as Record<string, CommunicationActivity[]>);
 
   const completedCount = activities.filter(a => a.completed).length;
+  
+  // Convert activities to calendar events
+  const calendarEvents = activities
+    .filter(a => a.scheduled_date)
+    .map(a => ({
+      id: a.id,
+      title: a.description,
+      date: parseISO(a.scheduled_date!),
+      type: "communication" as const,
+      status: a.completed ? "completed" : "scheduled"
+    }));
   
   return (
     <>
@@ -233,6 +246,11 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
               </div>
             </div>
           )}
+            </TabsContent>
+            
+            <TabsContent value="calendar" className="mt-0">
+              <PlanCalendarView events={calendarEvents} />
+            </TabsContent>
         </CardContent>
       </Card>
 

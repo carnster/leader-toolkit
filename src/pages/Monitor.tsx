@@ -31,6 +31,8 @@ import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useIndicators, Indicator } from "@/hooks/useIndicators";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { FidelityMonitoringPlan } from "@/components/FidelityMonitoringPlan";
+import { TimelineTracker } from "@/components/TimelineTracker";
 
 const mockIndicators = [
   { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
@@ -150,11 +152,11 @@ export default function Monitor() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <BarChart3 className="h-4 w-4" />
-          <span>Within Implement Stage: Monitor & Adjust</span>
+          <span>Stage 4: Monitor & Adjust</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Monitor & Adjust</h1>
         <p className="text-muted-foreground mt-2">
-          Assess and adjust continuously using data and improvement cycles
+          Track implementation progress, assess fidelity, and use data to drive continuous improvement
         </p>
         
         {/* Indicator Import Banner */}
@@ -178,6 +180,22 @@ export default function Monitor() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Fidelity Monitoring Section - Moved from Plan stage */}
+      <Card className="border-primary/30">
+        <CardHeader>
+          <CardTitle>Fidelity Monitoring & Observation</CardTitle>
+          <CardDescription>
+            Conduct observations, track fidelity data, and manage your monitoring schedule
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FidelityMonitoringPlan activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />
+        </CardContent>
+      </Card>
+      
+      {/* Timeline Tracker */}
+      <TimelineTracker initiativeId={effectiveInitiativeId} stage="monitor" />
 
       {/* Implementation Phase Status */}
       {currentSubStage && currentDetails && (

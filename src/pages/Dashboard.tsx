@@ -15,6 +15,7 @@ import { BudgetTrackingChart } from "@/components/dashboard/BudgetTrackingChart"
 import { InitiativeHealthWidget } from "@/components/dashboard/InitiativeHealthWidget";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TestNotifications } from "@/components/TestNotifications";
+import { TeamDashboard } from "@/components/TeamDashboard";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();

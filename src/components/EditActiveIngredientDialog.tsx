@@ -114,19 +114,30 @@ export function EditActiveIngredientDialog({ ingredient, open, onOpenChange, ini
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Type</Label>
-                <Select
-                  value={formData.is_core ? "core" : "adaptable"}
-                  onValueChange={(value) => setFormData({ ...formData, is_core: value === "core" })}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="core">Core (Non-negotiable)</SelectItem>
-                    <SelectItem value="adaptable">Adaptable</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="type">Fidelity Status</Label>
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant={formData.is_core ? "destructive" : "outline"}
+                    onClick={() => setFormData({ ...formData, is_core: true })}
+                    className="flex-1"
+                  >
+                    CORE (Non-Negotiable)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!formData.is_core ? "default" : "outline"}
+                    onClick={() => setFormData({ ...formData, is_core: false })}
+                    className="flex-1"
+                  >
+                    ADAPTABLE
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formData.is_core 
+                    ? "🔒 CORE ingredients must be implemented as designed - essential to effectiveness"
+                    : "⚙️ ADAPTABLE ingredients can be adjusted to fit local context while maintaining quality"}
+                </p>
               </div>
             </div>
 
