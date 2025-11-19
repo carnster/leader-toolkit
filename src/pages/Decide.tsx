@@ -1,10 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText } from "lucide-react";
+import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText, Calendar, Flag } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -1343,75 +1345,178 @@ export default function Decide() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Summary Dashboard */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 dark:border-blue-800">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Leading Indicators</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{leadingIndicators.length}</p>
+                    </div>
+                    <Flag className="h-8 w-8 text-blue-600 dark:text-blue-400 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Lagging Indicators</p>
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">{laggingIndicators.length}</p>
+                    </div>
+                    <Target className="h-8 w-8 text-green-600 dark:text-green-400 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-purple-200 bg-purple-50/50 dark:bg-purple-950/20 dark:border-purple-800">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Data Activities</p>
+                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{measurementTimeline.length}</p>
+                    </div>
+                    <Calendar className="h-8 w-8 text-purple-600 dark:text-purple-400 opacity-50" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Guide */}
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <h4 className="font-medium mb-2">What to do in this step:</h4>
+              <h4 className="font-medium mb-2">Quick Guide:</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li><strong>Leading indicators:</strong> Early signals that show implementation is happening (e.g., attendance, fidelity checks)</li>
-                <li><strong>Lagging indicators:</strong> Outcome measures showing the impact (e.g., assessment results, behavior data)</li>
-                <li>Create a timeline for when you'll measure each indicator</li>
-                <li>Ensure metrics are specific, measurable, and aligned to your problem</li>
+                <li><strong>Leading indicators:</strong> Early signals showing implementation is happening</li>
+                <li><strong>Lagging indicators:</strong> Outcome measures showing ultimate impact</li>
+                <li><strong>Data activities:</strong> How and when you'll collect measurement data</li>
               </ul>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="leading">Leading Indicators (early signals)</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Add indicators with their measurement frequency. Examples: Teacher lesson plan completion, Student attendance at interventions, Fidelity observations
-              </p>
-              <TimelineItemInput
-                items={leadingIndicators}
-                onChange={(items) => {
-                  setLeadingIndicators(items);
-                  isUserEditingRef.current = false;
-                  triggerAutoSave();
-                }}
-                placeholder="e.g., Teacher completion of lesson plans"
-                itemClassName="bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-800"
-                itemTypeName="leading indicator"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="lagging">Lagging Indicators (outcome measures)</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Add indicators with their measurement frequency. Examples: End of half-term assessments, Student confidence surveys, Progress data
-              </p>
-              <TimelineItemInput
-                items={laggingIndicators}
-                onChange={(items) => {
-                  setLaggingIndicators(items);
-                  isUserEditingRef.current = false;
-                  triggerAutoSave();
-                }}
-                placeholder="e.g., End of half-term assessments"
-                itemClassName="bg-green-50 text-green-900 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800"
-                itemTypeName="lagging indicator"
-              />
-            </div>
+            {/* Tabbed Interface */}
+            <Tabs defaultValue="leading" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="leading" className="gap-2">
+                  <Flag className="h-4 w-4" />
+                  Leading
+                  {leadingIndicators.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {leadingIndicators.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="lagging" className="gap-2">
+                  <Target className="h-4 w-4" />
+                  Lagging
+                  {laggingIndicators.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {laggingIndicators.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="activities" className="gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Activities
+                  {measurementTimeline.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      {measurementTimeline.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="space-y-2">
-              <Label htmlFor="timeline">Data Collection Activities</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                How will you collect measurement data? Add activities with their frequency. Examples: Weekly fidelity walkthroughs, Monthly student surveys, Termly standardized assessments
-              </p>
-              <TimelineItemInput
-                items={measurementTimeline}
-                onChange={(items) => {
-                  setMeasurementTimeline(items);
-                  isUserEditingRef.current = false;
-                  triggerAutoSave();
-                }}
-                placeholder="e.g., Weekly fidelity observations"
-                itemClassName="bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
-                itemTypeName="data collection activity"
-              />
-            </div>
+              <TabsContent value="leading" className="space-y-4 mt-4">
+                <div className="rounded-lg border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 p-4">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                    What are Leading Indicators?
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Early signals that show if implementation is on track. These help you catch problems quickly and adjust before they impact outcomes.
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                    Examples: Teacher lesson plan completion, Student attendance at interventions, Fidelity observations
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="leading">Add Leading Indicators</Label>
+                  <TimelineItemInput
+                    items={leadingIndicators}
+                    onChange={(items) => {
+                      setLeadingIndicators(items);
+                      isUserEditingRef.current = false;
+                      triggerAutoSave();
+                    }}
+                    placeholder="e.g., Teacher completion of lesson plans (Weekly)"
+                    itemClassName="bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-800"
+                    itemTypeName="leading indicator"
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="lagging" className="space-y-4 mt-4">
+                <div className="rounded-lg border-l-4 border-green-500 bg-green-50/50 dark:bg-green-950/20 p-4">
+                  <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                    What are Lagging Indicators?
+                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    Outcome measures that show the ultimate impact of your initiative. These confirm whether you're achieving your goals but take longer to see results.
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                    Examples: End of half-term assessments, Student confidence surveys, Behavior incident rates
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lagging">Add Lagging Indicators</Label>
+                  <TimelineItemInput
+                    items={laggingIndicators}
+                    onChange={(items) => {
+                      setLaggingIndicators(items);
+                      isUserEditingRef.current = false;
+                      triggerAutoSave();
+                    }}
+                    placeholder="e.g., End of half-term assessments (Termly)"
+                    itemClassName="bg-green-50 text-green-900 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800"
+                    itemTypeName="lagging indicator"
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="activities" className="space-y-4 mt-4">
+                <div className="rounded-lg border-l-4 border-purple-500 bg-purple-50/50 dark:bg-purple-950/20 p-4">
+                  <p className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">
+                    What are Data Collection Activities?
+                  </p>
+                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                    The specific methods and schedules for gathering your indicator data. These are the practical steps for how you'll track progress.
+                  </p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                    Examples: Weekly fidelity walkthroughs, Monthly student surveys, Termly standardized assessments
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="timeline">Add Data Collection Activities</Label>
+                  <TimelineItemInput
+                    items={measurementTimeline}
+                    onChange={(items) => {
+                      setMeasurementTimeline(items);
+                      isUserEditingRef.current = false;
+                      triggerAutoSave();
+                    }}
+                    placeholder="e.g., Weekly fidelity observations"
+                    itemClassName="bg-purple-50 text-purple-900 border-purple-200 dark:bg-purple-950 dark:text-purple-100 dark:border-purple-800"
+                    itemTypeName="data collection activity"
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
             
-            {/* Timeline Visualization */}
-            <TimelineVisualization 
-              measurementTimeline={measurementTimeline}
-              leadingIndicators={leadingIndicators}
-              laggingIndicators={laggingIndicators}
-            />
+            {/* Timeline Visualization - More prominent */}
+            {(leadingIndicators.length > 0 || laggingIndicators.length > 0 || measurementTimeline.length > 0) && (
+              <TimelineVisualization 
+                measurementTimeline={measurementTimeline}
+                leadingIndicators={leadingIndicators}
+                laggingIndicators={laggingIndicators}
+              />
+            )}
             
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
