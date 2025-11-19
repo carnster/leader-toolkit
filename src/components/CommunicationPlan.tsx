@@ -136,121 +136,135 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading activities...</p>
-          ) : activities.length === 0 ? (
-            <div className="text-center py-8 space-y-3">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
-              <div>
-                <h3 className="font-medium text-lg mb-1">No communication activities yet</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Start planning your stakeholder engagement strategy
-                </p>
-                <Button onClick={handleAddActivity} variant="outline">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Activity
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedActivities).map(([group, groupActivities]) => (
-                <div key={group}>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    {group}
-                  </h4>
-                  <div className="space-y-2">
-                    {groupActivities.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="p-3 rounded-lg border hover:bg-accent/50 transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={activity.completed}
-                            onCheckedChange={() => handleToggleComplete(activity)}
-                            className="mt-1"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1">
-                                <p className={`font-medium text-sm ${activity.completed ? 'line-through text-muted-foreground' : ''}`}>
-                                  {activity.description}
-                                </p>
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {activity.activity_type}
-                                  </Badge>
-                                  {activity.channel && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {activity.channel}
-                                    </Badge>
-                                  )}
-                                  {activity.scheduled_date && (
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      {format(new Date(activity.scheduled_date), "MMM d, yyyy")}
-                                    </span>
-                                  )}
-                                  {activity.completed && activity.completed_date && (
-                                    <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                                      <CheckCircle2 className="h-3 w-3" />
-                                      Completed {format(new Date(activity.completed_date), "MMM d")}
-                                    </span>
-                                  )}
-                                </div>
-                                {activity.notes && (
-                                  <p className="text-xs text-muted-foreground mt-2">{activity.notes}</p>
-                                )}
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditActivity(activity)}
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+          <Tabs defaultValue="list" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="list">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Activity List
+              </TabsTrigger>
+              <TabsTrigger value="calendar">
+                <CalendarDays className="mr-2 h-4 w-4" />
+                Calendar View
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="list" className="mt-0 space-y-6">
+              {isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading activities...</p>
+              ) : activities.length === 0 ? (
+                <div className="text-center py-8 space-y-3">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <div>
+                    <h3 className="font-medium text-lg mb-1">No communication activities yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Start planning your stakeholder engagement strategy
+                    </p>
+                    <Button onClick={handleAddActivity} variant="outline">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Your First Activity
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedActivities).map(([group, groupActivities]) => (
+                    <div key={group}>
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        {group}
+                      </h4>
+                      <div className="space-y-2">
+                        {groupActivities.map((activity) => (
+                          <div
+                            key={activity.id}
+                            className="p-3 rounded-lg border hover:bg-accent/50 transition-colors"
+                          >
+                            <div className="flex items-start gap-3">
+                              <Checkbox
+                                checked={activity.completed}
+                                onCheckedChange={() => handleToggleComplete(activity)}
+                                className="mt-1"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <p className={`font-medium text-sm ${activity.completed ? 'line-through text-muted-foreground' : ''}`}>
+                                      {activity.description}
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                      <Badge variant="outline" className="text-xs">
+                                        {activity.activity_type}
+                                      </Badge>
+                                      {activity.channel && (
+                                        <Badge variant="secondary" className="text-xs">
+                                          {activity.channel}
+                                        </Badge>
+                                      )}
+                                      {activity.scheduled_date && (
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                          <Calendar className="h-3 w-3" />
+                                          {format(new Date(activity.scheduled_date), "MMM d, yyyy")}
+                                        </span>
+                                      )}
+                                      {activity.completed && activity.completed_date && (
+                                        <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                                          <CheckCircle2 className="h-3 w-3" />
+                                          Completed {format(new Date(activity.completed_date), "MMM d")}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {activity.notes && (
+                                      <p className="text-xs text-muted-foreground mt-2">{activity.notes}</p>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditActivity(activity)}
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-          {/* Reference Guide - shown when there are activities */}
-          {activities.length > 0 && (
-            <div className="pt-6 border-t">
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Communication Best Practices</h4>
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="p-2 rounded text-xs border">
-                  <span className="font-medium">Early Involvement: </span>
-                  <span className="text-muted-foreground">Engage stakeholders in planning</span>
+              {/* Reference Guide - shown when there are activities */}
+              {activities.length > 0 && (
+                <div className="pt-6 border-t">
+                  <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Communication Best Practices</h4>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="p-2 rounded text-xs border">
+                      <span className="font-medium">Early Involvement: </span>
+                      <span className="text-muted-foreground">Engage stakeholders in planning</span>
+                    </div>
+                    <div className="p-2 rounded text-xs border">
+                      <span className="font-medium">Share Successes: </span>
+                      <span className="text-muted-foreground">Celebrate wins and progress</span>
+                    </div>
+                    <div className="p-2 rounded text-xs border">
+                      <span className="font-medium">Transparent Data: </span>
+                      <span className="text-muted-foreground">Share successes and challenges</span>
+                    </div>
+                    <div className="p-2 rounded text-xs border">
+                      <span className="font-medium">Two-way: </span>
+                      <span className="text-muted-foreground">Seek feedback actively</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="p-2 rounded text-xs border">
-                  <span className="font-medium">Share Successes: </span>
-                  <span className="text-muted-foreground">Celebrate wins and progress</span>
-                </div>
-                <div className="p-2 rounded text-xs border">
-                  <span className="font-medium">Transparent Data: </span>
-                  <span className="text-muted-foreground">Share successes and challenges</span>
-                </div>
-                <div className="p-2 rounded text-xs border">
-                  <span className="font-medium">Two-way: </span>
-                  <span className="text-muted-foreground">Seek feedback actively</span>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
             </TabsContent>
             
             <TabsContent value="calendar" className="mt-0">
               <PlanCalendarView events={calendarEvents} />
             </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
