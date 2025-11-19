@@ -36,6 +36,7 @@ interface PlanSidebarProps {
     timeline: number;
     risks: number;
     pd: number;
+    communication: number;
   };
 }
 
@@ -47,6 +48,7 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
   
   const [strategicOpen, setStrategicOpen] = useState(true);
   const [teamOpen, setTeamOpen] = useState(true);
+  const [communicationOpen, setCommunicationOpen] = useState(true);
   const [executionOpen, setExecutionOpen] = useState(true);
   const [qualityOpen, setQualityOpen] = useState(true);
 
@@ -186,6 +188,33 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                           )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
+                    </div>
+                  </CollapsibleContent>
+                )}
+              </Collapsible>
+
+              {/* Communication & Engagement */}
+              <Collapsible open={communicationOpen} onOpenChange={setCommunicationOpen}>
+                <CollapsibleTrigger className="w-full">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton className="hover:bg-muted/50">
+                      <MessageSquare className="h-4 w-4" />
+                      {!collapsed && (
+                        <>
+                          <span>Communication & Engagement</span>
+                          {communicationOpen ? (
+                            <ChevronDown className="ml-auto h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="ml-auto h-4 w-4" />
+                          )}
+                        </>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </CollapsibleTrigger>
+                {!collapsed && (
+                  <CollapsibleContent>
+                    <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
                           onClick={() => setSection("communication")}
@@ -193,6 +222,11 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                         >
                           <MessageSquare className="h-3 w-3" />
                           <span className="text-sm">Communication Plan</span>
+                          {hasContent(completionCounts.communication) && (
+                            <Badge variant="secondary" className="ml-auto text-xs">
+                              {completionCounts.communication}
+                            </Badge>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </div>

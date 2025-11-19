@@ -7,6 +7,7 @@ import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { usePDActivities } from "@/hooks/usePDActivities";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,6 +22,7 @@ import { PlanSidebar } from "@/components/PlanSidebar";
 import { OverviewSection } from "@/components/plan/OverviewSection";
 import { StrategicFoundationSection } from "@/components/plan/StrategicFoundationSection";
 import { TeamCapacitySection } from "@/components/plan/TeamCapacitySection";
+import { CommunicationSection } from "@/components/plan/CommunicationSection";
 import { ExecutionPlanningSection } from "@/components/plan/ExecutionPlanningSection";
 import { QualityAssuranceSection } from "@/components/plan/QualityAssuranceSection";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
@@ -50,6 +52,7 @@ export default function Plan() {
   const { risks, isLoading: isLoadingRisks, createRisk } = useImplementationRisks(effectiveInitiativeId);
   const { activities, isLoading: isLoadingActivities, createActivity } = usePDActivities(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies, createStrategy, updateStrategy, deleteStrategy } = useImplementationStrategies(effectiveInitiativeId);
+  const { activities: communicationActivities, isLoading: isLoadingCommunication } = useCommunicationActivities(effectiveInitiativeId);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -433,7 +436,6 @@ export default function Plan() {
 
       case "team":
       case "pd":
-      case "communication":
         return (
           <TeamCapacitySection
             initiativeId={effectiveInitiativeId}
@@ -465,6 +467,9 @@ export default function Plan() {
             onGeneratePD={generatePDActivities}
           />
         );
+
+      case "communication":
+        return <CommunicationSection initiativeId={effectiveInitiativeId} />;
 
       case "timeline":
       case "risks":
@@ -520,6 +525,7 @@ export default function Plan() {
             timeline: milestones.length,
             risks: risks.length,
             pd: activities.length,
+            communication: communicationActivities.length,
           }}
         />
 
