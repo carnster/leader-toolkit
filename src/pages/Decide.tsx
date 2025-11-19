@@ -27,6 +27,7 @@ import { DecisionBriefExport } from "@/components/DecisionBriefExport";
 import { TimelineVisualization } from "@/components/TimelineVisualization";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
 import { DecideStepperNav } from "@/components/DecideStepperNav";
+import { MultiItemInput } from "@/components/MultiItemInput";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target pupils defined", required: true },
@@ -70,8 +71,8 @@ export default function Decide() {
   const [chosenApproach, setChosenApproach] = useState("");
   const [evidenceBase, setEvidenceBase] = useState("");
   const [feasibilityScore, setFeasibilityScore] = useState<number | null>(null);
-  const [leadingIndicators, setLeadingIndicators] = useState("");
-  const [laggingIndicators, setLaggingIndicators] = useState("");
+  const [leadingIndicators, setLeadingIndicators] = useState<string[]>([]);
+  const [laggingIndicators, setLaggingIndicators] = useState<string[]>([]);
   const [measurementTimeline, setMeasurementTimeline] = useState("");
   const [goalsEvaluation, setGoalsEvaluation] = useState<any>(null);
   const [isEvaluatingGoals, setIsEvaluatingGoals] = useState(false);
@@ -139,8 +140,8 @@ export default function Decide() {
       setChosenApproach(decisionBrief.chosen_approach || "");
       setEvidenceBase(decisionBrief.evidence_base || "");
       setFeasibilityScore(decisionBrief.feasibility_score || null);
-      setLeadingIndicators(decisionBrief.leading_indicators?.join(", ") || "");
-      setLaggingIndicators(decisionBrief.lagging_indicators?.join(", ") || "");
+      setLeadingIndicators(decisionBrief.leading_indicators || []);
+      setLaggingIndicators(decisionBrief.lagging_indicators || []);
       setMeasurementTimeline(decisionBrief.measurement_timeline || "");
       setGoalsEvaluation(decisionBrief.goals_feedback || null);
       
@@ -163,7 +164,7 @@ export default function Decide() {
   const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
   const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
-  const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
+  const isStep6Complete = leadingIndicators.length > 0 && laggingIndicators.length > 0 && measurementTimeline; // Success Metrics
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
@@ -273,8 +274,8 @@ export default function Decide() {
       evidence_base: evidenceBase,
       feasibility_score: calculatedFeasibilityScore,
       feasibility_factors: feasibilityFactors,
-      leading_indicators: leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : null,
-      lagging_indicators: laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : null,
+      leading_indicators: leadingIndicators.length > 0 ? leadingIndicators : null,
+      lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
       measurement_timeline: measurementTimeline,
       checklist_completed: completionRate === 100,
     });
@@ -503,8 +504,8 @@ export default function Decide() {
         setProblemStatement(brief.problem_statement || "");
         setTargetGroup(brief.target_group || "");
         setMeasurementTimeline(brief.measurement_timeline || "");
-        setLeadingIndicators(brief.leading_indicators?.join(", ") || "");
-        setLaggingIndicators(brief.lagging_indicators?.join(", ") || "");
+        setLeadingIndicators(brief.leading_indicators || []);
+        setLaggingIndicators(brief.lagging_indicators || []);
       }
 
       toast({
@@ -1343,27 +1344,37 @@ export default function Decide() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="leading">Leading Indicators (early signals)</Label>
-              <Textarea
-                id="leading"
-                placeholder="Example: Teacher completion of mastery lesson plans (weekly), Student attendance at intervention sessions (weekly), Fidelity observations using our rubric (fortnightly), Staff confidence surveys (half-termly)"
-                rows={3}
-                value={leadingIndicators}
-                onChange={(e) => setLeadingIndicators(e.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+              <p className="text-sm text-muted-foreground mb-2">
+                Add indicators one at a time. Examples: Teacher completion of mastery lesson plans (weekly), Student attendance at intervention sessions (weekly), Fidelity observations using our rubric (fortnightly)
+              </p>
+              <MultiItemInput
+                items={leadingIndicators}
+                onChange={(items) => {
+                  setLeadingIndicators(items);
+                  isUserEditingRef.current = false;
+                  triggerAutoSave();
+                }}
+                placeholder="e.g., Teacher completion of lesson plans (weekly)"
+                addButtonText="Add Leading Indicator"
+                itemClassName="bg-blue-50 text-blue-900 border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-800"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="lagging">Lagging Indicators (outcome measures)</Label>
-              <Textarea
-                id="lagging"
-                placeholder="Example: End of half-term maths assessments (% at expected standard), Student confidence surveys (termly), Progress data vs autumn baseline, Standardized test scores (summer term)"
-                rows={3}
-                value={laggingIndicators}
-                onChange={(e) => setLaggingIndicators(e.target.value)}
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
+              <p className="text-sm text-muted-foreground mb-2">
+                Add indicators one at a time. Examples: End of half-term maths assessments (% at expected standard), Student confidence surveys (termly), Progress data vs autumn baseline
+              </p>
+              <MultiItemInput
+                items={laggingIndicators}
+                onChange={(items) => {
+                  setLaggingIndicators(items);
+                  isUserEditingRef.current = false;
+                  triggerAutoSave();
+                }}
+                placeholder="e.g., End of half-term assessments (% at expected)"
+                addButtonText="Add Lagging Indicator"
+                itemClassName="bg-green-50 text-green-900 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800"
               />
             </div>
 
@@ -1382,8 +1393,8 @@ export default function Decide() {
             {/* Timeline Visualization */}
             <TimelineVisualization 
               measurementTimeline={measurementTimeline}
-              leadingIndicators={leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : []}
-              laggingIndicators={laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : []}
+              leadingIndicators={leadingIndicators}
+              laggingIndicators={laggingIndicators}
             />
             
             <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
