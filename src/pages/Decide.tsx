@@ -1399,7 +1399,95 @@ export default function Decide() {
                 <li><strong>Data activities:</strong> How and when you'll collect measurement data</li>
               </ul>
             </div>
+            </CardContent>
+        </Card>
+      )}
 
+      {/* AI Recommendations for Metrics - Moved to top */}
+      {step === 6 && (
+        <>
+          <MetricsRecommendations
+            decisionBrief={decisionBrief}
+            onApplyRecommendations={(recs) => {
+              setPreviousIndicators({
+                leading: [...leadingIndicators],
+                lagging: [...laggingIndicators],
+                timeline: [...measurementTimeline]
+              });
+
+              const formattedLeading = recs.leading_indicators.map(item => 
+                `${item.indicator} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+              );
+              setLeadingIndicators(formattedLeading);
+
+              const formattedLagging = recs.lagging_indicators.map(item => 
+                `${item.indicator} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+              );
+              setLaggingIndicators(formattedLagging);
+
+              const formattedActivities = recs.data_collection_activities.map(item => 
+                `${item.activity} (${item.frequency.charAt(0).toUpperCase() + item.frequency.slice(1)})`
+              );
+              setMeasurementTimeline(formattedActivities);
+
+              setShowUndoButton(true);
+              isUserEditingRef.current = false;
+              triggerAutoSave();
+
+              toast({
+                title: "AI Recommendations Applied",
+                description: "Your indicators have been updated. Click undo to revert.",
+              });
+            }}
+          />
+
+          {showUndoButton && previousIndicators && (
+            <Card className="border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20 animate-fade-in">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-amber-500/10 p-2">
+                      <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-amber-900 dark:text-amber-100">AI Recommendations Applied</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">Click undo to restore previous indicators</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setShowUndoButton(false); setPreviousIndicators(null); }} className="border-amber-300 dark:border-amber-700">
+                      Dismiss
+                    </Button>
+                    <Button variant="default" size="sm" onClick={() => {
+                      if (previousIndicators) {
+                        setLeadingIndicators(previousIndicators.leading);
+                        setLaggingIndicators(previousIndicators.lagging);
+                        setMeasurementTimeline(previousIndicators.timeline);
+                        setShowUndoButton(false);
+                        setPreviousIndicators(null);
+                        isUserEditingRef.current = false;
+                        triggerAutoSave();
+                        toast({ title: "Changes Undone", description: "Previous indicators restored." });
+                      }
+                    }} className="bg-amber-600 hover:bg-amber-700 text-white">
+                      <span className="mr-2">↶</span>Undo
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+
+      {/* Step 6 Main Content */}
+      {step === 6 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Define Your Indicators</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
             {/* Tabbed Interface */}
             <Tabs defaultValue="leading" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
