@@ -39,15 +39,34 @@ export function FlexibleObservationDialog({
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [followUpActions, setFollowUpActions] = useState<string[]>([]);
   const [newAction, setNewAction] = useState<string>("");
+  
+  // Team check-in specific fields
+  const [teamProgress, setTeamProgress] = useState<string>("");
+  const [teamWorking, setTeamWorking] = useState<string>("");
+  const [teamBarriers, setTeamBarriers] = useState<string>("");
+  const [teamAdaptations, setTeamAdaptations] = useState<string>("");
 
   const handleSubmit = () => {
+    let consolidatedNotes = notes;
+    
+    // For team check-ins, consolidate all team fields into notes
+    if (mode === 'team') {
+      const sections = [];
+      if (teamProgress) sections.push(`**Implementation Progress:** ${teamProgress}`);
+      if (teamWorking) sections.push(`**What's Working / Needs Adjustment:** ${teamWorking}`);
+      if (teamBarriers) sections.push(`**Barriers & Solutions:** ${teamBarriers}`);
+      if (teamAdaptations) sections.push(`**Adaptation Decisions:** ${teamAdaptations}`);
+      if (notes) sections.push(`**Additional Notes:** ${notes}`);
+      consolidatedNotes = sections.join('\n\n');
+    }
+    
     const logData = {
       component_id: selectedIngredient || null,
       rating,
-      notes: notes || null,
+      notes: consolidatedNotes || null,
       log_type: mode,
       participants: mode === 'team' ? selectedParticipants : [],
-      follow_up_actions: mode === 'detailed' ? followUpActions : null,
+      follow_up_actions: (mode === 'detailed' || mode === 'team') ? followUpActions : null,
       observer_id: null, // Will be set by the hook
       schedule_id: null,
       checklist_id: null,
@@ -68,6 +87,10 @@ export function FlexibleObservationDialog({
     setSelectedParticipants([]);
     setFollowUpActions([]);
     setNewAction("");
+    setTeamProgress("");
+    setTeamWorking("");
+    setTeamBarriers("");
+    setTeamAdaptations("");
     onOpenChange(false);
   };
 
@@ -94,29 +117,49 @@ export function FlexibleObservationDialog({
     switch (mode) {
       case 'quick':
         return {
-          title: "60-Second Quick Log",
-          description: "Quick fidelity check - are core components happening as planned?",
+          title: "60-Second Fidelity Log",
+          description: "Quick check on core component implementation",
+          showIngredient: true,
+          showLookFors: true,
+          showTeamFields: false,
+          showParticipants: false,
+          showFollowUp: false,
           notesLabel: "Quick Notes (optional, max 150 chars)",
           notesMax: 150,
         };
       case 'detailed':
         return {
           title: "Coach Observation",
-          description: "Detailed observation with feedback and action items",
-          notesLabel: "Observation Notes",
+          description: "Detailed observation with feedback notes",
+          showIngredient: true,
+          showLookFors: true,
+          showTeamFields: false,
+          showParticipants: false,
+          showFollowUp: true,
+          notesLabel: "Detailed Observation Notes",
           notesMax: 1000,
         };
       case 'team':
         return {
           title: "Team Check-In",
-          description: "Group reflection and consensus on implementation progress",
-          notesLabel: "Team Reflections",
+          description: "Team reflection and adjustment decisions",
+          showIngredient: false,
+          showLookFors: false,
+          showTeamFields: true,
+          showParticipants: true,
+          showFollowUp: true,
+          notesLabel: "Additional Notes (optional)",
           notesMax: 500,
         };
       default:
         return {
           title: "Observation Log",
           description: "Record implementation observation",
+          showIngredient: true,
+          showLookFors: false,
+          showTeamFields: false,
+          showParticipants: false,
+          showFollowUp: false,
           notesLabel: "Notes",
           notesMax: 500,
         };
@@ -124,6 +167,7 @@ export function FlexibleObservationDialog({
   };
 
   const config = getModeConfig();
+  const selectedIngredientData = activeIngredients.find(ing => ing.id === selectedIngredient);
   const canSubmit = selectedIngredient && (mode !== 'team' || selectedParticipants.length > 0);
 
   return (
@@ -241,7 +285,7 @@ export function FlexibleObservationDialog({
           {/* Follow-up Actions (detailed mode only) */}
           {mode === 'detailed' && (
             <div className="space-y-2">
-              <Label>Follow-up Actions</Label>
+              <Label>{mode === 'team' ? 'Action Items & Next Steps' : 'Follow-up Actions'}</Label>
               <div className="flex gap-2">
                 <Input
                   value={newAction}
