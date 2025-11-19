@@ -575,6 +575,7 @@ export type Database = {
       }
       indicators: {
         Row: {
+          archived: boolean
           created_at: string
           id: string
           initiative_id: string
@@ -585,6 +586,7 @@ export type Database = {
           type: Database["public"]["Enums"]["indicator_type"]
         }
         Insert: {
+          archived?: boolean
           created_at?: string
           id?: string
           initiative_id: string
@@ -595,6 +597,7 @@ export type Database = {
           type: Database["public"]["Enums"]["indicator_type"]
         }
         Update: {
+          archived?: boolean
           created_at?: string
           id?: string
           initiative_id?: string
