@@ -423,6 +423,11 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                         >
                           <Settings className="h-3 w-3" />
                           <span className="text-sm">Resource Allocation</span>
+                          {hasContent(completionCounts.budget) && (
+                            <Badge variant="secondary" className="ml-auto text-xs">
+                              {completionCounts.budget}
+                            </Badge>
+                          )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </div>

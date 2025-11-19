@@ -9,7 +9,7 @@ export interface CompletionCounts {
   communication: number;
   timeline: number;
   risks: number;
-  fidelity: number;
+  budget: number;
 }
 
 export interface SectionProgress {
@@ -63,12 +63,13 @@ export function calculateSectionProgress(
       return {
         section: "execution",
         label: "Execution Planning",
-        completed: Math.min(counts.timeline, 1) + Math.min(counts.risks, 1),
-        total: 2,
-        percentage: ((Math.min(counts.timeline, 1) + Math.min(counts.risks, 1)) / 2) * 100,
+        completed: Math.min(counts.timeline, 1) + Math.min(counts.risks, 1) + Math.min(counts.budget, 1),
+        total: 3,
+        percentage: ((Math.min(counts.timeline, 1) + Math.min(counts.risks, 1) + Math.min(counts.budget, 1)) / 3) * 100,
         items: [
           { name: "Timeline & Milestones", completed: counts.timeline > 0 },
           { name: "Risk Management", completed: counts.risks > 0 },
+          { name: "Budget & Resources", completed: counts.budget > 0 },
         ],
       };
     case "quality":
@@ -184,12 +185,12 @@ export function generateSmartSuggestions(counts: CompletionCounts): IncompleteSu
     });
   }
 
-  if (counts.fidelity === 0) {
+  if (counts.budget === 0) {
     suggestions.push({
-      section: "quality",
-      sectionLabel: "Quality Assurance",
-      message: "Set up fidelity monitoring to ensure quality implementation",
-      action: "Add Fidelity Checklists",
+      section: "execution",
+      sectionLabel: "Execution Planning",
+      message: "Define budget and resource allocation for implementation",
+      action: "Add Budget Items",
       priority: "low",
     });
   }
