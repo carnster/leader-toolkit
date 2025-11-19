@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationsPanel } from "@/components/NotificationsPanel";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -77,8 +78,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          {/* User Menu */}
+          {/* User Menu & Notifications */}
           <div className="hidden md:flex items-center gap-2">
+            <NotificationsPanel />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
