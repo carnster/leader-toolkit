@@ -75,10 +75,10 @@ export function calculateSectionProgress(
       return {
         section: "quality",
         label: "Quality Assurance",
-        completed: Math.min(counts.fidelity, 1),
+        completed: 1,
         total: 1,
-        percentage: counts.fidelity > 0 ? 100 : 0,
-        items: [{ name: "Fidelity Monitoring", completed: counts.fidelity > 0 }],
+        percentage: 100,
+        items: [{ name: "Quality Guidelines", completed: true }],
       };
     default:
       return {
