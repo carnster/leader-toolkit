@@ -9,6 +9,7 @@ export interface PDActivity {
   title: string;
   description: string | null;
   facilitator: string | null;
+  facilitator_id: string | null;
   target_audience: string[] | null;
   scheduled_date: string | null;
   duration_minutes: number | null;
@@ -49,6 +50,7 @@ export function usePDActivities(initiativeId: string | undefined) {
           title: activity.title!,
           description: activity.description,
           facilitator: activity.facilitator,
+          facilitator_id: activity.facilitator_id,
           target_audience: activity.target_audience,
           scheduled_date: activity.scheduled_date,
           duration_minutes: activity.duration_minutes,

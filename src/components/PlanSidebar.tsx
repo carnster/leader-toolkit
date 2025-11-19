@@ -12,7 +12,12 @@ import {
   Target,
   ChevronDown,
   ChevronRight,
+  FileText,
+  LayoutDashboard,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { calculateSectionProgress, type CompletionCounts } from "@/lib/planProgress";
 import {
   Sidebar,
   SidebarContent,
@@ -29,15 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface PlanSidebarProps {
-  completionCounts: {
-    ingredients: number;
-    strategies: number;
-    team: number;
-    timeline: number;
-    risks: number;
-    pd: number;
-    communication: number;
-  };
+  completionCounts: CompletionCounts;
 }
 
 export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
@@ -64,6 +61,13 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
       : "hover:bg-muted/50";
 
   const hasContent = (count: number) => count > 0;
+
+  // Calculate progress for sections
+  const getStrategicProgress = () => calculateSectionProgress("strategic", completionCounts);
+  const getTeamProgress = () => calculateSectionProgress("team", completionCounts);
+  const getCommunicationProgress = () => calculateSectionProgress("communication", completionCounts);
+  const getExecutionProgress = () => calculateSectionProgress("execution", completionCounts);
+  const getQualityProgress = () => calculateSectionProgress("quality", completionCounts);
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
@@ -92,10 +96,25 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                       {!collapsed && (
                         <>
                           <span>Strategic Foundation</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant={getStrategicProgress().percentage === 100 ? "default" : "secondary"}
+                                  className="ml-auto mr-1"
+                                >
+                                  {getStrategicProgress().completed}/{getStrategicProgress().total}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="text-xs">{getStrategicProgress().percentage}% complete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {strategicOpen ? (
-                            <ChevronDown className="ml-auto h-4 w-4" />
+                            <ChevronDown className="h-4 w-4" />
                           ) : (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </>
                       )}
@@ -104,6 +123,9 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                 </CollapsibleTrigger>
                 {!collapsed && (
                   <CollapsibleContent>
+                    <div className="mb-2 mx-4">
+                      <Progress value={getStrategicProgress().percentage} className="h-1" />
+                    </div>
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
@@ -147,10 +169,25 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                       {!collapsed && (
                         <>
                           <span>Team & Capacity</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant={getTeamProgress().percentage === 100 ? "default" : "secondary"}
+                                  className="ml-auto mr-1"
+                                >
+                                  {getTeamProgress().completed}/{getTeamProgress().total}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="text-xs">{getTeamProgress().percentage}% complete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {teamOpen ? (
-                            <ChevronDown className="ml-auto h-4 w-4" />
+                            <ChevronDown className="h-4 w-4" />
                           ) : (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </>
                       )}
@@ -159,6 +196,9 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                 </CollapsibleTrigger>
                 {!collapsed && (
                   <CollapsibleContent>
+                    <div className="mb-2 mx-4">
+                      <Progress value={getTeamProgress().percentage} className="h-1" />
+                    </div>
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
@@ -211,10 +251,25 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                       {!collapsed && (
                         <>
                           <span>Communication & Engagement</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant={getCommunicationProgress().percentage === 100 ? "default" : "secondary"}
+                                  className="ml-auto mr-1"
+                                >
+                                  {getCommunicationProgress().completed}/{getCommunicationProgress().total}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="text-xs">{getCommunicationProgress().percentage}% complete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {communicationOpen ? (
-                            <ChevronDown className="ml-auto h-4 w-4" />
+                            <ChevronDown className="h-4 w-4" />
                           ) : (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </>
                       )}
@@ -223,6 +278,9 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                 </CollapsibleTrigger>
                 {!collapsed && (
                   <CollapsibleContent>
+                    <div className="mb-2 mx-4">
+                      <Progress value={getCommunicationProgress().percentage} className="h-1" />
+                    </div>
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
@@ -252,10 +310,25 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                       {!collapsed && (
                         <>
                           <span>Execution Planning</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant={getExecutionProgress().percentage === 100 ? "default" : "secondary"}
+                                  className="ml-auto mr-1"
+                                >
+                                  {getExecutionProgress().completed}/{getExecutionProgress().total}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="text-xs">{getExecutionProgress().percentage}% complete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {executionOpen ? (
-                            <ChevronDown className="ml-auto h-4 w-4" />
+                            <ChevronDown className="h-4 w-4" />
                           ) : (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </>
                       )}
@@ -264,6 +337,9 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                 </CollapsibleTrigger>
                 {!collapsed && (
                   <CollapsibleContent>
+                    <div className="mb-2 mx-4">
+                      <Progress value={getExecutionProgress().percentage} className="h-1" />
+                    </div>
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
@@ -316,10 +392,25 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                       {!collapsed && (
                         <>
                           <span>Quality Assurance</span>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant={getQualityProgress().percentage === 100 ? "default" : "secondary"}
+                                  className="ml-auto mr-1"
+                                >
+                                  {getQualityProgress().completed}/{getQualityProgress().total}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className="text-xs">{getQualityProgress().percentage}% complete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                           {qualityOpen ? (
-                            <ChevronDown className="ml-auto h-4 w-4" />
+                            <ChevronDown className="h-4 w-4" />
                           ) : (
-                            <ChevronRight className="ml-auto h-4 w-4" />
+                            <ChevronRight className="h-4 w-4" />
                           )}
                         </>
                       )}
@@ -328,6 +419,9 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                 </CollapsibleTrigger>
                 {!collapsed && (
                   <CollapsibleContent>
+                    <div className="mb-2 mx-4">
+                      <Progress value={getQualityProgress().percentage} className="h-1" />
+                    </div>
                     <div className="ml-4 space-y-1">
                       <SidebarMenuItem>
                         <SidebarMenuButton
