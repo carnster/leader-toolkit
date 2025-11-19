@@ -18,6 +18,7 @@ interface ReadinessChecklistProps {
   budgetItemsCount?: number;
   fidelityChecklistsCount?: number;
   observationSchedulesCount?: number;
+  activeIngredients?: any[];
 }
 
 export function ReadinessChecklist({
@@ -31,11 +32,18 @@ export function ReadinessChecklist({
   budgetItemsCount = 0,
   fidelityChecklistsCount = 0,
   observationSchedulesCount = 0,
+  activeIngredients = [],
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
   const [searchParams] = useSearchParams();
   const initiativeId = searchParams.get("initiative");
+
+  // Check if ingredients have look-fors defined
+  const ingredientsWithLookFors = activeIngredients.filter(
+    ing => ing.look_fors && ing.look_fors.length > 0
+  ).length;
+  const ingredientsComplete = activeIngredientsCount > 0 && ingredientsWithLookFors === activeIngredientsCount;
 
   const checklistItemDetails = {
     ingredients: {
@@ -94,7 +102,7 @@ export function ReadinessChecklist({
       section: "Active Ingredients",
       label: "All core and adaptable ingredients identified with clear look-fors",
       required: true,
-      autoCheck: activeIngredientsCount > 0,
+      autoCheck: ingredientsComplete,
       actionLink: `/plan?section=strategic-foundation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Define Active Ingredients"
     },

@@ -166,6 +166,7 @@ export function OverviewSection({
         budgetItemsCount={budgetItems.length}
         fidelityChecklistsCount={fidelityChecklists.length}
         observationSchedulesCount={observationSchedules.length}
+        activeIngredients={activeIngredients}
       />
 
       {/* Export Implementation Plan */}
