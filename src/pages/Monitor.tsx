@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +12,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
@@ -58,12 +66,14 @@ export default function Monitor() {
   
   const [editingIndicator, setEditingIndicator] = useState<Indicator | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deletingIndicatorId, setDeletingIndicatorId] = useState<string | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [archivingIndicatorId, setArchivingIndicatorId] = useState<string | null>(null);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [showArchivedSheet, setShowArchivedSheet] = useState(false);
   
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
-  const { indicators, isLoading: isLoadingIndicators, updateIndicator, deleteIndicator } = useIndicators(effectiveInitiativeId);
+  const { indicators, isLoading: isLoadingIndicators, updateIndicator, archiveIndicator, restoreIndicator } = useIndicators(effectiveInitiativeId);
+  const { indicators: archivedIndicators } = useIndicators(effectiveInitiativeId, true);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   
   const handleEditIndicator = (indicator: Indicator) => {
@@ -75,18 +85,24 @@ export default function Monitor() {
     updateIndicator({ id, updates });
   };
 
-  const handleDeleteIndicator = (indicatorId: string) => {
-    setDeletingIndicatorId(indicatorId);
-    setDeleteDialogOpen(true);
+  const handleArchiveIndicator = (indicatorId: string) => {
+    setArchivingIndicatorId(indicatorId);
+    setArchiveDialogOpen(true);
   };
 
-  const confirmDeleteIndicator = () => {
-    if (deletingIndicatorId) {
-      deleteIndicator(deletingIndicatorId);
-      setDeleteDialogOpen(false);
-      setDeletingIndicatorId(null);
+  const confirmArchiveIndicator = () => {
+    if (archivingIndicatorId) {
+      archiveIndicator(archivingIndicatorId);
+      setArchiveDialogOpen(false);
+      setArchivingIndicatorId(null);
     }
   };
+
+  const handleRestoreIndicator = (indicatorId: string) => {
+    restoreIndicator(indicatorId);
+  };
+
+  const filteredArchivedIndicators = archivedIndicators?.filter(i => i.archived) || [];
   
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
   const activeStrategies = strategies.filter(s => s.status === 'in_progress' || s.status === 'planned');
@@ -274,6 +290,21 @@ export default function Monitor() {
         </Card>
       </div>
 
+      {/* Key Indicators Section Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Key Indicators</h2>
+        {filteredArchivedIndicators.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowArchivedSheet(true)}
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            View Archived ({filteredArchivedIndicators.length})
+          </Button>
+        )}
+      </div>
+
       {/* Key Indicators */}
       <div className="grid gap-6 md:grid-cols-2">
         {(indicators.length > 0 ? indicators : mockIndicators).map((indicator: any) => (
@@ -298,10 +329,11 @@ export default function Monitor() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteIndicator(indicator.id)}
+                        onClick={() => handleArchiveIndicator(indicator.id)}
                         className="h-8 w-8 p-0"
+                        title="Archive indicator"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        <Archive className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </>
                   )}
@@ -473,26 +505,75 @@ export default function Monitor() {
         onSave={handleSaveIndicator}
       />
 
-      {/* Delete Indicator Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* Archive Indicator Confirmation Dialog */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Indicator</AlertDialogTitle>
+            <AlertDialogTitle>Archive Indicator</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this indicator? This will also remove all recorded values for this indicator. This action cannot be undone.
+              Are you sure you want to archive this indicator? It will be hidden from the main view but can be restored later from the archived indicators.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={confirmDeleteIndicator} 
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmArchiveIndicator}
             >
-              Delete
+              Archive
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Archived Indicators Sheet */}
+      <Sheet open={showArchivedSheet} onOpenChange={setShowArchivedSheet}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Archived Indicators</SheetTitle>
+            <SheetDescription>
+              View and restore previously archived indicators
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {filteredArchivedIndicators.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No archived indicators
+              </p>
+            ) : (
+              filteredArchivedIndicators.map((indicator) => (
+                <Card key={indicator.id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-base">{indicator.name}</CardTitle>
+                        <Badge 
+                          variant={indicator.type === "leading" ? "default" : "secondary"}
+                          className="mt-2"
+                        >
+                          {indicator.type}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRestoreIndicator(indicator.id)}
+                      >
+                        <ArchiveRestore className="h-4 w-4 mr-2" />
+                        Restore
+                      </Button>
+                    </div>
+                    {indicator.schedule && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Measured {indicator.schedule.toLowerCase()}
+                      </p>
+                    )}
+                  </CardHeader>
+                </Card>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -10,6 +10,7 @@ export interface Indicator {
   target_value: number | null;
   source: string | null;
   schedule: string | null;
+  archived: boolean;
   created_at: string;
 }
 
@@ -21,19 +22,24 @@ export interface IndicatorValue {
   recorded_at: string;
 }
 
-export function useIndicators(initiativeId: string | undefined) {
+export function useIndicators(initiativeId: string | undefined, includeArchived = false) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: indicators, isLoading } = useQuery({
-    queryKey: ["indicators", initiativeId],
+    queryKey: ["indicators", initiativeId, includeArchived],
     queryFn: async () => {
       if (!initiativeId) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from("indicators")
         .select("*")
-        .eq("initiative_id", initiativeId)
-        .order("type", { ascending: true });
+        .eq("initiative_id", initiativeId);
+      
+      if (!includeArchived) {
+        query = query.eq("archived", false);
+      }
+      
+      const { data, error } = await query.order("type", { ascending: true });
 
       if (error) throw error;
       return data as Indicator[];
@@ -126,11 +132,11 @@ export function useIndicators(initiativeId: string | undefined) {
     },
   });
 
-  const deleteIndicator = useMutation({
+  const archiveIndicator = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("indicators")
-        .delete()
+        .update({ archived: true })
         .eq("id", id);
 
       if (error) throw error;
@@ -138,13 +144,38 @@ export function useIndicators(initiativeId: string | undefined) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });
       toast({
-        title: "Indicator deleted",
-        description: "Indicator has been removed.",
+        title: "Indicator archived",
+        description: "Indicator has been archived and can be restored later.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error deleting indicator",
+        title: "Error archiving indicator",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const restoreIndicator = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("indicators")
+        .update({ archived: false })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });
+      toast({
+        title: "Indicator restored",
+        description: "Indicator has been restored successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error restoring indicator",
         description: error.message,
         variant: "destructive",
       });
@@ -184,11 +215,13 @@ export function useIndicators(initiativeId: string | undefined) {
     isLoading,
     createIndicator: createIndicator.mutate,
     updateIndicator: updateIndicator.mutate,
-    deleteIndicator: deleteIndicator.mutate,
+    archiveIndicator: archiveIndicator.mutate,
+    restoreIndicator: restoreIndicator.mutate,
     addIndicatorValue: addIndicatorValue.mutate,
     isCreating: createIndicator.isPending,
     isUpdating: updateIndicator.isPending,
-    isDeleting: deleteIndicator.isPending,
+    isArchiving: archiveIndicator.isPending,
+    isRestoring: restoreIndicator.isPending,
     isAddingValue: addIndicatorValue.isPending,
   };
 }
