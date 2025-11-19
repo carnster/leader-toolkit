@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AICopilot } from "@/components/AICopilot";
 import Dashboard from "./pages/Dashboard";
 import Decide from "./pages/Decide";
 import Plan from "./pages/Plan";
@@ -43,6 +44,7 @@ const App = () => (
             }
           />
         </Routes>
+        <AICopilot />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
