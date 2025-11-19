@@ -6,6 +6,7 @@ import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialo
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
 import { ImplementationStrategyRecommendations } from "@/components/ImplementationStrategyRecommendations";
 import { StrategyIngredientConnections } from "@/components/StrategyIngredientConnections";
+import { AdaptationProtocolSummary } from "@/components/AdaptationProtocolSummary";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
@@ -202,6 +203,9 @@ export function StrategicFoundationSection({
           )}
         </CardContent>
       </Card>
+
+      {/* Adaptation Protocol Summary */}
+      <AdaptationProtocolSummary activeIngredients={activeIngredients} />
 
       {/* Implementation Strategies - AI Recommendations */}
       <ImplementationStrategyRecommendations
