@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { ReadinessChecklist } from "@/components/ReadinessChecklist";
 import { useNavigate } from "react-router-dom";
+import { ImplementationPlanExport } from "@/components/ImplementationPlanExport";
 
 interface OverviewSectionProps {
   activeIngredientsCount: number;
@@ -16,6 +17,15 @@ interface OverviewSectionProps {
   isGenerating: boolean;
   nextStep: string;
   initiativeId: string;
+  initiativeTitle: string;
+  activeIngredients: any[];
+  strategies: any[];
+  teamMembers: any[];
+  timeCommitments: any[];
+  communicationActivities: any[];
+  milestones: any[];
+  risks: any[];
+  pdActivities: any[];
 }
 
 export function OverviewSection({
@@ -29,6 +39,15 @@ export function OverviewSection({
   isGenerating,
   nextStep,
   initiativeId,
+  initiativeTitle,
+  activeIngredients,
+  strategies,
+  teamMembers,
+  timeCommitments,
+  communicationActivities,
+  milestones,
+  risks,
+  pdActivities,
 }: OverviewSectionProps) {
   const navigate = useNavigate();
   const totalRequired = 6;
@@ -138,6 +157,33 @@ export function OverviewSection({
         risksCount={risksCount}
         pdActivitiesCount={pdActivitiesCount}
       />
+
+      {/* Export Implementation Plan */}
+      {completionPercentage >= 50 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Export Implementation Plan</h3>
+                <p className="text-sm text-muted-foreground">
+                  Download a comprehensive PDF document of your implementation plan
+                </p>
+              </div>
+              <ImplementationPlanExport
+                initiativeTitle={initiativeTitle}
+                activeIngredients={activeIngredients}
+                strategies={strategies}
+                teamMembers={teamMembers}
+                timeCommitments={timeCommitments}
+                communicationActivities={communicationActivities}
+                milestones={milestones}
+                risks={risks}
+                pdActivities={pdActivities}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Complete Planning Button */}
       {isReady && (
