@@ -450,8 +450,12 @@ export default function Plan() {
               setEditingTeamMember(member);
               setTeamDialogOpen(true);
             }}
-            onAddPDActivity={() => {
-              setEditingActivity(null);
+            onAddPDActivity={(activity) => {
+              if (activity) {
+                setEditingActivity(activity as any);
+              } else {
+                setEditingActivity(null);
+              }
               setPdDialogOpen(true);
             }}
             onEditPDActivity={(activity) => {
