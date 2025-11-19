@@ -153,78 +153,6 @@ export default function Decide() {
     }
   }, [decisionBrief]);
   
-  // Auto-save functionality with debounce
-  const triggerAutoSave = useCallback(() => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      handleSaveProgress().then((success) => {
-        if (success) {
-          setLastSaved(new Date());
-        }
-      });
-    }, 2000); // 2 second debounce
-  }, [effectiveInitiativeId, problemStatement, targetGroup, baselineData, rootCauses, goals, 
-      equityNotes, stakeholderInput, chosenApproach, evidenceBase, feasibilityFactors,
-      leadingIndicators, laggingIndicators, measurementTimeline]);
-  
-  // Cleanup auto-save timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleEvaluateGoals = async () => {
-    if (!goals || !goals.trim()) {
-      toast({
-        title: "No goals to evaluate",
-        description: "Please enter your initiative goals first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsEvaluatingGoals(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("evaluate-goals", {
-        body: { goals }
-      });
-
-      if (error) throw error;
-
-      if (data?.evaluation) {
-        setGoalsEvaluation(data.evaluation);
-        
-        // Save evaluation to database
-        if (effectiveInitiativeId) {
-          await supabase
-            .from("decision_briefs")
-            .update({ goals_feedback: data.evaluation })
-            .eq("initiative_id", effectiveInitiativeId);
-        }
-
-        toast({
-          title: "Goals evaluated",
-          description: `Overall score: ${data.evaluation.overall_score}/100`,
-        });
-      }
-    } catch (error: any) {
-      console.error("Error evaluating goals:", error);
-      toast({
-        title: "Evaluation failed",
-        description: error.message || "Failed to evaluate goals. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsEvaluatingGoals(false);
-    }
-  };
-
   // Auto-calculate checklist completion based on form data
   const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses; // Problem Definition
   const isStep2Complete = teamMembers.length > 0; // Team Assembly
@@ -232,44 +160,6 @@ export default function Decide() {
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
   const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators && laggingIndicators && measurementTimeline; // Success Metrics
-  
-  // Step completion validation
-  const getStepCompletion = (stepNumber: number): boolean => {
-    switch(stepNumber) {
-      case 1: return !!isStep1Complete;
-      case 2: return !!isStep2Complete;
-      case 3: return !!isStep3Complete;
-      case 4: return !!isStep4Complete;
-      case 5: return !!isStep5Complete;
-      case 6: return !!isStep6Complete;
-      default: return false;
-    }
-  };
-  
-  const getStepName = (stepNumber: number): string => {
-    switch(stepNumber) {
-      case 1: return "Problem Definition";
-      case 2: return "Team Assembly";
-      case 3: return "Goal Development";
-      case 4: return "Solution Selection";
-      case 5: return "Readiness & Feasibility";
-      case 6: return "Success Metrics";
-      default: return "Unknown Step";
-    }
-  };
-  
-  const handleNextStep = () => {
-    if (!getStepCompletion(step)) {
-      setSkipWarningOpen(true);
-      return;
-    }
-    setStep(Math.min(6, step + 1));
-  };
-  
-  const confirmSkipStep = () => {
-    setStep(Math.min(6, step + 1));
-    setSkipWarningOpen(false);
-  };
   
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
@@ -282,7 +172,8 @@ export default function Decide() {
   
   const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
   
-  const handleSaveProgress = async (): Promise<boolean> => {
+  // Auto-save functionality with debounce
+  const handleSaveProgress = useCallback(async (): Promise<boolean> => {
     // Validate required fields before saving
     if (!problemStatement || problemStatement.trim() === "") {
       toast({
@@ -383,8 +274,118 @@ export default function Decide() {
       measurement_timeline: measurementTimeline,
       checklist_completed: completionRate === 100,
     });
-
+    
     return true;
+  }, [effectiveInitiativeId, problemStatement, targetGroup, baselineData, rootCauses, goals,
+      equityNotes, stakeholderInput, chosenApproach, evidenceBase, calculatedFeasibilityScore,
+      feasibilityFactors, leadingIndicators, laggingIndicators, measurementTimeline, completionRate,
+      newInitiative, navigate, toast, upsertDecisionBrief, setDialogOpen]);
+
+  const triggerAutoSave = useCallback(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      handleSaveProgress().then((success) => {
+        if (success) {
+          setLastSaved(new Date());
+        }
+      });
+    }, 2000); // 2 second debounce
+  }, [handleSaveProgress]);
+  
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleEvaluateGoals = async () => {
+    if (!goals || !goals.trim()) {
+      toast({
+        title: "No goals to evaluate",
+        description: "Please enter your initiative goals first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsEvaluatingGoals(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("evaluate-goals", {
+        body: { goals }
+      });
+
+      if (error) throw error;
+
+      if (data?.evaluation) {
+        setGoalsEvaluation(data.evaluation);
+        
+        // Save evaluation to database
+        if (effectiveInitiativeId) {
+          await supabase
+            .from("decision_briefs")
+            .update({ goals_feedback: data.evaluation })
+            .eq("initiative_id", effectiveInitiativeId);
+        }
+
+        toast({
+          title: "Goals evaluated",
+          description: `Overall score: ${data.evaluation.overall_score}/100`,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error evaluating goals:", error);
+      toast({
+        title: "Evaluation failed",
+        description: error.message || "Failed to evaluate goals. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEvaluatingGoals(false);
+    }
+  };
+
+  // Step completion validation
+  const getStepCompletion = (stepNumber: number): boolean => {
+    switch(stepNumber) {
+      case 1: return !!isStep1Complete;
+      case 2: return !!isStep2Complete;
+      case 3: return !!isStep3Complete;
+      case 4: return !!isStep4Complete;
+      case 5: return !!isStep5Complete;
+      case 6: return !!isStep6Complete;
+      default: return false;
+    }
+  };
+  
+  const getStepName = (stepNumber: number): string => {
+    switch(stepNumber) {
+      case 1: return "Problem Definition";
+      case 2: return "Team Assembly";
+      case 3: return "Goal Development";
+      case 4: return "Solution Selection";
+      case 5: return "Readiness & Feasibility";
+      case 6: return "Success Metrics";
+      default: return "Unknown Step";
+    }
+  };
+  
+  const handleNextStep = () => {
+    if (!getStepCompletion(step)) {
+      setSkipWarningOpen(true);
+      return;
+    }
+    setStep(Math.min(6, step + 1));
+  };
+  
+  const confirmSkipStep = () => {
+    setStep(Math.min(6, step + 1));
+    setSkipWarningOpen(false);
   };
   
   const handleAdoptInitiative = async () => {
