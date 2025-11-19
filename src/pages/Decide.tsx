@@ -26,6 +26,7 @@ import { EquityChecklist } from "@/components/EquityChecklist";
 import { DecisionBriefExport } from "@/components/DecisionBriefExport";
 import { TimelineVisualization } from "@/components/TimelineVisualization";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
+import { DecideStepperNav } from "@/components/DecideStepperNav";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target pupils defined", required: true },
@@ -599,21 +600,19 @@ export default function Decide() {
         </CardContent>
       </Card>
 
-      {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Wizard Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Step {step} of 6</span>
-              <span className="font-medium">{Math.round((step / 6) * 100)}%</span>
-            </div>
-            <Progress value={(step / 6) * 100} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Step Navigation */}
+      <DecideStepperNav
+        currentStep={step}
+        steps={[
+          { number: 1, title: "Problem", completed: !!isStep1Complete },
+          { number: 2, title: "Team", completed: !!isStep2Complete },
+          { number: 3, title: "Goals", completed: !!isStep3Complete },
+          { number: 4, title: "Solution", completed: !!isStep4Complete },
+          { number: 5, title: "Feasibility", completed: !!isStep5Complete },
+          { number: 6, title: "Metrics", completed: !!isStep6Complete },
+        ]}
+        onStepClick={setStep}
+      />
 
       {/* Step 1: Problem Definition */}
       {step === 1 && (
@@ -706,6 +705,15 @@ export default function Decide() {
               />
               <p className="text-sm text-muted-foreground">
                 List underlying factors that contribute to the problem. Each should be evidence-based.
+              </p>
+            </div>
+            
+            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <span className="text-lg">→</span> What's Next?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                After defining the problem, you'll <strong>assemble your implementation team</strong> to ensure diverse perspectives and expertise are included from the start.
               </p>
             </div>
             
@@ -822,6 +830,15 @@ export default function Decide() {
                   </p>
                 </div>
               </div>
+            </div>
+            
+            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <span className="text-lg">→</span> What's Next?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Once your team is assembled, you'll <strong>develop clear, measurable goals</strong> to guide your implementation and measure success.
+              </p>
             </div>
             
             <div className="flex justify-end">
@@ -984,6 +1001,15 @@ export default function Decide() {
               </Card>
             )}
             
+            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <span className="text-lg">→</span> What's Next?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                With clear goals defined, you'll <strong>select an evidence-based solution</strong> that best addresses your problem and fits your context.
+              </p>
+            </div>
+            
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
@@ -1042,6 +1068,15 @@ export default function Decide() {
               />
                 <p className="text-sm text-muted-foreground">
                   Cite research, trials, or evidence that supports this approach
+                </p>
+              </div>
+              
+              <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+                <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                  <span className="text-lg">→</span> What's Next?
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  After selecting your solution, you'll <strong>assess organizational readiness and feasibility</strong> to ensure successful implementation.
                 </p>
               </div>
               
@@ -1230,6 +1265,15 @@ export default function Decide() {
             {/* Feasibility Red Flags */}
             <FeasibilityRedFlags factors={feasibilityFactors} />
             
+            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <span className="text-lg">→</span> What's Next?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Once feasibility is assessed, you'll <strong>define success metrics and measurement plans</strong> to track implementation progress and impact.
+              </p>
+            </div>
+            
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
@@ -1302,6 +1346,15 @@ export default function Decide() {
               leadingIndicators={leadingIndicators ? leadingIndicators.split(",").map(s => s.trim()) : []}
               laggingIndicators={laggingIndicators ? laggingIndicators.split(",").map(s => s.trim()) : []}
             />
+            
+            <div className="rounded-lg border-2 border-secondary bg-secondary/10 p-4">
+              <p className="text-sm font-semibold mb-1 flex items-center gap-2">
+                <span className="text-lg">✓</span> Ready to Move Forward?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                With all metrics defined, you're ready to <strong>complete your decision brief and move to the Plan stage</strong> where you'll develop your detailed implementation plan.
+              </p>
+            </div>
             
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
@@ -1378,30 +1431,36 @@ export default function Decide() {
       </AlertDialog>
       
       {/* Navigation & Adoption */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-8 pt-6 border-t">
         <Button
           variant="outline"
           onClick={() => setStep(Math.max(1, step - 1))}
           disabled={step === 1}
+          size="lg"
         >
           Previous Step
         </Button>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
+          <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving} size="lg">
             {isSaving ? "Saving..." : "Save Progress"}
           </Button>
           {step < 6 ? (
-            <Button onClick={handleNextStep}>
-              Next Step
+            <Button onClick={handleNextStep} size="lg" className="min-w-[200px]">
+              {step === 1 && "Continue to Team →"}
+              {step === 2 && "Continue to Goals →"}
+              {step === 3 && "Continue to Solution →"}
+              {step === 4 && "Continue to Feasibility →"}
+              {step === 5 && "Continue to Metrics →"}
             </Button>
           ) : (
             <Button 
               disabled={completionRate < 100 || !effectiveInitiativeId}
               onClick={handleAdoptInitiative}
-              className="bg-primary"
+              className="bg-primary min-w-[200px]"
+              size="lg"
             >
               <CheckCircle2 className="mr-2 h-4 w-4" />
-              Adopt Initiative & Move to Plan
+              Complete & Move to Plan
             </Button>
           )}
         </div>
