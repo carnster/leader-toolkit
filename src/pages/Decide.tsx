@@ -115,7 +115,7 @@ export default function Decide() {
           .from("initiatives")
           .select("title")
           .eq("id", effectiveInitiativeId)
-          .single();
+          .maybeSingle();
         if (data) setInitiativeTitle(data.title);
       }
     };
@@ -283,6 +283,25 @@ export default function Decide() {
   const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
   
   const handleSaveProgress = async (): Promise<boolean> => {
+    // Validate required fields before saving
+    if (!problemStatement || problemStatement.trim() === "") {
+      toast({
+        title: "Cannot save",
+        description: "Please enter a problem statement before saving.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!targetGroup || targetGroup.trim() === "") {
+      toast({
+        title: "Cannot save",
+        description: "Please enter a target group before saving.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     let idToUse = effectiveInitiativeId;
 
     // If no initiative selected, create one automatically so saving works seamlessly

@@ -49,15 +49,21 @@ export function useDecisionBrief(initiativeId: string | undefined) {
     mutationFn: async (brief: Partial<DecisionBrief>) => {
       const { id, created_at, updated_at, ...briefData } = brief as any;
       
+      // Validate required fields
+      if (!briefData.problem_statement || briefData.problem_statement.trim() === "") {
+        throw new Error("Problem statement is required");
+      }
+      if (!briefData.target_group || briefData.target_group.trim() === "") {
+        throw new Error("Target group is required");
+      }
+      
       const { data, error } = await supabase
         .from("decision_briefs")
         .upsert({
           initiative_id: initiativeId!,
-          problem_statement: briefData.problem_statement || "",
-          target_group: briefData.target_group || "",
+          problem_statement: briefData.problem_statement.trim(),
+          target_group: briefData.target_group.trim(),
           ...briefData,
-        }, {
-          onConflict: 'initiative_id'  // This tells Supabase to update if initiative_id already exists
         })
         .select()
         .single();
