@@ -1,70 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { StageProgress } from "@/components/StageProgress";
-import { Plus, AlertCircle, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical } from "lucide-react";
+import { Plus, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInitiatives } from "@/hooks/useInitiatives";
+import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-
-const mockStages = [
-  { id: "decide", name: "Decide", completed: true, current: false },
-  { id: "plan", name: "Plan", completed: true, current: false },
-  { id: "implement", name: "Implement", completed: false, current: true },
-  { id: "monitor", name: "Monitor", completed: false, current: false },
-  { id: "sustain", name: "Sustain", completed: false, current: false },
-];
-
-const mockInitiatives = [
-  {
-    id: "1",
-    title: "Reading Fluency Programme",
-    stage: "Implement",
-    progress: 65,
-    dueDate: "2025-11-15",
-    status: "on-track",
-    team: 8,
-  },
-  {
-    id: "2",
-    title: "Math Mastery Approach",
-    stage: "Plan",
-    progress: 30,
-    dueDate: "2025-12-01",
-    status: "at-risk",
-    team: 12,
-  },
-  {
-    id: "3",
-    title: "Behaviour for Learning",
-    stage: "Monitor",
-    progress: 85,
-    dueDate: "2025-10-30",
-    status: "on-track",
-    team: 15,
-  },
-];
-
-const mockAlerts = [
-  {
-    id: "1",
-    type: "warning",
-    message: "Reading Fluency: Fidelity check due tomorrow",
-    initiative: "Reading Fluency Programme",
-  },
-  {
-    id: "2",
-    type: "info",
-    message: "Math Mastery: Team meeting scheduled for Thursday",
-    initiative: "Math Mastery Approach",
-  },
-];
+import { FidelityTrendsChart } from "@/components/dashboard/FidelityTrendsChart";
+import { ReadinessStatsWidget } from "@/components/dashboard/ReadinessStatsWidget";
+import { BudgetTrackingChart } from "@/components/dashboard/BudgetTrackingChart";
+import { InitiativeHealthWidget } from "@/components/dashboard/InitiativeHealthWidget";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
+  const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics();
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
@@ -100,9 +53,9 @@ export default function Dashboard() {
       </div>
     );
   }
+
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Implementation Dashboard</h1>
@@ -116,7 +69,6 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -124,9 +76,11 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{initiatives.length}</div>
+            <div className="text-2xl font-bold">
+              {analyticsLoading ? "..." : analytics?.totalInitiatives || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {initiatives.filter(i => i.status === "active").length} active
+              {analyticsLoading ? "..." : analytics?.activeInitiatives || 0} active
             </p>
           </CardContent>
         </Card>
@@ -136,9 +90,11 @@ export default function Dashboard() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">78%</div>
+            <div className="text-2xl font-bold">
+              {analyticsLoading ? "..." : analytics?.avgFidelityScore ? `${analytics.avgFidelityScore}/5` : "N/A"}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +5% from last month
+              {analyticsLoading ? "..." : analytics?.avgFidelityScore ? "Based on observations" : "No data yet"}
             </p>
           </CardContent>
         </Card>
@@ -148,7 +104,9 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">35</div>
+            <div className="text-2xl font-bold">
+              {analyticsLoading ? "..." : analytics?.totalTeamMembers || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               Across all initiatives
             </p>
@@ -156,174 +114,133 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alerts</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockAlerts.length}</div>
+            <div className="text-2xl font-bold">
+              {analyticsLoading ? "..." : analytics?.upcomingDeadlines || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Require attention
+              Next 7 days
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alerts Section - Hidden when no alerts */}
-      {false && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Alerts</CardTitle>
-            <CardDescription>Items requiring your attention</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {mockAlerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex items-start gap-3 rounded-lg border p-3"
-              >
-                <AlertCircle
-                  className={`h-5 w-5 mt-0.5 ${
-                    alert.type === "warning"
-                      ? "text-warning"
-                      : "text-primary"
-                  }`}
-                />
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground">{alert.initiative}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="initiatives">Initiatives</TabsTrigger>
+        </TabsList>
 
-      {/* Active Initiatives */}
-      {initiatives.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Initiatives</CardTitle>
-            <CardDescription>
-              Monitor progress across all implementation stages
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {initiatives.map((initiative) => {
-              const mockStages = [
-                { id: "decide", name: "Decide", completed: initiative.stage !== "decide", current: initiative.stage === "decide" },
-                { id: "plan", name: "Plan", completed: ["implement", "monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "plan" },
-                { id: "implement", name: "Implement", completed: ["monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "implement" },
-                { id: "monitor", name: "Monitor", completed: initiative.stage === "sustain", current: initiative.stage === "monitor" },
-                { id: "sustain", name: "Sustain", completed: false, current: initiative.stage === "sustain" },
-              ];
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <div className="col-span-4">
+              <FidelityTrendsChart />
+            </div>
+            <div className="col-span-3">
+              <InitiativeHealthWidget />
+            </div>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <ReadinessStatsWidget />
+            <BudgetTrackingChart />
+          </div>
+        </TabsContent>
 
-              return (
-                <div key={initiative.id} className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <h3 className="font-semibold">{initiative.title}</h3>
-                      {initiative.description && (
-                        <p className="text-sm text-muted-foreground">{initiative.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span>Stage: {stageMap[initiative.stage]}</span>
-                        {initiative.target_end_date && (
-                          <>
-                            <span>•</span>
-                            <span>Due: {new Date(initiative.target_end_date).toLocaleDateString()}</span>
-                          </>
-                        )}
+        <TabsContent value="initiatives" className="space-y-4">
+          {initiatives.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Initiatives</CardTitle>
+                <CardDescription>
+                  Monitor progress across all implementation stages
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {initiatives.map((initiative) => {
+                  const stages = [
+                    { id: "decide", name: "Decide", completed: initiative.stage !== "decide", current: initiative.stage === "decide" },
+                    { id: "plan", name: "Plan", completed: ["implement", "monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "plan" },
+                    { id: "implement", name: "Implement", completed: ["monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "implement" },
+                    { id: "monitor", name: "Monitor", completed: initiative.stage === "sustain", current: initiative.stage === "monitor" },
+                    { id: "sustain", name: "Sustain", completed: false, current: initiative.stage === "sustain" },
+                  ];
+
+                  return (
+                    <div key={initiative.id} className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 flex-1">
+                          <h3 className="font-semibold">{initiative.title}</h3>
+                          {initiative.description && (
+                            <p className="text-sm text-muted-foreground">{initiative.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span>Stage: {stageMap[initiative.stage]}</span>
+                            {initiative.target_end_date && (
+                              <>
+                                <span>•</span>
+                                <span>Due: {new Date(initiative.target_end_date).toLocaleDateString()}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link to={`/${initiative.stage}?initiative=${initiative.id}`}>View Details</Link>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => handleDeleteClick(initiative.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Initiative
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                      <div className="pt-2">
+                        <StageProgress stages={stages} />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/${initiative.stage}?initiative=${initiative.id}`}>View Details</Link>
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteClick(initiative.id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Initiative
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="text-center space-y-4">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted mx-auto">
+                    <Plus className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <div className="pt-2">
-                    <StageProgress stages={mockStages} />
+                  <div>
+                    <h3 className="font-semibold text-lg mb-2">No initiatives yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Get started by creating your first school improvement initiative
+                    </p>
+                    <Button onClick={() => navigate('/decide')}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Initiative
+                    </Button>
                   </div>
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted mx-auto">
-                <Plus className="h-10 w-10 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">No initiatives yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get started by creating your first school improvement initiative
-                </p>
-                <Button onClick={() => navigate('/decide')}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Initiative
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks and workflows</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Button variant="outline" className="h-auto flex-col items-start p-4" asChild>
-              <Link to="/implement">
-                <span className="font-semibold">Log Fidelity Check</span>
-                <span className="text-sm text-muted-foreground">
-                  Quick 60-second observation
-                </span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col items-start p-4" asChild>
-              <Link to="/monitor">
-                <span className="font-semibold">Review Data</span>
-                <span className="text-sm text-muted-foreground">
-                  Check leading indicators
-                </span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col items-start p-4" asChild>
-              <Link to="/decide">
-                <span className="font-semibold">Start New Initiative</span>
-                <span className="text-sm text-muted-foreground">
-                  Begin with Decision Brief
-                </span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
