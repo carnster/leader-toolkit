@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Lightbulb, Plus, Edit, Loader2 } from "lucide-react";
 import { CommunicationPlan } from "@/components/CommunicationPlan";
+import { PDRecommendations } from "@/components/PDRecommendations";
+import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { useToast } from "@/hooks/use-toast";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import type { PDActivity } from "@/hooks/usePDActivities";
 
@@ -15,7 +18,7 @@ interface TeamCapacitySectionProps {
   isGeneratingPD: boolean;
   onAddTeamMember: () => void;
   onEditTeamMember: (member: TeamMember) => void;
-  onAddPDActivity: () => void;
+  onAddPDActivity: (activity?: Partial<PDActivity>) => void;
   onEditPDActivity: (activity: PDActivity) => void;
   onGeneratePD: () => void;
 }
@@ -33,6 +36,28 @@ export function TeamCapacitySection({
   onEditPDActivity,
   onGeneratePD,
 }: TeamCapacitySectionProps) {
+  const { activeIngredients } = useActiveIngredients(initiativeId);
+  const { toast } = useToast();
+
+  const handleApplyPDRecommendations = async (recommendations: any[]) => {
+    try {
+      for (const activity of recommendations) {
+        await onAddPDActivity(activity);
+      }
+      toast({
+        title: "PD activities created",
+        description: `Successfully added ${recommendations.length} professional development activities.`,
+      });
+    } catch (error) {
+      console.error("Error applying PD recommendations:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create some PD activities.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Team Members */}
@@ -95,38 +120,24 @@ export function TeamCapacitySection({
       </Card>
 
       {/* Professional Development */}
+      <PDRecommendations
+        initiativeId={initiativeId}
+        activeIngredients={activeIngredients}
+        teamMembers={teamMembers}
+        onApplyRecommendations={handleApplyPDRecommendations}
+      />
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-primary" />
-              <CardTitle>Professional Development Plan</CardTitle>
+              <CardTitle>Professional Development Activities</CardTitle>
             </div>
-            <div className="flex gap-2">
-              {pdActivities.length === 0 && (
-                <Button
-                  onClick={onGeneratePD}
-                  disabled={isGeneratingPD}
-                  variant="outline"
-                >
-                  {isGeneratingPD ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Lightbulb className="mr-2 h-4 w-4" />
-                      Generate PD Activities
-                    </>
-                  )}
-                </Button>
-              )}
-              <Button onClick={onAddPDActivity}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Activity
-              </Button>
-            </div>
+            <Button onClick={() => onAddPDActivity()}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Activity
+            </Button>
           </div>
           <CardDescription>
             Comprehensive training, coaching, and ongoing support aligned to fidelity
