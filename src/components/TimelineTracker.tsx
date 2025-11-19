@@ -1,9 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Flag, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { useState } from "react";
 
 interface TimelineTrackerProps {
   initiativeId: string;
@@ -11,7 +16,10 @@ interface TimelineTrackerProps {
 }
 
 export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
-  const { milestones, isLoading } = useTimelineMilestones(initiativeId);
+  const { milestones, isLoading, updateMilestone, isUpdating } = useTimelineMilestones(initiativeId);
+  const [completingMilestone, setCompletingMilestone] = useState<any>(null);
+  const [completionNotes, setCompletionNotes] = useState("");
+  const [completionDate, setCompletionDate] = useState(format(new Date(), "yyyy-MM-dd"));
   
   if (isLoading) {
     return (
@@ -59,6 +67,31 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
       default:
         return <Badge variant="default"><Flag className="h-3 w-3 mr-1" />On Track</Badge>;
     }
+  };
+
+  const handleMarkComplete = (milestone: any) => {
+    setCompletingMilestone(milestone);
+    setCompletionNotes(milestone.notes || "");
+    setCompletionDate(format(new Date(), "yyyy-MM-dd"));
+  };
+
+  const handleConfirmComplete = () => {
+    if (!completingMilestone) return;
+    
+    updateMilestone({
+      id: completingMilestone.id,
+      status: "completed",
+      completion_date: completionDate,
+      notes: completionNotes || completingMilestone.notes
+    });
+    
+    setCompletingMilestone(null);
+    setCompletionNotes("");
+  };
+
+  const handleCancelComplete = () => {
+    setCompletingMilestone(null);
+    setCompletionNotes("");
   };
 
   return (
@@ -118,6 +151,17 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
                         )}
                       </p>
                     </div>
+                    {milestone.status !== "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMarkComplete(milestone)}
+                        className="flex-shrink-0"
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Mark Complete
+                      </Button>
+                    )}
                   </div>
                   {milestone.notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic">
@@ -135,6 +179,58 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
           )}
         </div>
       </CardContent>
+
+      {/* Completion Dialog */}
+      <Dialog open={!!completingMilestone} onOpenChange={(open) => !open && handleCancelComplete()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark Milestone as Complete</DialogTitle>
+            <DialogDescription>
+              Confirm completion of this milestone and add any notes about the completion.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {completingMilestone && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="font-medium">Milestone</Label>
+                <p className="text-sm text-muted-foreground">{completingMilestone.milestone}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="completion-date">Completion Date</Label>
+                <input
+                  id="completion-date"
+                  type="date"
+                  value={completionDate}
+                  onChange={(e) => setCompletionDate(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="completion-notes">Completion Notes (Optional)</Label>
+                <Textarea
+                  id="completion-notes"
+                  placeholder="Add any notes about completing this milestone..."
+                  value={completionNotes}
+                  onChange={(e) => setCompletionNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelComplete}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmComplete} disabled={isUpdating}>
+              {isUpdating ? "Marking Complete..." : "Mark Complete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
