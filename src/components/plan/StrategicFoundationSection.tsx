@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen, Network } from "lucide-react";
+import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen, Network, UserCheck, UserX } from "lucide-react";
 import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
 import { ImplementationStrategyRecommendations } from "@/components/ImplementationStrategyRecommendations";
@@ -312,6 +312,17 @@ export function StrategicFoundationSection({
                                     >
                                       {strategy.status.replace("_", " ")}
                                     </Badge>
+                                    {strategy.responsible_party_id ? (
+                                      <Badge variant="outline" className="text-xs">
+                                        <UserCheck className="h-3 w-3 mr-1" />
+                                        Assigned
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="destructive" className="text-xs">
+                                        <UserX className="h-3 w-3 mr-1" />
+                                        Unassigned
+                                      </Badge>
+                                    )}
                                   </div>
                                   {strategy.description && (
                                     <p className="text-sm text-muted-foreground mt-1">{strategy.description}</p>
