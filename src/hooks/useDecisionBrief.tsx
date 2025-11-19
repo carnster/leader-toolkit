@@ -64,6 +64,8 @@ export function useDecisionBrief(initiativeId: string | undefined) {
           problem_statement: briefData.problem_statement.trim(),
           target_group: briefData.target_group.trim(),
           ...briefData,
+        }, {
+          onConflict: 'initiative_id'
         })
         .select()
         .single();
