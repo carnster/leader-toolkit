@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Shield, Plus, Edit, Lightbulb, Loader2 } from "lucide-react";
 import { ResourceAllocation } from "@/components/ResourceAllocation";
+import { RiskStrategyMapping } from "@/components/RiskStrategyMapping";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import { format } from "date-fns";
@@ -255,6 +256,9 @@ export function ExecutionPlanningSection({
           )}
         </CardContent>
       </Card>
+
+      {/* Risk-Strategy Mapping */}
+      <RiskStrategyMapping initiativeId={initiativeId} />
 
       {/* Resource Allocation */}
       <ResourceAllocation initiativeId={initiativeId} />
