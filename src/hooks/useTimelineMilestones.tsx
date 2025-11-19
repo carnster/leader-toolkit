@@ -13,6 +13,7 @@ export interface TimelineMilestone {
   completion_date: string | null;
   notes: string | null;
   owner_id: string | null;
+  depends_on: string[] | null;
   created_at: string;
   updated_at: string;
 }

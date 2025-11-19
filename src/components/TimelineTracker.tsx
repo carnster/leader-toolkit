@@ -33,6 +33,7 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
     target_date: new Date(),
     notes: "",
     owner_id: "",
+    depends_on: [] as string[],
   });
   
   if (isLoading) {
@@ -62,16 +63,43 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
   const getMilestoneStatus = (milestone: any) => {
     if (milestone.status === "completed") return "completed";
     if (milestone.status === "cancelled") return "cancelled";
+    
+    // Check if blocked by dependencies
+    if (isBlocked(milestone)) return "blocked";
+    
     const targetDate = parseISO(milestone.target_date);
     if (isPast(targetDate)) return "overdue";
     if (isFuture(targetDate)) return "upcoming";
     return "on-track";
+  };
+
+  const isBlocked = (milestone: any): boolean => {
+    if (!milestone.depends_on || milestone.depends_on.length === 0) return false;
+    
+    // Check if any dependencies are not completed
+    return milestone.depends_on.some((depId: string) => {
+      const dependency = milestones.find(m => m.id === depId);
+      return dependency && dependency.status !== "completed";
+    });
+  };
+
+  const getDependencyNames = (milestone: any): string[] => {
+    if (!milestone.depends_on || milestone.depends_on.length === 0) return [];
+    
+    return milestone.depends_on
+      .map((depId: string) => {
+        const dependency = milestones.find(m => m.id === depId);
+        return dependency ? dependency.milestone : null;
+      })
+      .filter(Boolean) as string[];
   };
   
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+      case "blocked":
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300"><AlertCircle className="h-3 w-3 mr-1" />Blocked</Badge>;
       case "overdue":
         return <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" />Overdue</Badge>;
       case "upcoming":
@@ -115,6 +143,7 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
       target_date: parseISO(milestone.target_date),
       notes: milestone.notes || "",
       owner_id: milestone.owner_id || "",
+      depends_on: milestone.depends_on || [],
     });
   };
 
@@ -127,6 +156,7 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
       target_date: format(editFormData.target_date, "yyyy-MM-dd"),
       notes: editFormData.notes || null,
       owner_id: editFormData.owner_id || null,
+      depends_on: editFormData.depends_on.length > 0 ? editFormData.depends_on : null,
     });
     
     setEditingMilestone(null);
@@ -192,6 +222,26 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
                           </span>
                         )}
                       </p>
+                      {milestone.depends_on && milestone.depends_on.length > 0 && (
+                        <div className="mt-2 p-2 rounded bg-muted/50 border border-border/50">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            Dependencies:
+                          </p>
+                          <ul className="text-xs text-muted-foreground space-y-1">
+                            {getDependencyNames(milestone).map((depName, idx) => (
+                              <li key={idx} className="flex items-center gap-1">
+                                <span className="text-primary">→</span>
+                                {depName}
+                              </li>
+                            ))}
+                          </ul>
+                          {status === "blocked" && (
+                            <p className="text-xs text-orange-600 mt-2 font-medium">
+                              ⚠️ Complete dependencies before starting this milestone
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
                       <Button
@@ -206,6 +256,8 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleMarkComplete(milestone)}
+                          disabled={status === "blocked"}
+                          title={status === "blocked" ? "Complete dependencies first" : ""}
                         >
                           <CheckCircle2 className="h-4 w-4 mr-1" />
                           Mark Complete
@@ -349,6 +401,51 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-dependencies">Dependencies (Optional)</Label>
+                <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Select milestones that must be completed before this one can begin:
+                  </p>
+                  {milestones
+                    .filter(m => m.id !== editingMilestone?.id)
+                    .map((m) => (
+                      <label key={m.id} className="flex items-start gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          checked={editFormData.depends_on.includes(m.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditFormData({
+                                ...editFormData,
+                                depends_on: [...editFormData.depends_on, m.id]
+                              });
+                            } else {
+                              setEditFormData({
+                                ...editFormData,
+                                depends_on: editFormData.depends_on.filter(id => id !== m.id)
+                              });
+                            }
+                          }}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm">{m.milestone}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {m.phase} • {format(parseISO(m.target_date), "MMM d, yyyy")}
+                            {m.status === "completed" && " • ✓ Completed"}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  {milestones.length <= 1 && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      No other milestones available
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
