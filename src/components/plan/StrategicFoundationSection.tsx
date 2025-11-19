@@ -205,7 +205,7 @@ export function StrategicFoundationSection({
       </Card>
 
       {/* Adaptation Protocol Summary */}
-      <AdaptationProtocolSummary activeIngredients={activeIngredients} />
+      <AdaptationProtocolSummary activeIngredients={activeIngredients} initiativeId={initiativeId} />
 
       {/* Implementation Strategies - AI Recommendations */}
       <ImplementationStrategyRecommendations

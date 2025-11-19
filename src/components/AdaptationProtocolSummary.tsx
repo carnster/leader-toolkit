@@ -1,23 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Settings, Eye, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Lock, Settings, Eye, AlertCircle, Edit } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
-interface ActiveIngredient {
-  id: string;
-  name: string;
-  description: string | null;
-  category: string | null;
-  is_core: boolean;
-  look_fors: string[] | null;
-  adaptable_boundaries: string[] | null;
-}
+import { EditActiveIngredientDialog } from "@/components/EditActiveIngredientDialog";
+import { useState } from "react";
+import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 
 interface AdaptationProtocolSummaryProps {
   activeIngredients: ActiveIngredient[];
+  initiativeId: string;
 }
 
-export function AdaptationProtocolSummary({ activeIngredients }: AdaptationProtocolSummaryProps) {
+export function AdaptationProtocolSummary({ activeIngredients, initiativeId }: AdaptationProtocolSummaryProps) {
+  const [editingIngredient, setEditingIngredient] = useState<ActiveIngredient | null>(null);
   const coreIngredients = activeIngredients.filter(ing => ing.is_core);
   const adaptableIngredients = activeIngredients.filter(ing => !ing.is_core);
 
@@ -38,7 +34,8 @@ export function AdaptationProtocolSummary({ activeIngredients }: AdaptationProto
   }
 
   return (
-    <Card>
+    <>
+      <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5 text-primary" />
@@ -92,6 +89,13 @@ export function AdaptationProtocolSummary({ activeIngredients }: AdaptationProto
                         <p className="text-sm text-muted-foreground">{ingredient.description}</p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingIngredient(ingredient)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {ingredient.look_fors && ingredient.look_fors.length > 0 && (
@@ -147,6 +151,13 @@ export function AdaptationProtocolSummary({ activeIngredients }: AdaptationProto
                         <p className="text-sm text-muted-foreground">{ingredient.description}</p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditingIngredient(ingredient)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {ingredient.look_fors && ingredient.look_fors.length > 0 && (
@@ -201,5 +212,16 @@ export function AdaptationProtocolSummary({ activeIngredients }: AdaptationProto
         </div>
       </CardContent>
     </Card>
+
+    {/* Edit Dialog */}
+    {editingIngredient && (
+      <EditActiveIngredientDialog
+        ingredient={editingIngredient}
+        open={!!editingIngredient}
+        onOpenChange={(open) => !open && setEditingIngredient(null)}
+        initiativeId={initiativeId}
+      />
+    )}
+    </>
   );
 }
