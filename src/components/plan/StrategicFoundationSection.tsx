@@ -4,8 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen } from "lucide-react";
 import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
+import { ImplementationStrategyRecommendations } from "@/components/ImplementationStrategyRecommendations";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useDecisionBrief } from "@/hooks/useDecisionBrief";
+import { useToast } from "@/hooks/use-toast";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 
@@ -22,7 +25,7 @@ interface StrategicFoundationSectionProps {
   onEditIngredient: (ingredient: ActiveIngredient) => void;
   onEditStrategy: (strategy: ImplementationStrategy) => void;
   onDeleteStrategy: (id: string) => void;
-  onAddStrategy: () => void;
+  onAddStrategy: (strategy?: Partial<ImplementationStrategy>) => void;
 }
 
 export function StrategicFoundationSection({
@@ -41,6 +44,30 @@ export function StrategicFoundationSection({
   onAddStrategy,
 }: StrategicFoundationSectionProps) {
   const [showERICLibrary, setShowERICLibrary] = useState(false);
+  const { decisionBrief } = useDecisionBrief(initiativeId);
+  const { toast } = useToast();
+
+  const handleApplyStrategyRecommendation = async (recommendation: any) => {
+    // Map the ERIC category names from recommendations to the database enum values
+    const ericCategoryMap: Record<string, "evaluative_iterative" | "provide_interactive_assistance" | "adapt_practice" | "develop_stakeholder_relationships" | "train_educate" | "support_clinicians" | "engage_consumers" | "use_financial_strategies" | "change_infrastructure"> = {
+      evaluative_iterative: "evaluative_iterative",
+      provide_interactive_assistance: "provide_interactive_assistance",
+      adapt_practice: "adapt_practice",
+      develop_stakeholder_relationships: "develop_stakeholder_relationships",
+      train_educate: "train_educate",
+      support_clinicians: "support_clinicians",
+      engage_consumers: "engage_consumers",
+      use_financial_strategies: "use_financial_strategies",
+      change_infrastructure: "change_infrastructure"
+    };
+    
+    const mappedStrategy = {
+      ...recommendation,
+      eric_category: ericCategoryMap[recommendation.eric_category] || recommendation.eric_category
+    };
+    
+    onAddStrategy(mappedStrategy);
+  };
 
   const coreIngredients = activeIngredients.filter((ing) => ing.is_core);
   const adaptableIngredients = activeIngredients.filter((ing) => !ing.is_core);
@@ -171,6 +198,14 @@ export function StrategicFoundationSection({
         </CardContent>
       </Card>
 
+      {/* Implementation Strategies - AI Recommendations */}
+      <ImplementationStrategyRecommendations
+        initiativeId={initiativeId}
+        decisionBrief={decisionBrief}
+        activeIngredients={activeIngredients}
+        onApplyRecommendation={handleApplyStrategyRecommendation}
+      />
+
       {/* Implementation Strategies */}
       <Card>
         <CardHeader>
@@ -199,7 +234,7 @@ export function StrategicFoundationSection({
                   )}
                 </Button>
               )}
-              <Button onClick={onAddStrategy} variant="outline">
+              <Button onClick={() => onAddStrategy()} variant="outline">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Strategy
               </Button>
