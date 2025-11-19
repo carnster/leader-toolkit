@@ -89,9 +89,15 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
               {/* Strategic Foundation */}
               <Collapsible open={strategicOpen} onOpenChange={setStrategicOpen}>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="hover:bg-muted/50">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="w-full" asChild>
+                    <SidebarMenuButton 
+                      onClick={(e) => {
+                        // Navigate to first subsection on click
+                        setSection("ingredients");
+                      }}
+                      className="hover:bg-muted/50"
+                    >
                       <Target className="h-4 w-4" />
                       {!collapsed && (
                         <>
@@ -111,16 +117,24 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          {strategicOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStrategicOpen(!strategicOpen);
+                            }}
+                            className="ml-1 p-1 hover:bg-muted rounded"
+                          >
+                            {strategicOpen ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
                         </>
                       )}
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
                 {!collapsed && (
                   <CollapsibleContent>
                     <div className="mb-2 mx-4">
@@ -162,9 +176,12 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
               {/* Team & Capacity */}
               <Collapsible open={teamOpen} onOpenChange={setTeamOpen}>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="hover:bg-muted/50">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="w-full" asChild>
+                    <SidebarMenuButton
+                      onClick={() => setSection("team")}
+                      className="hover:bg-muted/50"
+                    >
                       <Users className="h-4 w-4" />
                       {!collapsed && (
                         <>
@@ -184,16 +201,24 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          {teamOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setTeamOpen(!teamOpen);
+                            }}
+                            className="ml-1 p-1 hover:bg-muted rounded"
+                          >
+                            {teamOpen ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
                         </>
                       )}
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
                 {!collapsed && (
                   <CollapsibleContent>
                     <div className="mb-2 mx-4">
@@ -244,9 +269,12 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
               {/* Communication & Engagement */}
               <Collapsible open={communicationOpen} onOpenChange={setCommunicationOpen}>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="hover:bg-muted/50">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="w-full" asChild>
+                    <SidebarMenuButton
+                      onClick={() => setSection("communication")}
+                      className="hover:bg-muted/50"
+                    >
                       <MessageSquare className="h-4 w-4" />
                       {!collapsed && (
                         <>
@@ -266,16 +294,24 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          {communicationOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCommunicationOpen(!communicationOpen);
+                            }}
+                            className="ml-1 p-1 hover:bg-muted rounded"
+                          >
+                            {communicationOpen ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
                         </>
                       )}
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
                 {!collapsed && (
                   <CollapsibleContent>
                     <div className="mb-2 mx-4">
@@ -303,9 +339,12 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
               {/* Execution Planning */}
               <Collapsible open={executionOpen} onOpenChange={setExecutionOpen}>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="hover:bg-muted/50">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="w-full" asChild>
+                    <SidebarMenuButton
+                      onClick={() => setSection("timeline")}
+                      className="hover:bg-muted/50"
+                    >
                       <Calendar className="h-4 w-4" />
                       {!collapsed && (
                         <>
@@ -325,16 +364,24 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          {executionOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExecutionOpen(!executionOpen);
+                            }}
+                            className="ml-1 p-1 hover:bg-muted rounded"
+                          >
+                            {executionOpen ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
                         </>
                       )}
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
                 {!collapsed && (
                   <CollapsibleContent>
                     <div className="mb-2 mx-4">
@@ -385,9 +432,12 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
               {/* Quality Assurance */}
               <Collapsible open={qualityOpen} onOpenChange={setQualityOpen}>
-                <CollapsibleTrigger className="w-full">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton className="hover:bg-muted/50">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger className="w-full" asChild>
+                    <SidebarMenuButton
+                      onClick={() => setSection("fidelity")}
+                      className="hover:bg-muted/50"
+                    >
                       <Eye className="h-4 w-4" />
                       {!collapsed && (
                         <>
@@ -407,16 +457,24 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                          {qualityOpen ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQualityOpen(!qualityOpen);
+                            }}
+                            className="ml-1 p-1 hover:bg-muted rounded"
+                          >
+                            {qualityOpen ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
                         </>
                       )}
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </CollapsibleTrigger>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
                 {!collapsed && (
                   <CollapsibleContent>
                     <div className="mb-2 mx-4">
