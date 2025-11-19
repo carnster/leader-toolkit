@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2 } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
+import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
 import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
-import { useIndicators } from "@/hooks/useIndicators";
+import { useIndicators, Indicator } from "@/hooks/useIndicators";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 
 const mockIndicators = [
@@ -44,10 +46,22 @@ export default function Monitor() {
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
+  const [editingIndicator, setEditingIndicator] = useState<Indicator | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
-  const { indicators, isLoading: isLoadingIndicators } = useIndicators(effectiveInitiativeId);
+  const { indicators, isLoading: isLoadingIndicators, updateIndicator } = useIndicators(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
+  
+  const handleEditIndicator = (indicator: Indicator) => {
+    setEditingIndicator(indicator);
+    setEditDialogOpen(true);
+  };
+  
+  const handleSaveIndicator = (id: string, updates: Partial<Indicator>) => {
+    updateIndicator({ id, updates });
+  };
   
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
   const activeStrategies = strategies.filter(s => s.status === 'in_progress' || s.status === 'planned');
@@ -242,10 +256,27 @@ export default function Monitor() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{indicator.name}</CardTitle>
-                <Badge variant={indicator.type === "leading" ? "default" : "secondary"}>
-                  {indicator.type}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={indicator.type === "leading" ? "default" : "secondary"}>
+                    {indicator.type}
+                  </Badge>
+                  {indicators.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditIndicator(indicator)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
+              {indicator.schedule && (
+                <p className="text-xs text-muted-foreground">
+                  Measured {indicator.schedule.toLowerCase()}
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -398,6 +429,14 @@ export default function Monitor() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Edit Indicator Dialog */}
+      <EditIndicatorDialog
+        indicator={editingIndicator}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleSaveIndicator}
+      />
     </div>
   );
 }
