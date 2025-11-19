@@ -2,7 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Lightbulb, Plus, Edit, Loader2 } from "lucide-react";
-import { CommunicationPlan } from "@/components/CommunicationPlan";
 import { PDRecommendations } from "@/components/PDRecommendations";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { usePDActivities } from "@/hooks/usePDActivities";
@@ -230,9 +229,6 @@ export function TeamCapacitySection({
           )}
         </CardContent>
       </Card>
-
-      {/* Communication Plan */}
-      <CommunicationPlan initiativeId={initiativeId} />
     </div>
   );
 }
