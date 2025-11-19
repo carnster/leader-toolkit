@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [activeTab, setActiveTab] = useState("signin");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -126,7 +127,7 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -158,6 +159,13 @@ export default function Auth() {
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Signing in..." : "Sign In"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("reset")}
+                  className="text-sm text-primary hover:underline mt-2"
+                >
+                  Forgot Password?
+                </button>
               </form>
             </TabsContent>
 
