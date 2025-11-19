@@ -724,6 +724,7 @@ export default function Plan() {
               if (!open) setEditingActivity(null);
             }}
             initiativeId={effectiveInitiativeId}
+            teamMembers={teamMembers}
           />
           
           <ImplementationStrategyDialog
