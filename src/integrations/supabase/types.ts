@@ -371,12 +371,15 @@ export type Database = {
           created_at: string
           duration_minutes: number | null
           evidence_photos: string[] | null
+          follow_up_actions: string[] | null
           id: string
           initiative_id: string
           location: string | null
+          log_type: string | null
           notes: string | null
           observed_at: string
           observer_id: string
+          participants: Json | null
           rating: number
           schedule_id: string | null
         }
@@ -387,12 +390,15 @@ export type Database = {
           created_at?: string
           duration_minutes?: number | null
           evidence_photos?: string[] | null
+          follow_up_actions?: string[] | null
           id?: string
           initiative_id: string
           location?: string | null
+          log_type?: string | null
           notes?: string | null
           observed_at?: string
           observer_id: string
+          participants?: Json | null
           rating: number
           schedule_id?: string | null
         }
@@ -403,12 +409,15 @@ export type Database = {
           created_at?: string
           duration_minutes?: number | null
           evidence_photos?: string[] | null
+          follow_up_actions?: string[] | null
           id?: string
           initiative_id?: string
           location?: string | null
+          log_type?: string | null
           notes?: string | null
           observed_at?: string
           observer_id?: string
+          participants?: Json | null
           rating?: number
           schedule_id?: string | null
         }

@@ -17,6 +17,9 @@ export interface FidelityLog {
   evidence_photos: string[];
   duration_minutes: number | null;
   location: string | null;
+  log_type: 'quick' | 'detailed' | 'team' | 'standard';
+  participants: string[];
+  follow_up_actions: string[] | null;
 }
 
 export function useFidelityLogs(initiativeId: string | undefined) {
@@ -45,7 +48,7 @@ export function useFidelityLogs(initiativeId: string | undefined) {
       const observerId = log.observer_id || userData.user?.id;
       if (!observerId) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from("fidelity_logs")
         .insert({
           initiative_id: initiativeId!,
@@ -60,6 +63,9 @@ export function useFidelityLogs(initiativeId: string | undefined) {
           evidence_photos: log.evidence_photos || [],
           duration_minutes: log.duration_minutes || null,
           location: log.location || null,
+          log_type: log.log_type || 'standard',
+          participants: log.participants || [],
+          follow_up_actions: log.follow_up_actions || null,
         })
         .select()
         .single();

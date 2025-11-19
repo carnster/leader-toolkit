@@ -84,6 +84,9 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       evidence_photos: [],
       duration_minutes: schedule?.duration_minutes || null,
       location: schedule?.location || null,
+      log_type: 'standard' as const,
+      participants: [],
+      follow_up_actions: null,
     };
 
     createLog(logData, {
