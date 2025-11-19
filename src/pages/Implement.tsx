@@ -111,9 +111,6 @@ export default function Implement() {
         </CardContent>
       </Card>
 
-      {/* Timeline Tracker */}
-      <TimelineTracker initiativeId={effectiveInitiativeId} stage="implement" />
-
       {/* Fidelity Trends */}
       <FidelityTrendsChart />
 
