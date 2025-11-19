@@ -11,7 +11,7 @@ const requestSchema = z.object({
     problem_statement: z.string().max(5000),
     target_group: z.string().max(1000),
     chosen_approach: z.string().max(2000).optional(),
-    measurement_timeline: z.string().max(5000).optional(),
+    measurement_timeline: z.array(z.string()).max(100).optional(),
     goals: z.string().max(10000).optional(),
   }),
   activeIngredients: z.array(z.object({
@@ -70,8 +70,8 @@ Each milestone should include:
 **Initiative:**
 ${decisionBrief.chosen_approach || 'Not specified'}
 
-**Target Timeline:**
-${decisionBrief.measurement_timeline || 'Not specified'}
+**Data Collection Activities:**
+${decisionBrief.measurement_timeline?.join('\n') || 'Not specified'}
 
 **Active Ingredients to Implement:**
 ${activeIngredients?.map((ing: any) => `- ${ing.name} (${ing.is_core ? 'Core' : 'Adaptable'})`).join('\n') || 'None specified'}
