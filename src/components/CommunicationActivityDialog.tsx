@@ -228,22 +228,22 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
 
             <div className="space-y-2">
               <Label htmlFor="assigned_to_id">Assigned To</Label>
-              <Select 
-                value={formData.assigned_to_id || ""} 
-                onValueChange={(value) => setFormData({ ...formData, assigned_to_id: value || "" })}
-              >
-                <SelectTrigger id="assigned_to_id">
-                  <SelectValue placeholder="Select team member" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {teamMembers.map(member => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name || member.profiles?.full_name || "Unnamed Member"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <Select 
+              value={formData.assigned_to_id || "unassigned"} 
+              onValueChange={(value) => setFormData({ ...formData, assigned_to_id: value === "unassigned" ? null : value })}
+            >
+              <SelectTrigger id="assigned_to_id">
+                <SelectValue placeholder="Select team member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">None</SelectItem>
+                {teamMembers.map(member => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.name || member.profiles?.full_name || "Unnamed Member"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             </div>
 
             <div className="space-y-4 p-4 rounded-lg border">
