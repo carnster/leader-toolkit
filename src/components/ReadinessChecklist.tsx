@@ -150,7 +150,7 @@ export function ReadinessChecklist({
       label: "Stakeholder communication plan in place",
       required: true,
       autoCheck: false,
-      actionLink: `/monitor${initiativeId ? `?initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=communication${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Create Communication Plan"
     },
     {
