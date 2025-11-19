@@ -5,10 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Flag, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Flag, Clock, CheckCircle2, AlertCircle, Pencil, CalendarIcon } from "lucide-react";
 import { format, parseISO, isPast, isFuture } from "date-fns";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface TimelineTrackerProps {
   initiativeId: string;
@@ -17,9 +23,17 @@ interface TimelineTrackerProps {
 
 export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
   const { milestones, isLoading, updateMilestone, isUpdating } = useTimelineMilestones(initiativeId);
+  const { teamMembers } = useTeamMembers(initiativeId);
   const [completingMilestone, setCompletingMilestone] = useState<any>(null);
   const [completionNotes, setCompletionNotes] = useState("");
   const [completionDate, setCompletionDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [editingMilestone, setEditingMilestone] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState({
+    milestone: "",
+    target_date: new Date(),
+    notes: "",
+    owner_id: "",
+  });
   
   if (isLoading) {
     return (
@@ -94,6 +108,34 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
     setCompletionNotes("");
   };
 
+  const handleEditMilestone = (milestone: any) => {
+    setEditingMilestone(milestone);
+    setEditFormData({
+      milestone: milestone.milestone,
+      target_date: parseISO(milestone.target_date),
+      notes: milestone.notes || "",
+      owner_id: milestone.owner_id || "",
+    });
+  };
+
+  const handleConfirmEdit = () => {
+    if (!editingMilestone) return;
+    
+    updateMilestone({
+      id: editingMilestone.id,
+      milestone: editFormData.milestone,
+      target_date: format(editFormData.target_date, "yyyy-MM-dd"),
+      notes: editFormData.notes || null,
+      owner_id: editFormData.owner_id || null,
+    });
+    
+    setEditingMilestone(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMilestone(null);
+  };
+
   return (
     <Card className="border-primary/30 bg-primary/5">
       <CardHeader>
@@ -151,17 +193,25 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
                         )}
                       </p>
                     </div>
-                    {milestone.status !== "completed" && (
+                    <div className="flex gap-2 flex-shrink-0">
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => handleMarkComplete(milestone)}
-                        className="flex-shrink-0"
+                        variant="ghost"
+                        onClick={() => handleEditMilestone(milestone)}
                       >
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Mark Complete
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    )}
+                      {milestone.status !== "completed" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleMarkComplete(milestone)}
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-1" />
+                          Mark Complete
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {milestone.notes && (
                     <p className="text-xs text-muted-foreground mt-2 italic">
@@ -227,6 +277,99 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
             </Button>
             <Button onClick={handleConfirmComplete} disabled={isUpdating}>
               {isUpdating ? "Marking Complete..." : "Mark Complete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingMilestone} onOpenChange={(open) => !open && handleCancelEdit()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Milestone</DialogTitle>
+            <DialogDescription>
+              Update milestone details for quick changes during implementation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingMilestone && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-milestone">Milestone Name</Label>
+                <Input
+                  id="edit-milestone"
+                  value={editFormData.milestone}
+                  onChange={(e) => setEditFormData({ ...editFormData, milestone: e.target.value })}
+                  placeholder="Enter milestone name..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Target Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !editFormData.target_date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editFormData.target_date ? format(editFormData.target_date, "PPP") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={editFormData.target_date}
+                      onSelect={(date) => date && setEditFormData({ ...editFormData, target_date: date })}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-owner">Owner (Optional)</Label>
+                <Select
+                  value={editFormData.owner_id}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, owner_id: value })}
+                >
+                  <SelectTrigger id="edit-owner">
+                    <SelectValue placeholder="Select team member..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name || member.profiles?.full_name || "Unknown"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-notes">Notes (Optional)</Label>
+                <Textarea
+                  id="edit-notes"
+                  placeholder="Add any notes about this milestone..."
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelEdit}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmEdit} disabled={isUpdating || !editFormData.milestone}>
+              {isUpdating ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
