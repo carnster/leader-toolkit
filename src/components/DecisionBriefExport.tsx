@@ -89,7 +89,7 @@ export function DecisionBriefExport({ decisionBrief, initiativeTitle }: Decision
       
       addSection("Leading Indicators", decisionBrief.leading_indicators?.join(", ") || null);
       addSection("Lagging Indicators", decisionBrief.lagging_indicators?.join(", ") || null);
-      addSection("Measurement Timeline", decisionBrief.measurement_timeline);
+      addSection("Measurement Timeline", decisionBrief.measurement_timeline?.join(", ") || null);
 
       // Add footer with date
       const dateStr = new Date().toLocaleDateString();

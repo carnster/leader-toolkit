@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Flag } from "lucide-react";
 
 interface TimelineVisualizationProps {
-  measurementTimeline: string;
+  measurementTimeline: string[];
   leadingIndicators: string[];
   laggingIndicators: string[];
 }
@@ -13,35 +13,14 @@ export function TimelineVisualization({
   leadingIndicators, 
   laggingIndicators 
 }: TimelineVisualizationProps) {
-  if (!measurementTimeline && leadingIndicators.length === 0 && laggingIndicators.length === 0) {
+  if (measurementTimeline.length === 0 && leadingIndicators.length === 0 && laggingIndicators.length === 0) {
     return null;
   }
 
-  // Parse and format measurement timeline entries
-  const parseTimelineEntries = (timeline: string): string[] => {
-    if (!timeline) return [];
-    
-    // Remove common bullet/numbering prefixes and split by various delimiters
-    const entries = timeline
-      // Split by newlines, commas, semicolons, or "and"
-      .split(/[\n,;]|(?:\s+and\s+)/i)
-      .map(entry => entry
-        // Remove bullets (•, -, *, >, etc.)
-        .replace(/^[\s\-•*>]+/, '')
-        // Remove numbering (1., 2), etc.)
-        .replace(/^\d+[\.)]\s*/, '')
-        .trim()
-      )
-      .filter(entry => entry.length > 0);
-    
-    return entries;
-  };
-
-  const timelineEntries = parseTimelineEntries(measurementTimeline);
-  
-  // Extract timeline keywords and organize
+  // Extract timeline keywords and organize from all timeline entries
   const timelinePattern = /\b(weekly|fortnightly|monthly|termly|half-termly|quarterly|annually|daily)\b/gi;
-  const matches = measurementTimeline.match(timelinePattern) || [];
+  const allTimelineText = measurementTimeline.join(' ');
+  const matches = allTimelineText.match(timelinePattern) || [];
   const frequencies = [...new Set(matches.map(m => m.toLowerCase()))];
 
   return (
@@ -111,11 +90,11 @@ export function TimelineVisualization({
         </div>
 
         {/* Timeline Description */}
-        {timelineEntries.length > 0 && (
+        {measurementTimeline.length > 0 && (
           <div className="rounded-lg bg-muted/50 p-3">
             <p className="text-sm font-medium mb-2">Measurement Plan:</p>
             <div className="space-y-1">
-              {timelineEntries.map((entry, idx) => (
+              {measurementTimeline.map((entry, idx) => (
                 <div key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span>{entry}</span>
