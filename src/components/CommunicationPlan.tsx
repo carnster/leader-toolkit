@@ -7,14 +7,21 @@ import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circl
 import { format } from "date-fns";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { CommunicationActivityDialog } from "./CommunicationActivityDialog";
+import { CommunicationRecommendations } from "./CommunicationRecommendations";
 import type { CommunicationActivity } from "@/hooks/useCommunicationActivities";
+import { useDecisionBrief } from "@/hooks/useDecisionBrief";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommunicationPlanProps {
   initiativeId: string;
 }
 
 export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
-  const { activities, isLoading, updateActivity } = useCommunicationActivities(initiativeId);
+  const { activities, isLoading, updateActivity, createActivity } = useCommunicationActivities(initiativeId);
+  const { decisionBrief } = useDecisionBrief(initiativeId);
+  const { teamMembers } = useTeamMembers(initiativeId);
+  const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<CommunicationActivity | undefined>();
 
@@ -36,6 +43,30 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
     });
   };
 
+  const handleApplyRecommendations = (recommendations: Array<{
+    stakeholder_group: string;
+    activity_type: string;
+    description: string;
+    channel: string;
+    timing: string;
+  }>) => {
+    recommendations.forEach(rec => {
+      createActivity({
+        stakeholder_group: rec.stakeholder_group,
+        activity_type: rec.activity_type,
+        description: rec.description,
+        channel: rec.channel,
+        scheduled_date: null,
+        notes: `Timing: ${rec.timing}`,
+      });
+    });
+    
+    toast({
+      title: "Activities Added",
+      description: `${recommendations.length} communication activities have been added to your plan.`,
+    });
+  };
+
   const groupedActivities = activities.reduce((acc, activity) => {
     const group = activity.stakeholder_group;
     if (!acc[group]) acc[group] = [];
@@ -44,8 +75,28 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
   }, {} as Record<string, CommunicationActivity[]>);
 
   const completedCount = activities.filter(a => a.completed).length;
+  
   return (
     <>
+      {/* AI Recommendations */}
+      {decisionBrief && (
+        <CommunicationRecommendations
+          decisionBrief={{
+            problem_statement: decisionBrief.problem_statement,
+            target_group: decisionBrief.target_group,
+            goals: decisionBrief.goals || undefined,
+            chosen_approach: decisionBrief.chosen_approach || undefined,
+            stakeholder_input: decisionBrief.stakeholder_input || undefined,
+            equity_notes: decisionBrief.equity_notes || undefined,
+          }}
+          teamMembers={teamMembers?.map(tm => ({
+            name: tm.name || undefined,
+            role_in_initiative: tm.role_in_initiative,
+          }))}
+          onApplyRecommendations={handleApplyRecommendations}
+        />
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
