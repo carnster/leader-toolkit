@@ -16,10 +16,12 @@ import { InitiativeHealthWidget } from "@/components/dashboard/InitiativeHealthW
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TestNotifications } from "@/components/TestNotifications";
 import { TeamDashboard } from "@/components/TeamDashboard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
-  const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics();
+  const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
+  const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
@@ -65,10 +67,25 @@ export default function Dashboard() {
             Track and manage your school improvement initiatives
           </p>
         </div>
-        <Button onClick={() => navigate('/decide')}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Initiative
-        </Button>
+        <div className="flex items-center gap-4">
+          <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
+            <SelectTrigger className="w-[280px]">
+              <SelectValue placeholder="Select initiative" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Initiatives</SelectItem>
+              {initiatives.map((initiative) => (
+                <SelectItem key={initiative.id} value={initiative.id}>
+                  {initiative.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={() => navigate('/decide')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Initiative
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -139,16 +156,16 @@ export default function Dashboard() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <div className="col-span-4">
-              <FidelityTrendsChart />
+              <FidelityTrendsChart initiativeId={selectedInitiativeId} />
             </div>
             <div className="col-span-3">
-              <InitiativeHealthWidget />
+              <InitiativeHealthWidget initiativeId={selectedInitiativeId} />
             </div>
           </div>
           
           <div className="grid gap-4 md:grid-cols-2">
-            <ReadinessStatsWidget />
-            <BudgetTrackingChart />
+            <ReadinessStatsWidget initiativeId={selectedInitiativeId} />
+            <BudgetTrackingChart initiativeId={selectedInitiativeId} />
           </div>
 
           <TestNotifications />

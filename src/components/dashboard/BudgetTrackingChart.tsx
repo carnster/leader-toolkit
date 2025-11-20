@@ -3,8 +3,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { DollarSign } from "lucide-react";
 
-export function BudgetTrackingChart() {
-  const { data: budgets, isLoading } = useBudgetTracking();
+interface BudgetTrackingChartProps {
+  initiativeId?: string;
+}
+
+export function BudgetTrackingChart({ initiativeId }: BudgetTrackingChartProps) {
+  const { data: budgets, isLoading } = useBudgetTracking(initiativeId);
 
   if (isLoading) {
     return (

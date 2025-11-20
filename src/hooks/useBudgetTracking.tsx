@@ -10,15 +10,15 @@ export interface BudgetSummary {
   variancePercentage: number;
 }
 
-export function useBudgetTracking() {
+export function useBudgetTracking(initiativeId?: string) {
   return useQuery({
-    queryKey: ["budgetTracking"],
+    queryKey: ["budgetTracking", initiativeId],
     queryFn: async (): Promise<BudgetSummary[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch initiatives with budget items
-      const { data: initiatives, error: initiativesError } = await supabase
+      // Build query
+      let query = supabase
         .from("initiatives")
         .select(`
           id,
@@ -28,8 +28,14 @@ export function useBudgetTracking() {
             actual_cost
           )
         `)
-        .or(`owner_id.eq.${user.id},id.in.(select initiative_id from initiative_team_members where user_id = ${user.id})`)
+        .eq("owner_id", user.id)
         .eq("status", "active");
+
+      if (initiativeId) {
+        query = query.eq("id", initiativeId);
+      }
+
+      const { data: initiatives, error: initiativesError } = await query;
 
       if (initiativesError) throw initiativesError;
 

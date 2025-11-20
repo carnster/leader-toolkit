@@ -13,18 +13,24 @@ export interface DashboardStats {
   atRiskInitiatives: number;
 }
 
-export function useDashboardAnalytics() {
+export function useDashboardAnalytics(initiativeId?: string) {
   return useQuery({
-    queryKey: ["dashboardAnalytics"],
+    queryKey: ["dashboardAnalytics", initiativeId],
     queryFn: async (): Promise<DashboardStats> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch initiatives
-      const { data: initiatives, error: initiativesError } = await supabase
+      // Build query
+      let query = supabase
         .from("initiatives")
         .select("id, status, stage")
-        .or(`owner_id.eq.${user.id},id.in.(select initiative_id from initiative_team_members where user_id = ${user.id})`);
+        .eq("owner_id", user.id);
+
+      if (initiativeId) {
+        query = query.eq("id", initiativeId);
+      }
+
+      const { data: initiatives, error: initiativesError } = await query;
 
       if (initiativesError) throw initiativesError;
 

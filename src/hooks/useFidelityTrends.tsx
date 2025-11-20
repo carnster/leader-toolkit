@@ -8,22 +8,28 @@ export interface FidelityTrendData {
   observationCount: number;
 }
 
-export function useFidelityTrends(days: number = 30) {
+export function useFidelityTrends(days: number = 30, initiativeId?: string) {
   return useQuery({
-    queryKey: ["fidelityTrends", days],
+    queryKey: ["fidelityTrends", days, initiativeId],
     queryFn: async (): Promise<FidelityTrendData[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const startDate = subDays(new Date(), days);
 
-      // Fetch initiatives
-      const { data: initiatives } = await supabase
-        .from("initiatives")
-        .select("id")
-        .or(`owner_id.eq.${user.id},id.in.(select initiative_id from initiative_team_members where user_id = ${user.id})`);
+      let initiativeIds: string[] = [];
+      
+      if (initiativeId) {
+        initiativeIds = [initiativeId];
+      } else {
+        // Fetch all user initiatives
+        const { data: initiatives } = await supabase
+          .from("initiatives")
+          .select("id")
+          .eq("owner_id", user.id);
 
-      const initiativeIds = initiatives?.map(i => i.id) || [];
+        initiativeIds = initiatives?.map(i => i.id) || [];
+      }
 
       if (initiativeIds.length === 0) return [];
 
