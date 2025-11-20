@@ -4,8 +4,12 @@ import { useReadinessStats } from "@/hooks/useReadinessStats";
 import { CheckCircle2, Circle } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export function ReadinessStatsWidget() {
-  const { data: stats, isLoading } = useReadinessStats();
+interface ReadinessStatsWidgetProps {
+  initiativeId?: string;
+}
+
+export function ReadinessStatsWidget({ initiativeId }: ReadinessStatsWidgetProps) {
+  const { data: stats, isLoading } = useReadinessStats(initiativeId);
 
   if (isLoading) {
     return (

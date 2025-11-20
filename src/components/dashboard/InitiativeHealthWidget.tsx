@@ -3,8 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
 import { AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
 
-export function InitiativeHealthWidget() {
-  const { data: stats, isLoading } = useDashboardAnalytics();
+interface InitiativeHealthWidgetProps {
+  initiativeId?: string;
+}
+
+export function InitiativeHealthWidget({ initiativeId }: InitiativeHealthWidgetProps) {
+  const { data: stats, isLoading } = useDashboardAnalytics(initiativeId);
 
   if (isLoading) {
     return (

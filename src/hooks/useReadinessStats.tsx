@@ -24,19 +24,25 @@ const READINESS_ITEMS = [
   "adaptation-protocol"
 ];
 
-export function useReadinessStats() {
+export function useReadinessStats(initiativeId?: string) {
   return useQuery({
-    queryKey: ["readinessStats"],
+    queryKey: ["readinessStats", initiativeId],
     queryFn: async (): Promise<ReadinessStats[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Fetch initiatives
-      const { data: initiatives, error: initiativesError } = await supabase
+      // Build query
+      let query = supabase
         .from("initiatives")
         .select("id, title")
-        .or(`owner_id.eq.${user.id},id.in.(select initiative_id from initiative_team_members where user_id = ${user.id})`)
+        .eq("owner_id", user.id)
         .eq("status", "active");
+
+      if (initiativeId) {
+        query = query.eq("id", initiativeId);
+      }
+
+      const { data: initiatives, error: initiativesError } = await query;
 
       if (initiativesError) throw initiativesError;
 

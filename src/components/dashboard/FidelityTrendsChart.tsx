@@ -3,8 +3,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { TrendingUp } from "lucide-react";
 
-export function FidelityTrendsChart() {
-  const { data: trends, isLoading } = useFidelityTrends(30);
+interface FidelityTrendsChartProps {
+  initiativeId?: string;
+}
+
+export function FidelityTrendsChart({ initiativeId }: FidelityTrendsChartProps) {
+  const { data: trends, isLoading } = useFidelityTrends(30, initiativeId);
 
   if (isLoading) {
     return (
