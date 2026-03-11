@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TestNotifications } from "@/components/TestNotifications";
 import { TeamDashboard } from "@/components/TeamDashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DashboardExport } from "@/components/DashboardExport";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
@@ -81,6 +82,11 @@ export default function Dashboard() {
               ))}
             </SelectContent>
           </Select>
+          <DashboardExport 
+            analytics={analytics} 
+            initiatives={initiatives} 
+            selectedInitiativeId={selectedInitiativeId} 
+          />
           <Button onClick={() => navigate('/decide')}>
             <Plus className="mr-2 h-4 w-4" />
             New Initiative
