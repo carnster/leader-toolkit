@@ -6,15 +6,27 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { DashboardStats } from "@/hooks/useDashboardAnalytics";
 import { Initiative } from "@/hooks/useInitiatives";
+import { FidelityTrendData } from "@/hooks/useFidelityTrends";
+import { BudgetSummary } from "@/hooks/useBudgetTracking";
 
 interface DashboardExportProps {
   analytics: DashboardStats | undefined;
   initiatives: Initiative[];
   selectedInitiativeId?: string;
+  fidelityTrends?: FidelityTrendData[];
+  budgetData?: BudgetSummary[];
 }
 
-export function DashboardExport({ analytics, initiatives, selectedInitiativeId }: DashboardExportProps) {
+export function DashboardExport({ analytics, initiatives, selectedInitiativeId, fidelityTrends, budgetData }: DashboardExportProps) {
   const [exporting, setExporting] = useState(false);
+
+  const checkPageBreak = (doc: jsPDF, yPos: number, needed: number = 40): number => {
+    if (yPos + needed > 270) {
+      doc.addPage();
+      return 20;
+    }
+    return yPos;
+  };
 
   const handleExport = () => {
     if (!analytics) {
@@ -96,13 +108,85 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId }
         yPos += 15;
       }
 
+      // Fidelity Trends Table
+      if (fidelityTrends && fidelityTrends.length > 0) {
+        yPos = checkPageBreak(doc, yPos, 50);
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("Fidelity Trends (Last 30 Days)", 20, yPos);
+        yPos += 5;
+
+        const trendRows = fidelityTrends.map(t => [
+          t.date,
+          t.avgRating.toFixed(1),
+          t.observationCount.toString(),
+        ]);
+
+        // Summary row
+        const overallAvg = fidelityTrends.reduce((s, t) => s + t.avgRating, 0) / fidelityTrends.length;
+        const totalObs = fidelityTrends.reduce((s, t) => s + t.observationCount, 0);
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [["Date", "Avg Rating (out of 5)", "Observations"]],
+          body: trendRows,
+          foot: [["Overall", overallAvg.toFixed(1), totalObs.toString()]],
+          theme: "grid",
+          headStyles: { fillColor: [34, 197, 94], textColor: 255, fontStyle: "bold" },
+          footStyles: { fillColor: [229, 231, 235], textColor: [0, 0, 0], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 247, 250] },
+          styles: { fontSize: 9, cellPadding: 4 },
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 15;
+      }
+
+      // Budget Tracking Table
+      if (budgetData && budgetData.length > 0) {
+        yPos = checkPageBreak(doc, yPos, 50);
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("Budget Tracking", 20, yPos);
+        yPos += 5;
+
+        const budgetRows = budgetData.map(b => [
+          b.initiativeTitle.length > 30 ? b.initiativeTitle.substring(0, 30) + "..." : b.initiativeTitle,
+          `$${b.totalEstimated.toLocaleString()}`,
+          `$${b.totalActual.toLocaleString()}`,
+          `$${b.variance.toLocaleString()}`,
+          `${b.variancePercentage}%`,
+        ]);
+
+        const totalEst = budgetData.reduce((s, b) => s + b.totalEstimated, 0);
+        const totalAct = budgetData.reduce((s, b) => s + b.totalActual, 0);
+        const totalVar = totalEst - totalAct;
+        const totalVarPct = totalEst > 0 ? Math.round((totalVar / totalEst) * 100) : 0;
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [["Initiative", "Estimated", "Actual", "Variance", "Variance %"]],
+          body: budgetRows,
+          foot: [["Total", `$${totalEst.toLocaleString()}`, `$${totalAct.toLocaleString()}`, `$${totalVar.toLocaleString()}`, `${totalVarPct}%`]],
+          theme: "grid",
+          headStyles: { fillColor: [139, 92, 246], textColor: 255, fontStyle: "bold" },
+          footStyles: { fillColor: [229, 231, 235], textColor: [0, 0, 0], fontStyle: "bold" },
+          alternateRowStyles: { fillColor: [245, 247, 250] },
+          styles: { fontSize: 9, cellPadding: 4 },
+          columnStyles: { 0: { cellWidth: 55 } },
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 15;
+      }
+
       // Initiatives Table
       if (initiatives.length > 0) {
-        if (yPos > 220) {
-          doc.addPage();
-          yPos = 20;
-        }
+        yPos = checkPageBreak(doc, yPos, 50);
 
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         doc.text("Initiatives Overview", 20, yPos);
@@ -139,10 +223,7 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId }
       }
 
       // Summary Footer
-      if (yPos > 260) {
-        doc.addPage();
-        yPos = 20;
-      }
+      yPos = checkPageBreak(doc, yPos, 20);
 
       doc.setDrawColor(200, 200, 200);
       doc.line(20, yPos, 190, yPos);

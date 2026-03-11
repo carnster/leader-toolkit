@@ -18,11 +18,15 @@ import { TestNotifications } from "@/components/TestNotifications";
 import { TeamDashboard } from "@/components/TeamDashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardExport } from "@/components/DashboardExport";
+import { useFidelityTrends } from "@/hooks/useFidelityTrends";
+import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
+  const { data: fidelityTrends } = useFidelityTrends(30, selectedInitiativeId);
+  const { data: budgetData } = useBudgetTracking(selectedInitiativeId);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
@@ -85,7 +89,9 @@ export default function Dashboard() {
           <DashboardExport 
             analytics={analytics} 
             initiatives={initiatives} 
-            selectedInitiativeId={selectedInitiativeId} 
+            selectedInitiativeId={selectedInitiativeId}
+            fidelityTrends={fidelityTrends}
+            budgetData={budgetData}
           />
           <Button onClick={() => navigate('/decide')}>
             <Plus className="mr-2 h-4 w-4" />
