@@ -89,7 +89,9 @@ export default function Dashboard() {
           <DashboardExport 
             analytics={analytics} 
             initiatives={initiatives} 
-            selectedInitiativeId={selectedInitiativeId} 
+            selectedInitiativeId={selectedInitiativeId}
+            fidelityTrends={fidelityTrends}
+            budgetData={budgetData}
           />
           <Button onClick={() => navigate('/decide')}>
             <Plus className="mr-2 h-4 w-4" />
