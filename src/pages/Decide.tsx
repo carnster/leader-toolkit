@@ -791,6 +791,9 @@ export default function Decide() {
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
+              <Button onClick={handleNextStep}>
+                Continue to Team →
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -914,6 +917,9 @@ export default function Decide() {
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
+              <Button onClick={handleNextStep}>
+                Continue to Goals →
               </Button>
             </div>
           </CardContent>
@@ -1085,6 +1091,9 @@ export default function Decide() {
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
+              <Button onClick={handleNextStep}>
+                Continue to Solution →
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1155,6 +1164,9 @@ export default function Decide() {
               <div className="flex justify-end">
                 <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Progress"}
+                </Button>
+                <Button onClick={handleNextStep}>
+                  Continue to Feasibility →
                 </Button>
               </div>
             </CardContent>
@@ -1354,6 +1366,9 @@ export default function Decide() {
             <div className="flex justify-end">
               <Button variant="outline" onClick={handleSaveProgress} disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Progress"}
+              </Button>
+              <Button onClick={handleNextStep}>
+                Continue to Metrics →
               </Button>
             </div>
           </CardContent>
