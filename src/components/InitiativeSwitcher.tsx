@@ -24,7 +24,7 @@ export function InitiativeSwitcher() {
     <div className="hidden lg:flex items-center">
       <Select value={initiativeId || undefined} onValueChange={setInitiativeId}>
         <SelectTrigger
-          className="h-9 w-[210px] border-dashed text-sm"
+          className="h-9 w-[180px] border-dashed text-sm"
           aria-label="Switch initiative"
         >
           <span className="flex items-center gap-2 truncate">

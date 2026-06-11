@@ -88,8 +88,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
-              {navigation.map((item) => {
+            <nav className="hidden lg:flex items-center space-x-1">
+              {navigation.filter((item) => item.href !== "/").map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);
                 return (
@@ -137,7 +137,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         />
                       );
                     })()}
-                    <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>
                 );
@@ -163,7 +162,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* User Menu & Notifications */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <InitiativeSwitcher />
             <Button
               variant="ghost"
@@ -204,7 +203,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Mobile theme toggle & menu button */}
-          <div className="flex items-center gap-1 md:hidden">
+          <div className="flex items-center gap-1 lg:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -240,7 +239,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t">
+          <div className="lg:hidden border-t">
             <nav className="container py-4 space-y-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -290,7 +289,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
                         />
                       );
                     })()}
-                    <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>
                 );
