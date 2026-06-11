@@ -49,6 +49,18 @@ export function SMARTCriteriaChecker({ goals }: SMARTCriteriaCheckerProps) {
         hint: "Include a specific deadline or timeframe",
         pattern: /\b(by|before|until|within|202\d|january|february|march|april|may|june|july|august|september|october|november|december|term|year)\b/i,
       },
+      {
+        name: "Inclusive",
+        met: /\b(all students|every student|each student|families|stakeholders|voice|multilingual|IEP|special education|English learners?|ELL?s?)\b/i.test(goals),
+        hint: "Name who is included: all students, families, students with IEPs, English learners",
+        pattern: /\b(all students|every student|each student|families|stakeholders|voice|multilingual|IEP|special education|English learners?|ELL?s?)\b/i,
+      },
+      {
+        name: "Equitable",
+        met: /\b(gap|disparit|disadvantaged|underserved|subgroup|equity|equitable|low.income|free and reduced|FRL|marginalized)\b/i.test(goals),
+        hint: "Address disparities: name the gap you will narrow and for whom",
+        pattern: /\b(gap|disparit|disadvantaged|underserved|subgroup|equity|equitable|low.income|free and reduced|FRL|marginalized)\b/i,
+      },
     ];
 
     setChecks(criteriaChecks.map(check => ({
@@ -74,7 +86,7 @@ export function SMARTCriteriaChecker({ goals }: SMARTCriteriaCheckerProps) {
             ) : (
               <AlertCircle className="h-4 w-4 text-yellow-600" />
             )}
-            SMART Criteria Check
+            SMARTIE Criteria Check
           </CardTitle>
           <Badge variant={allMet ? "default" : "secondary"}>
             {metCount}/{checks.length}
