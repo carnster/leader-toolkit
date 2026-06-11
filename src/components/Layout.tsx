@@ -31,6 +31,8 @@ import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { InitiativeSwitcher } from "@/components/InitiativeSwitcher";
 import impactLogo from "@/assets/impact-logo.png";
 import { stageColorFor } from "@/lib/stageColors";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
+import { useStageCompletion, type StageStatus } from "@/hooks/useStageCompletion";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -50,6 +52,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { initiativeId } = useInitiativeContext();
+  const completion = useStageCompletion(initiativeId || undefined);
+
+  const STAGE_KEYS: Record<string, "decide" | "plan" | "implement" | "sustain"> = {
+    "/decide": "decide",
+    "/plan": "plan",
+    "/implement": "implement",
+    "/sustain": "sustain",
+  };
+  const statusFor = (href: string): StageStatus | null => {
+    const key = STAGE_KEYS[href];
+    return key && completion ? completion[key] : null;
+  };
+  const remainingFor = (href: string): string | undefined => {
+    const key = STAGE_KEYS[href];
+    return key && completion ? completion.remaining[key] : undefined;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,6 +96,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.name}
                     to={item.href}
+                    title={remainingFor(item.href)}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
@@ -86,13 +106,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     )}
                     style={isActive && stageColor ? { backgroundColor: stageColor } : undefined}
                   >
-                    {stageColor && (
-                      <span
-                        aria-hidden="true"
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : stageColor }}
-                      />
-                    )}
+                    {stageColor && (() => {
+                      const status = statusFor(item.href);
+                      const dotColor = isActive ? "rgba(255,255,255,0.95)" : stageColor;
+                      if (status === "complete") {
+                        return (
+                          <span
+                            aria-label="Stage complete"
+                            className="flex h-3.5 w-3.5 items-center justify-center rounded-full shrink-0 text-[9px] font-bold"
+                            style={{ backgroundColor: dotColor, color: isActive ? stageColor : "#fff" }}
+                          >
+                            ✓
+                          </span>
+                        );
+                      }
+                      if (status === "in_progress") {
+                        return (
+                          <span
+                            aria-label="Stage in progress"
+                            className="h-2.5 w-2.5 rounded-full border-2 shrink-0"
+                            style={{ borderColor: dotColor, backgroundColor: "transparent" }}
+                          />
+                        );
+                      }
+                      return (
+                        <span
+                          aria-hidden="true"
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: dotColor, opacity: status === "not_started" ? 0.35 : 1 }}
+                        />
+                      );
+                    })()}
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>
@@ -215,13 +259,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     )}
                     style={isActive && stageColor ? { backgroundColor: stageColor } : undefined}
                   >
-                    {stageColor && (
-                      <span
-                        aria-hidden="true"
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : stageColor }}
-                      />
-                    )}
+                    {stageColor && (() => {
+                      const status = statusFor(item.href);
+                      const dotColor = isActive ? "rgba(255,255,255,0.95)" : stageColor;
+                      if (status === "complete") {
+                        return (
+                          <span
+                            aria-label="Stage complete"
+                            className="flex h-3.5 w-3.5 items-center justify-center rounded-full shrink-0 text-[9px] font-bold"
+                            style={{ backgroundColor: dotColor, color: isActive ? stageColor : "#fff" }}
+                          >
+                            ✓
+                          </span>
+                        );
+                      }
+                      if (status === "in_progress") {
+                        return (
+                          <span
+                            aria-label="Stage in progress"
+                            className="h-2.5 w-2.5 rounded-full border-2 shrink-0"
+                            style={{ borderColor: dotColor, backgroundColor: "transparent" }}
+                          />
+                        );
+                      }
+                      return (
+                        <span
+                          aria-hidden="true"
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: dotColor, opacity: status === "not_started" ? 0.35 : 1 }}
+                        />
+                      );
+                    })()}
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>
