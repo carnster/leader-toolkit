@@ -29,3 +29,10 @@ if (splash) {
     window.addEventListener("load", dismiss, { once: true });
   }
 }
+
+// Register the minimal service worker (PWA installability; no caching)
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
