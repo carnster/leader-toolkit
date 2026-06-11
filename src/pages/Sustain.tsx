@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Calendar, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3, Plus, Pencil, Trash2 } from "lucide-react";
 import { MasterChecklist } from "@/components/MasterChecklist";
+import { SustainGate } from "@/components/SustainGate";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
@@ -234,6 +235,8 @@ export default function Sustain() {
       )}
 
       {/* Implementation Summary */}
+      {effectiveInitiativeId && <SustainGate initiativeId={effectiveInitiativeId} />}
+
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
           <CardTitle>Implementation Journey Summary</CardTitle>
