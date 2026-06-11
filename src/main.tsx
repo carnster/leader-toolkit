@@ -8,3 +8,24 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </ThemeProvider>
 );
+
+// Dismiss the splash screen (rendered inline in index.html so it paints
+// before the bundle loads). Keep it up long enough for the brand animation
+// to complete, then fade and remove.
+const splash = document.getElementById("splash");
+if (splash) {
+  const MIN_DISPLAY_MS = 1900;
+  const shownAt = performance.now();
+  const dismiss = () => {
+    const remaining = Math.max(0, MIN_DISPLAY_MS - (performance.now() - shownAt));
+    setTimeout(() => {
+      splash.classList.add("splash-hide");
+      setTimeout(() => splash.remove(), 600);
+    }, remaining);
+  };
+  if (document.readyState === "complete") {
+    dismiss();
+  } else {
+    window.addEventListener("load", dismiss, { once: true });
+  }
+}
