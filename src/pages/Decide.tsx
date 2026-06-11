@@ -783,7 +783,7 @@ export default function Decide() {
                 <span className="text-lg">→</span> What's Next?
               </p>
               <p className="text-sm text-muted-foreground">
-                After defining the problem, you'll <strong>assemble your implementation team</strong> to ensure diverse perspectives and expertise are included from the start.
+                After defining the problem, you'll <button type="button" onClick={handleNextStep} className="font-semibold text-accent underline underline-offset-2 hover:text-accent/80">assemble your implementation team</button> to ensure diverse perspectives and expertise are included from the start.
               </p>
             </div>
             
@@ -907,7 +907,7 @@ export default function Decide() {
                 <span className="text-lg">→</span> What's Next?
               </p>
               <p className="text-sm text-muted-foreground">
-                Once your team is assembled, you'll <strong>develop clear, measurable goals</strong> to guide your implementation and measure success.
+                Once your team is assembled, you'll <button type="button" onClick={handleNextStep} className="font-semibold text-accent underline underline-offset-2 hover:text-accent/80">develop clear, measurable goals</button> to guide your implementation and measure success.
               </p>
             </div>
             
@@ -1077,7 +1077,7 @@ export default function Decide() {
                 <span className="text-lg">→</span> What's Next?
               </p>
               <p className="text-sm text-muted-foreground">
-                With clear goals defined, you'll <strong>select an evidence-based solution</strong> that best addresses your problem and fits your context.
+                With clear goals defined, you'll <button type="button" onClick={handleNextStep} className="font-semibold text-accent underline underline-offset-2 hover:text-accent/80">select an evidence-based solution</button> that best addresses your problem and fits your context.
               </p>
             </div>
             
@@ -1148,7 +1148,7 @@ export default function Decide() {
                   <span className="text-lg">→</span> What's Next?
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  After selecting your solution, you'll <strong>assess organizational readiness and feasibility</strong> to ensure successful implementation.
+                  After selecting your solution, you'll <button type="button" onClick={handleNextStep} className="font-semibold text-accent underline underline-offset-2 hover:text-accent/80">assess organizational readiness and feasibility</button> to ensure successful implementation.
                 </p>
               </div>
               
@@ -1347,7 +1347,7 @@ export default function Decide() {
                 <span className="text-lg">→</span> What's Next?
               </p>
               <p className="text-sm text-muted-foreground">
-                Once feasibility is assessed, you'll <strong>define success metrics and measurement plans</strong> to track implementation progress and impact.
+                Once feasibility is assessed, you'll <button type="button" onClick={handleNextStep} className="font-semibold text-accent underline underline-offset-2 hover:text-accent/80">define success metrics and measurement plans</button> to track implementation progress and impact.
               </p>
             </div>
             
