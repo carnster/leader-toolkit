@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AICopilot } from "@/components/AICopilot";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Decide from "./pages/Decide";
 import Plan from "./pages/Plan";
@@ -23,28 +24,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/decide" element={<Decide />} />
-                    <Route path="/plan" element={<Plan />} />
-                    <Route path="/implement" element={<Implement />} />
-                    <Route path="/monitor" element={<Monitor />} />
-                    <Route path="/sustain" element={<Sustain />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-        <AICopilot />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/decide" element={<Decide />} />
+                      <Route path="/plan" element={<Plan />} />
+                      <Route path="/implement" element={<Implement />} />
+                      <Route path="/monitor" element={<Monitor />} />
+                      <Route path="/sustain" element={<Sustain />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Layout>
+                  <AICopilot />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

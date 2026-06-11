@@ -43,12 +43,11 @@ import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import type { PDActivity } from "@/hooks/usePDActivities";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 
 export default function Plan() {
   const [searchParams] = useSearchParams();
-  const initiativeId = searchParams.get("initiative");
-  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
-  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  const { initiativeId: effectiveInitiativeId } = useInitiativeContext();
   const currentSection = searchParams.get("section") || "overview";
   
   const { activeIngredients, isLoading, createIngredient } = useActiveIngredients(effectiveInitiativeId);

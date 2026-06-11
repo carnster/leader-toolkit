@@ -195,16 +195,25 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
 
             <TabsContent value="list" className="space-y-6">
         {/* Overall Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Overall Milestone Progress</span>
-            <span className="text-muted-foreground">{completedMilestones} of {relevantMilestones.length}</span>
+        {relevantMilestones.length > 0 ? (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Overall Milestone Progress</span>
+              <span className="text-muted-foreground">{completedMilestones} of {relevantMilestones.length}</span>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
+            <p className="text-xs text-muted-foreground">
+              {progressPercentage}% of {stage === "implement" ? "implementation" : "all"} milestones completed
+            </p>
           </div>
-          <Progress value={progressPercentage} className="h-2" />
-          <p className="text-xs text-muted-foreground">
-            {progressPercentage}% of {stage === "implement" ? "implementation" : "all"} milestones completed
-          </p>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Overall Milestone Progress</span>
+            <p className="text-xs text-muted-foreground">
+              No milestones to track yet — progress will appear once milestones are added in the Plan stage.
+            </p>
+          </div>
+        )}
         
         {/* Milestone List */}
         <div className="space-y-3">

@@ -10,7 +10,10 @@ import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
+import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
+import { usePDActivities } from "@/hooks/usePDActivities";
 import { useSearchParams } from "react-router-dom";
+import { addDays, format, isBefore, parseISO, startOfDay } from "date-fns";
 import { TimelineTracker } from "@/components/TimelineTracker";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
 import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
@@ -18,17 +21,6 @@ import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { FidelityTrendsChart } from "@/components/dashboard/FidelityTrendsChart";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
-
-const mockFidelityLogs = [
-  { id: "1", date: "2025-10-28", component: "Daily structured sessions", rating: 4, observer: "Sarah Chen" },
-  { id: "2", date: "2025-10-27", component: "Core practice delivery", rating: 5, observer: "James Wilson" },
-  { id: "3", date: "2025-10-27", component: "Weekly progress checks", rating: 3, observer: "Emma Davies" },
-];
-
-const mockNudges = [
-  { id: "1", text: "Reminder: Weekly progress checks due Friday", type: "reminder", due: "2025-10-31" },
-  { id: "2", text: "Tip: Try peer practice pairs during independent work time", type: "strategy", due: null },
-];
 
 export default function Implement() {
   const [searchParams] = useSearchParams();
@@ -40,10 +32,42 @@ export default function Implement() {
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
   const { teamMembers } = useTeamMembers(effectiveInitiativeId);
   const { fidelityLogs, createLog, isCreating } = useFidelityLogs(effectiveInitiativeId);
-  
+  const { milestones } = useTimelineMilestones(effectiveInitiativeId);
+  const { activities: pdActivities } = usePDActivities(effectiveInitiativeId);
+
   const [observationMode, setObservationMode] = useState<'quick' | 'detailed' | 'team' | null>(null);
-  
+
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
+
+  // Derive real nudges: milestones due within 14 days and overdue PD activities
+  const today = startOfDay(new Date());
+  const nudgeHorizon = addDays(today, 14);
+  const nudges = [
+    ...milestones
+      .filter((m) => {
+        if (m.status === "completed" || !m.target_date) return false;
+        const target = startOfDay(parseISO(m.target_date));
+        return !isBefore(target, today) && !isBefore(nudgeHorizon, target);
+      })
+      .map((m) => ({
+        id: `milestone-${m.id}`,
+        text: `Milestone approaching: ${m.milestone}`,
+        detail: `Due ${format(parseISO(m.target_date), "MMM d, yyyy")}`,
+        label: "Milestone",
+      })),
+    ...pdActivities
+      .filter((a) =>
+        a.completion_status === "planned" &&
+        a.scheduled_date &&
+        isBefore(startOfDay(parseISO(a.scheduled_date)), today)
+      )
+      .map((a) => ({
+        id: `pd-${a.id}`,
+        text: `PD activity needs follow-up: ${a.title}`,
+        detail: `Scheduled ${format(parseISO(a.scheduled_date!), "MMM d, yyyy")} — mark complete or reschedule`,
+        label: "PD",
+      })),
+  ];
 
   return (
     <div className="space-y-8 max-w-7xl">
@@ -131,21 +155,25 @@ export default function Implement() {
             <CardTitle>Implementation Nudges</CardTitle>
           </div>
           <CardDescription>
-            Contextual prompts based on your active ingredients
+            Contextual prompts based on your timeline milestones and PD activities
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {mockNudges.map((nudge) => (
-            <div key={nudge.id} className="flex items-start gap-3 rounded-lg border p-3">
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium">{nudge.text}</p>
-                {nudge.due && (
-                  <p className="text-xs text-muted-foreground">Due: {new Date(nudge.due).toLocaleDateString()}</p>
-                )}
+          {nudges.length > 0 ? (
+            nudges.map((nudge) => (
+              <div key={nudge.id} className="flex items-start gap-3 rounded-lg border p-3">
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-medium">{nudge.text}</p>
+                  <p className="text-xs text-muted-foreground">{nudge.detail}</p>
+                </div>
+                <Badge variant="outline" className="text-xs flex-shrink-0">{nudge.label}</Badge>
               </div>
-              <Button variant="ghost" size="sm">Dismiss</Button>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">No nudges right now — nudges appear when milestones approach or PD activities need follow-up.</p>
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
 
@@ -246,11 +274,7 @@ export default function Implement() {
                         </option>
                       ))
                     ) : (
-                      <>
-                        <option>Daily structured sessions</option>
-                        <option>Core practice delivery</option>
-                        <option>Weekly progress checks</option>
-                      </>
+                      <option value="" disabled>No core active ingredients defined yet</option>
                     )}
                   </select>
                   <p className="text-xs text-muted-foreground">

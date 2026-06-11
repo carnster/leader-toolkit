@@ -17,6 +17,7 @@ import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelec
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { EBPRecommendations } from "@/components/EBPRecommendations";
 import { MetricsRecommendations } from "@/components/MetricsRecommendations";
 import { MonitorPreview } from "@/components/MonitorPreview";
@@ -49,10 +50,8 @@ export default function Decide() {
   const { toast } = useToast();
   const { createInitiative, isCreating } = useInitiatives();
   
-  // Get initiative ID
-  const initiativeId = searchParams.get("initiative");
-  const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
-  const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  // Get initiative ID (URL is canonical; see useInitiativeContext)
+  const { initiativeId: effectiveInitiativeId, setInitiativeId } = useInitiativeContext();
   
   // Decision brief hook
   const { decisionBrief, upsertDecisionBrief, isSaving } = useDecisionBrief(effectiveInitiativeId || undefined);
@@ -324,13 +323,34 @@ export default function Decide() {
     triggerAutoSave();
   }, [triggerAutoSave]);
   
-  // Cleanup auto-save timeout on unmount
+  // Keep a ref to the latest save function so the unmount flush below
+  // saves current form state, not a stale closure
+  const handleSaveProgressRef = useRef(handleSaveProgress);
+  useEffect(() => {
+    handleSaveProgressRef.current = handleSaveProgress;
+  }, [handleSaveProgress]);
+
+  // Cleanup auto-save timeout on unmount; flush pending save so debounced
+  // edits aren't lost when the user navigates to another stage
   useEffect(() => {
     return () => {
       if (autoSaveTimeoutRef.current) {
         clearTimeout(autoSaveTimeoutRef.current);
+        handleSaveProgressRef.current();
       }
     };
+  }, []);
+
+  // Warn before the tab closes while a debounced save is still pending
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (autoSaveTimeoutRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, []);
 
   const handleEvaluateGoals = async () => {

@@ -1,46 +1,198 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Shield, Calendar, Users, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Shield, Calendar, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3, Plus, Pencil, Trash2 } from "lucide-react";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useIndicators } from "@/hooks/useIndicators";
+import {
+  useSustainabilityPlan,
+  EmbeddingRoutine,
+  OnboardingResource,
+  OnboardingStatus,
+  ProtectionCategory,
+  ResourceProtection,
+  ResourceProtectionsData,
+  ScaleReadinessRating,
+} from "@/hooks/useSustainabilityPlan";
 
-const sustainChecklist = [
-  { id: "1", text: "Leaders continue to acknowledge and support good implementation practices", completed: true },
-  { id: "2", text: "Range of staff involved so we aren't over-relying on individuals", completed: true },
-  { id: "3", text: "Reviewed implementation effort and outcomes before deciding next steps", completed: false },
-  { id: "4", text: "Core practices embedded in standard operating procedures", completed: false },
+const SUSTAIN_CHECKLIST = [
+  { id: "leadership_support", text: "Leaders continue to acknowledge and support good implementation practices" },
+  { id: "staff_range", text: "Range of staff involved so we aren't over-relying on individuals" },
+  { id: "review_outcomes", text: "Reviewed implementation effort and outcomes before deciding next steps" },
+  { id: "embedded_sops", text: "Core practices embedded in standard operating procedures" },
 ];
 
-const mockRoutines = [
-  { id: "1", routine: "Weekly planning meetings", frequency: "Every Monday 3:30pm", owner: "Year 3 Lead" },
-  { id: "2", routine: "Monthly data reviews", frequency: "Last Friday of month", owner: "Implementation Lead" },
-  { id: "3", routine: "Termly fidelity checks", frequency: "End of each term", owner: "Senior Leadership" },
+const ONBOARDING_STATUS_LABELS: Record<OnboardingStatus, string> = {
+  planned: "Planned",
+  in_progress: "In progress",
+  complete: "Complete",
+};
+
+const PROTECTION_CATEGORIES: { value: ProtectionCategory; label: string }[] = [
+  { value: "time", label: "Time Allocations" },
+  { value: "budget", label: "Budget & Materials" },
+  { value: "staffing", label: "Staffing & Expertise" },
 ];
 
-const mockOnboarding = [
-  { id: "1", resource: "New Teacher Induction Pack", status: "complete" },
-  { id: "2", resource: "Core Practices Video Series", status: "complete" },
-  { id: "3", resource: "Mentor Assignment Process", status: "in-progress" },
+const SCALE_DIMENSIONS = [
+  { id: "evidence", title: "Evidence of Impact", question: "Do you have clear outcome data?" },
+  { id: "fidelity", title: "Fidelity & Sustainability", question: "Are practices embedded?" },
+  { id: "leadership", title: "Leadership & Resources", question: "Can you support expansion?" },
 ];
+
+const READINESS_LABELS: Record<ScaleReadinessRating, string> = {
+  not_yet: "Not yet",
+  moderate: "Moderate",
+  strong: "Strong",
+};
+
+const READINESS_SCORES: Record<ScaleReadinessRating, number> = {
+  not_yet: 0,
+  moderate: 50,
+  strong: 100,
+};
+
+const NEXT_STEP_OPTIONS = [
+  { value: "continue_refine", title: "Continue & Refine", description: "Keep going with minor adjustments" },
+  { value: "scale_up", title: "Scale Up", description: "Expand to more grade levels or schools" },
+  { value: "stop_pivot", title: "Stop or Pivot", description: "Data suggests a different approach" },
+];
+
+const newId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export default function Sustain() {
   const [searchParams] = useSearchParams();
   const initiativeId = searchParams.get("initiative");
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
-  
+
   const { activeIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies } = useImplementationStrategies(effectiveInitiativeId);
   const { indicators } = useIndicators(effectiveInitiativeId);
-  
+  const { sustainabilityPlan, isLoading, upsertPlan, isSaving } = useSustainabilityPlan(
+    effectiveInitiativeId || undefined
+  );
+
   const successfulStrategies = strategies.filter(s => s.status === 'completed');
   const coreIngredients = activeIngredients.filter((ing: any) => ing.is_core ?? ing.isCore);
-  
+
+  const hasInitiative = !!effectiveInitiativeId;
+  const routines = sustainabilityPlan?.embedding_routines ?? [];
+  const onboardingResources = sustainabilityPlan?.onboarding_resources ?? [];
+  const protections = sustainabilityPlan?.resource_protections?.protections ?? [];
+  const checklist = sustainabilityPlan?.resource_protections?.checklist ?? {};
+  const scaleReadiness = sustainabilityPlan?.resource_protections?.scaleReadiness ?? {};
+  const nextSteps = sustainabilityPlan?.next_steps ?? null;
+
+  // --- Inline form state ---
+  const emptyRoutineForm = { name: "", schedule: "", owner: "" };
+  const [routineForm, setRoutineForm] = useState<typeof emptyRoutineForm | null>(null);
+  const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null);
+
+  const emptyResourceForm = { name: "", status: "planned" as OnboardingStatus };
+  const [resourceForm, setResourceForm] = useState<typeof emptyResourceForm | null>(null);
+
+  const emptyProtectionForm = { category: "time" as ProtectionCategory, text: "" };
+  const [protectionForm, setProtectionForm] = useState<typeof emptyProtectionForm | null>(null);
+
+  // --- Save helpers ---
+  const saveProtectionsData = (patch: Partial<ResourceProtectionsData>, silent = false, extra: Record<string, any> = {}) => {
+    upsertPlan({
+      resource_protections: { protections, checklist, scaleReadiness, ...patch },
+      _silent: silent,
+      ...extra,
+    });
+  };
+
+  const toggleChecklistItem = (id: string, checked: boolean) => {
+    saveProtectionsData({ checklist: { ...checklist, [id]: checked } }, true);
+  };
+
+  const saveRoutine = () => {
+    if (!routineForm || !routineForm.name.trim()) return;
+    const entry: EmbeddingRoutine = {
+      id: editingRoutineId ?? newId(),
+      name: routineForm.name.trim(),
+      schedule: routineForm.schedule.trim(),
+      owner: routineForm.owner.trim(),
+    };
+    const next = editingRoutineId
+      ? routines.map(r => (r.id === editingRoutineId ? entry : r))
+      : [...routines, entry];
+    upsertPlan({ embedding_routines: next });
+    setRoutineForm(null);
+    setEditingRoutineId(null);
+  };
+
+  const deleteRoutine = (id: string) => {
+    upsertPlan({ embedding_routines: routines.filter(r => r.id !== id) });
+    if (editingRoutineId === id) {
+      setRoutineForm(null);
+      setEditingRoutineId(null);
+    }
+  };
+
+  const saveResource = () => {
+    if (!resourceForm || !resourceForm.name.trim()) return;
+    const entry: OnboardingResource = {
+      id: newId(),
+      name: resourceForm.name.trim(),
+      status: resourceForm.status,
+    };
+    upsertPlan({ onboarding_resources: [...onboardingResources, entry] });
+    setResourceForm(null);
+  };
+
+  const updateResourceStatus = (id: string, status: OnboardingStatus) => {
+    upsertPlan({
+      onboarding_resources: onboardingResources.map(r => (r.id === id ? { ...r, status } : r)),
+      _silent: true,
+    });
+  };
+
+  const deleteResource = (id: string) => {
+    upsertPlan({ onboarding_resources: onboardingResources.filter(r => r.id !== id) });
+  };
+
+  const saveProtection = () => {
+    if (!protectionForm || !protectionForm.text.trim()) return;
+    const entry: ResourceProtection = {
+      id: newId(),
+      category: protectionForm.category,
+      text: protectionForm.text.trim(),
+    };
+    saveProtectionsData({ protections: [...protections, entry] });
+    setProtectionForm(null);
+  };
+
+  const deleteProtection = (id: string) => {
+    saveProtectionsData({ protections: protections.filter(p => p.id !== id) });
+  };
+
+  const setReadinessRating = (dimensionId: string, rating: ScaleReadinessRating) => {
+    const nextRatings = { ...scaleReadiness, [dimensionId]: rating };
+    const rated = SCALE_DIMENSIONS.map(d => nextRatings[d.id]).filter(Boolean) as ScaleReadinessRating[];
+    const score = rated.length > 0
+      ? Math.round(rated.reduce((sum, r) => sum + READINESS_SCORES[r], 0) / rated.length)
+      : null;
+    saveProtectionsData({ scaleReadiness: nextRatings }, true, { scale_readiness_score: score });
+  };
+
+  const chooseNextStep = (value: string) => {
+    upsertPlan({ next_steps: value });
+  };
+
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -71,6 +223,16 @@ export default function Sustain() {
         </Card>
       </div>
 
+      {!hasInitiative && (
+        <Card className="border-muted">
+          <CardContent className="pt-6">
+            <p className="text-sm text-muted-foreground">
+              Select an initiative to build and save your sustainability plan.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Implementation Summary */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
@@ -89,7 +251,7 @@ export default function Sustain() {
               <p className="text-2xl font-bold mb-1">{coreIngredients.length}</p>
               <p className="text-xs text-muted-foreground">Non-negotiable components defined</p>
             </div>
-            
+
             <div className="rounded-lg border bg-background/50 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="h-5 w-5 text-secondary" />
@@ -98,7 +260,7 @@ export default function Sustain() {
               <p className="text-2xl font-bold mb-1">{successfulStrategies.length}</p>
               <p className="text-xs text-muted-foreground">ERIC strategies completed</p>
             </div>
-            
+
             <div className="rounded-lg border bg-background/50 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-5 w-5 text-accent" />
@@ -120,15 +282,17 @@ export default function Sustain() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {sustainChecklist.map((item) => (
+          {SUSTAIN_CHECKLIST.map((item) => (
             <div key={item.id} className="flex items-start space-x-3 rounded-lg border p-3">
               <Checkbox
-                id={item.id}
-                checked={item.completed}
+                id={`sustain-check-${item.id}`}
+                checked={!!checklist[item.id]}
+                disabled={!hasInitiative || isLoading}
+                onCheckedChange={(checked) => toggleChecklistItem(item.id, checked === true)}
                 className="mt-0.5"
               />
               <label
-                htmlFor={item.id}
+                htmlFor={`sustain-check-${item.id}`}
                 className="flex-1 text-sm leading-relaxed cursor-pointer"
               >
                 {item.text}
@@ -152,24 +316,107 @@ export default function Sustain() {
           </div>
         </CardHeader>
         <CardContent>
+          {routines.length === 0 && !routineForm && (
+            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No routines yet. Add the regular practices that will keep this work going — for example,
+              a weekly planning meeting owned by a grade-level team lead.
+            </div>
+          )}
           <div className="space-y-3">
-            {mockRoutines.map((item) => (
+            {routines.map((item) => (
               <div key={item.id} className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-1">
-                  <p className="font-medium">{item.routine}</p>
+                  <p className="font-medium">{item.name}</p>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span>{item.frequency}</span>
-                    <span>•</span>
-                    <span>Owner: {item.owner}</span>
+                    {item.schedule && <span>{item.schedule}</span>}
+                    {item.schedule && item.owner && <span>•</span>}
+                    {item.owner && <span>Owner: {item.owner}</span>}
                   </div>
                 </div>
-                <Button variant="ghost" size="sm">Edit</Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingRoutineId(item.id);
+                      setRoutineForm({ name: item.name, schedule: item.schedule, owner: item.owner });
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit routine</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => deleteRoutine(item.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete routine</span>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full mt-4">
-            Add Routine
-          </Button>
+
+          {routineForm && (
+            <div className="mt-4 rounded-lg border p-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="routine-name">Routine</Label>
+                  <Input
+                    id="routine-name"
+                    placeholder="e.g. Weekly planning meeting"
+                    value={routineForm.name}
+                    onChange={(e) => setRoutineForm({ ...routineForm, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="routine-schedule">Schedule</Label>
+                  <Input
+                    id="routine-schedule"
+                    placeholder="e.g. Mondays after dismissal"
+                    value={routineForm.schedule}
+                    onChange={(e) => setRoutineForm({ ...routineForm, schedule: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="routine-owner">Owner</Label>
+                  <Input
+                    id="routine-owner"
+                    placeholder="e.g. Grade-level team lead"
+                    value={routineForm.owner}
+                    onChange={(e) => setRoutineForm({ ...routineForm, owner: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveRoutine} disabled={!routineForm.name.trim() || isSaving}>
+                  {editingRoutineId ? "Save Changes" : "Add Routine"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setRoutineForm(null);
+                    setEditingRoutineId(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!routineForm && (
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              disabled={!hasInitiative}
+              onClick={() => {
+                setEditingRoutineId(null);
+                setRoutineForm(emptyRoutineForm);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Routine
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -187,22 +434,97 @@ export default function Sustain() {
           </div>
         </CardHeader>
         <CardContent>
+          {onboardingResources.length === 0 && !resourceForm && (
+            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No onboarding resources yet. Add the materials new staff will need — for example,
+              an induction packet or a core practices walkthrough.
+            </div>
+          )}
           <div className="space-y-3">
-            {mockOnboarding.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-lg border p-4">
-                <div className="flex items-center gap-3">
-                  <BookOpen className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium">{item.resource}</span>
+            {onboardingResources.map((item) => (
+              <div key={item.id} className="flex items-center justify-between rounded-lg border p-4 gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <BookOpen className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <span className="font-medium truncate">{item.name}</span>
                 </div>
-                <Badge variant={item.status === "complete" ? "default" : "secondary"}>
-                  {item.status}
-                </Badge>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Select
+                    value={item.status}
+                    onValueChange={(value) => updateResourceStatus(item.id, value as OnboardingStatus)}
+                  >
+                    <SelectTrigger className="w-[140px] h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(ONBOARDING_STATUS_LABELS) as OnboardingStatus[]).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {ONBOARDING_STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="sm" onClick={() => deleteResource(item.id)}>
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete resource</span>
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
-          <Button variant="outline" className="w-full mt-4">
-            Add Resource
-          </Button>
+
+          {resourceForm && (
+            <div className="mt-4 rounded-lg border p-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
+                <div className="space-y-1.5">
+                  <Label htmlFor="resource-name">Resource</Label>
+                  <Input
+                    id="resource-name"
+                    placeholder="e.g. New staff induction packet"
+                    value={resourceForm.name}
+                    onChange={(e) => setResourceForm({ ...resourceForm, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select
+                    value={resourceForm.status}
+                    onValueChange={(value) => setResourceForm({ ...resourceForm, status: value as OnboardingStatus })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(ONBOARDING_STATUS_LABELS) as OnboardingStatus[]).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {ONBOARDING_STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveResource} disabled={!resourceForm.name.trim() || isSaving}>
+                  Add Resource
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setResourceForm(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!resourceForm && (
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              disabled={!hasInitiative}
+              onClick={() => setResourceForm(emptyResourceForm)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Resource
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -228,8 +550,15 @@ export default function Sustain() {
                       )}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm">
-                    Embed in SOP
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingRoutineId(null);
+                      setRoutineForm({ name: ingredient.name, schedule: "", owner: "" });
+                    }}
+                  >
+                    Embed as Routine
                   </Button>
                 </div>
               ))}
@@ -246,80 +575,150 @@ export default function Sustain() {
             <div>
               <CardTitle>Resource Protections</CardTitle>
               <CardDescription>
-                Safeguards to maintain time, budget, and staffing for {coreIngredients.length} core components
+                Safeguards to maintain time, budget, and staffing for your core components
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border p-4 space-y-2">
-            <h4 className="font-medium">Time Allocations</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Daily structured session time protected in timetable</li>
-              <li>• Weekly team meeting time (1 hour) ring-fenced</li>
-              <li>• Monthly data review time allocated</li>
-            </ul>
-          </div>
+          {protections.length === 0 && !protectionForm && (
+            <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No protections recorded yet. Capture the specific commitments that safeguard this work —
+              for example, protected meeting time, a dedicated budget line, or a formalized lead role.
+            </div>
+          )}
 
-          <div className="rounded-lg border p-4 space-y-2">
-            <h4 className="font-medium">Budget & Materials</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Annual budget line for core materials</li>
-              <li>• Replacement materials fund</li>
-              <li>• Professional learning budget protected</li>
-            </ul>
-          </div>
+          {PROTECTION_CATEGORIES.map(({ value, label }) => {
+            const items = protections.filter(p => p.category === value);
+            if (items.length === 0) return null;
+            return (
+              <div key={value} className="rounded-lg border p-4 space-y-2">
+                <h4 className="font-medium">{label}</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  {items.map((item) => (
+                    <li key={item.id} className="flex items-center justify-between gap-2">
+                      <span>• {item.text}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 flex-shrink-0"
+                        onClick={() => deleteProtection(item.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Delete protection</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
 
-          <div className="rounded-lg border p-4 space-y-2">
-            <h4 className="font-medium">Staffing & Expertise</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-              <li>• Implementation Lead role formalized (0.2 FTE)</li>
-              <li>• Training included in new teacher induction</li>
-              <li>• Coaching capacity maintained (2 hours/week)</li>
-            </ul>
-          </div>
+          {protectionForm && (
+            <div className="rounded-lg border p-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-[200px_1fr]">
+                <div className="space-y-1.5">
+                  <Label>Category</Label>
+                  <Select
+                    value={protectionForm.category}
+                    onValueChange={(value) =>
+                      setProtectionForm({ ...protectionForm, category: value as ProtectionCategory })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROTECTION_CATEGORIES.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="protection-text">Protection</Label>
+                  <Input
+                    id="protection-text"
+                    placeholder="e.g. Weekly team meeting time protected in the master schedule"
+                    value={protectionForm.text}
+                    onChange={(e) => setProtectionForm({ ...protectionForm, text: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveProtection} disabled={!protectionForm.text.trim() || isSaving}>
+                  Add Protection
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setProtectionForm(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!protectionForm && (
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={!hasInitiative}
+              onClick={() => setProtectionForm(emptyProtectionForm)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Protection
+            </Button>
+          )}
         </CardContent>
       </Card>
 
       {/* Scale Readiness */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Scale className="h-5 w-5 text-primary" />
-              <div>
-                <CardTitle>Scale Readiness Scan</CardTitle>
-                <CardDescription>
-                  Assess if you're ready to expand to other year groups or schools
-                </CardDescription>
-              </div>
+          <div className="flex items-center gap-2">
+            <Scale className="h-5 w-5 text-primary" />
+            <div>
+              <CardTitle>Scale Readiness Scan</CardTitle>
+              <CardDescription>
+                Assess if you're ready to expand to other grade levels or schools
+              </CardDescription>
             </div>
-            <Button>Run Scan</Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <p className="font-medium">Evidence of Impact</p>
-                <p className="text-sm text-muted-foreground">Do you have clear outcome data?</p>
+            {SCALE_DIMENSIONS.map((dimension) => (
+              <div key={dimension.id} className="flex items-center justify-between rounded-lg border p-4 gap-3">
+                <div>
+                  <p className="font-medium">{dimension.title}</p>
+                  <p className="text-sm text-muted-foreground">{dimension.question}</p>
+                </div>
+                <Select
+                  value={scaleReadiness[dimension.id] ?? ""}
+                  onValueChange={(value) => setReadinessRating(dimension.id, value as ScaleReadinessRating)}
+                  disabled={!hasInitiative}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Not assessed" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(READINESS_LABELS) as ScaleReadinessRating[]).map((rating) => (
+                      <SelectItem key={rating} value={rating}>
+                        {READINESS_LABELS[rating]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Badge>Strong</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <p className="font-medium">Fidelity & Sustainability</p>
-                <p className="text-sm text-muted-foreground">Are practices embedded?</p>
+            ))}
+            {sustainabilityPlan?.scale_readiness_score != null && (
+              <div className="flex items-center justify-between rounded-lg border bg-muted/50 p-4">
+                <p className="font-medium">Overall readiness</p>
+                <Badge variant={sustainabilityPlan.scale_readiness_score >= 67 ? "default" : "secondary"}>
+                  {sustainabilityPlan.scale_readiness_score}%
+                </Badge>
               </div>
-              <Badge variant="secondary">Moderate</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <p className="font-medium">Leadership & Resources</p>
-                <p className="text-sm text-muted-foreground">Can you support expansion?</p>
-              </div>
-              <Badge variant="secondary">Moderate</Badge>
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -334,24 +733,25 @@ export default function Sustain() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Button variant="outline" className="h-auto flex-col items-start p-4">
-              <span className="font-semibold mb-1">Continue & Refine</span>
-              <span className="text-sm text-muted-foreground">
-                Keep going with minor adjustments
-              </span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col items-start p-4">
-              <span className="font-semibold mb-1">Scale Up</span>
-              <span className="text-sm text-muted-foreground">
-                Expand to more year groups/schools
-              </span>
-            </Button>
-            <Button variant="outline" className="h-auto flex-col items-start p-4">
-              <span className="font-semibold mb-1">Stop or Pivot</span>
-              <span className="text-sm text-muted-foreground">
-                Data suggests a different approach
-              </span>
-            </Button>
+            {NEXT_STEP_OPTIONS.map((option) => (
+              <Button
+                key={option.value}
+                variant="outline"
+                disabled={!hasInitiative}
+                className={`h-auto flex-col items-start p-4 ${
+                  nextSteps === option.value ? "border-primary bg-primary/5" : ""
+                }`}
+                onClick={() => chooseNextStep(option.value)}
+              >
+                <span className="font-semibold mb-1 flex items-center gap-2">
+                  {option.title}
+                  {nextSteps === option.value && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                </span>
+                <span className="text-sm text-muted-foreground whitespace-normal text-left">
+                  {option.description}
+                </span>
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>

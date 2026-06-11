@@ -26,38 +26,22 @@ import { MasterChecklist } from "@/components/MasterChecklist";
 import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
 import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
 import { useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useIndicators, Indicator } from "@/hooks/useIndicators";
+import { usePDSACycles } from "@/hooks/usePDSACycles";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { FidelityMonitoringPlan } from "@/components/FidelityMonitoringPlan";
 import { TimelineTracker } from "@/components/TimelineTracker";
 
-const mockIndicators = [
-  { id: "1", name: "Fidelity (avg)", value: 4.0, target: 4.5, type: "leading", trend: "up" },
-  { id: "2", name: "Adoption (%)", value: 85, target: 90, type: "leading", trend: "up" },
-  { id: "3", name: "Staff Acceptability", value: 3.8, target: 4.0, type: "leading", trend: "stable" },
-  { id: "4", name: "Outcome Progress", value: 62, target: 75, type: "lagging", trend: "up" },
-];
-
-const mockPDSA = [
-  { 
-    id: "1",
-    cycle: "PDSA 1",
-    aim: "Increase daily session attendance from 75% to 90%",
-    changeIdea: "Move sessions to start of day, before first break",
-    status: "complete",
-    outcome: "Attendance increased to 88% - close to target"
-  },
-  {
-    id: "2",
-    cycle: "PDSA 2",
-    aim: "Improve fidelity of progress checks from 3.2 to 4.0",
-    changeIdea: "Provide simplified tracking template and weekly coaching",
-    status: "testing",
-    outcome: "Testing in progress - early data shows improvement"
-  },
+const chartColors = [
+  "hsl(var(--primary))",
+  "hsl(var(--secondary))",
+  "hsl(var(--accent))",
+  "hsl(var(--success))",
+  "hsl(var(--warning))",
 ];
 
 export default function Monitor() {
@@ -74,9 +58,46 @@ export default function Monitor() {
   
   const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
-  const { indicators, isLoading: isLoadingIndicators, updateIndicator, archiveIndicator, restoreIndicator } = useIndicators(effectiveInitiativeId);
+  const { indicators, indicatorValues, isLoading: isLoadingIndicators, updateIndicator, archiveIndicator, restoreIndicator } = useIndicators(effectiveInitiativeId);
   const { indicators: archivedIndicators } = useIndicators(effectiveInitiativeId, true);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
+  const { pdsaCycles, isLoading: isLoadingPDSA } = usePDSACycles(effectiveInitiativeId);
+
+  // Latest and previous recorded values per indicator (indicatorValues is ordered newest first)
+  const valuesByIndicator = useMemo(() => {
+    const map = new Map<string, { latest: number; previous: number | null }>();
+    for (const v of indicatorValues) {
+      const entry = map.get(v.indicator_id);
+      if (!entry) {
+        map.set(v.indicator_id, { latest: v.value, previous: null });
+      } else if (entry.previous === null) {
+        entry.previous = v.value;
+      }
+    }
+    return map;
+  }, [indicatorValues]);
+
+  // Pivot recorded values into one row per date for the trends chart
+  const chartData = useMemo(() => {
+    if (indicatorValues.length === 0 || indicators.length === 0) return [];
+    const indicatorNames = new Map(indicators.map(i => [i.id, i.name]));
+    const sorted = [...indicatorValues].sort(
+      (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+    );
+    const byDate = new Map<string, Record<string, number | string>>();
+    for (const v of sorted) {
+      const name = indicatorNames.get(v.indicator_id);
+      if (!name) continue;
+      const date = new Date(v.recorded_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (!byDate.has(date)) {
+        byDate.set(date, { date });
+      }
+      byDate.get(date)![name] = v.value;
+    }
+    return Array.from(byDate.values());
+  }, [indicatorValues, indicators]);
+
+  const chartedIndicators = indicators.filter(i => indicatorValues.some(v => v.indicator_id === i.id));
   
   const handleEditIndicator = (indicator: Indicator) => {
     setEditingIndicator(indicator);
@@ -324,18 +345,47 @@ export default function Monitor() {
       </div>
 
       {/* Key Indicators */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {(indicators.length > 0 ? indicators : mockIndicators).map((indicator: any) => (
-          <Card key={indicator.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{indicator.name}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant={indicator.type === "leading" ? "default" : "secondary"}>
-                    {indicator.type}
-                  </Badge>
-                  {indicators.length > 0 && (
-                    <>
+      {isLoadingIndicators ? (
+        <Card>
+          <CardContent className="py-8">
+            <p className="text-sm text-muted-foreground text-center">Loading indicators...</p>
+          </CardContent>
+        </Card>
+      ) : indicators.length === 0 ? (
+        <Card>
+          <CardContent className="py-10">
+            <div className="text-center text-muted-foreground">
+              <Target className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="font-medium text-foreground">No indicators yet</p>
+              <p className="text-sm mt-1">
+                Define success metrics in the Decide stage, or import them using the banner above
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {indicators.map((indicator) => {
+            const recorded = valuesByIndicator.get(indicator.id);
+            const latestValue = recorded?.latest ?? null;
+            const previousValue = recorded?.previous ?? null;
+            const trend = latestValue !== null && previousValue !== null
+              ? latestValue > previousValue ? "up" : latestValue < previousValue ? "down" : "stable"
+              : null;
+            const progress = latestValue !== null && indicator.target_value
+              ? (latestValue / indicator.target_value) * 100
+              : null;
+            const suffix = indicator.name.includes("%") ? "%" : "";
+
+            return (
+              <Card key={indicator.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">{indicator.name}</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={indicator.type === "leading" ? "default" : "secondary"}>
+                        {indicator.type}
+                      </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -353,59 +403,61 @@ export default function Monitor() {
                       >
                         <Archive className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-              {indicator.schedule && (
-                <p className="text-xs text-muted-foreground">
-                  Measured {indicator.schedule.toLowerCase()}
-                </p>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">
-                      {indicator.value || indicator.target_value || "—"}
-                      {indicator.name.includes("%") ? "%" : ""}
-                    </span>
-                    {indicator.trend === "up" && (
-                      <TrendingUp className="h-4 w-4 text-success" />
-                    )}
-                    {indicator.trend === "down" && (
-                      <TrendingDown className="h-4 w-4 text-destructive" />
-                    )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Target</p>
-                    <p className="font-semibold">
-                      {indicator.target || indicator.target_value || "—"}
-                      {indicator.name.includes("%") ? "%" : ""}
+                  {indicator.schedule && (
+                    <p className="text-xs text-muted-foreground">
+                      Measured {indicator.schedule.toLowerCase()}
                     </p>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-baseline justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold">
+                          {latestValue !== null ? `${latestValue}${suffix}` : "—"}
+                        </span>
+                        {trend === "up" && (
+                          <TrendingUp className="h-4 w-4 text-success" />
+                        )}
+                        {trend === "down" && (
+                          <TrendingDown className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Target</p>
+                        <p className="font-semibold">
+                          {indicator.target_value !== null ? `${indicator.target_value}${suffix}` : "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {latestValue === null ? (
+                      <p className="text-sm text-muted-foreground">
+                        No data recorded yet
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Progress to target</span>
+                          <span className="font-medium">
+                            {progress !== null ? `${Math.round(progress)}%` : "—"}
+                          </span>
+                        </div>
+                        <Progress
+                          value={progress !== null ? Math.min(progress, 100) : 0}
+                          className="h-2"
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress to target</span>
-                    <span className="font-medium">
-                      {indicator.value && indicator.target 
-                        ? Math.round((indicator.value / indicator.target) * 100)
-                        : "—"}%
-                    </span>
-                  </div>
-                  <Progress 
-                    value={indicator.value && indicator.target ? (indicator.value / indicator.target) * 100 : 0} 
-                    className="h-2"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Implementation Dashboard */}
       <Card>
@@ -414,20 +466,57 @@ export default function Monitor() {
             <div>
               <CardTitle>Implementation Dashboard</CardTitle>
               <CardDescription>
-                Fidelity, adoption, and acceptability over time
+                Recorded indicator values over time
               </CardDescription>
             </div>
-            <Button variant="outline">View Full Report</Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/20">
-            <div className="text-center text-muted-foreground">
-              <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Chart visualization would appear here</p>
-              <p className="text-xs">Showing trends over last 8 weeks</p>
+          {chartData.length === 0 ? (
+            <div className="h-64 flex items-center justify-center border rounded-lg bg-muted/20">
+              <div className="text-center text-muted-foreground">
+                <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No indicator data recorded yet</p>
+                <p className="text-xs">Log values for your indicators to see trends over time</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis
+                  dataKey="date"
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <YAxis
+                  className="text-xs"
+                  stroke="hsl(var(--muted-foreground))"
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "var(--radius)",
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                />
+                <Legend />
+                {chartedIndicators.map((indicator, index) => (
+                  <Line
+                    key={indicator.id}
+                    type="monotone"
+                    dataKey={indicator.name}
+                    stroke={chartColors[index % chartColors.length]}
+                    strokeWidth={2}
+                    dot={{ fill: chartColors[index % chartColors.length], r: 4 }}
+                    activeDot={{ r: 6 }}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
 
@@ -444,42 +533,54 @@ export default function Monitor() {
                 </CardDescription>
               </div>
             </div>
-            <Button>Start New PDSA</Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {mockPDSA.map((cycle) => (
-            <div key={cycle.id} className="rounded-lg border p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-semibold">{cycle.cycle}</h4>
-                <Badge variant={cycle.status === "complete" ? "default" : "secondary"}>
-                  {cycle.status}
-                </Badge>
-              </div>
-              
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium text-muted-foreground">Aim: </span>
-                  <span>{cycle.aim}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Change Idea: </span>
-                  <span>{cycle.changeIdea}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-muted-foreground">Outcome: </span>
-                  <span>{cycle.outcome}</span>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm">View Details</Button>
-                {cycle.status === "complete" && (
-                  <Button variant="ghost" size="sm">Scale or Abandon</Button>
-                )}
-              </div>
+          {isLoadingPDSA ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Loading PDSA cycles...</p>
+          ) : pdsaCycles.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
+              <Target className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="font-medium text-foreground">No PDSA cycles yet</p>
+              <p className="text-sm mt-1">
+                Use the PDSA Cycle Assistant below to plan your first improvement cycle
+              </p>
             </div>
-          ))}
+          ) : (
+            pdsaCycles.map((cycle) => (
+              <div key={cycle.id} className="rounded-lg border p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold">PDSA {cycle.cycle_number}</h4>
+                  <Badge variant={cycle.status === "complete" ? "default" : "secondary"}>
+                    {cycle.status}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">Aim: </span>
+                    <span>{cycle.aim}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Change Idea: </span>
+                    <span>{cycle.change_idea}</span>
+                  </div>
+                  {cycle.results && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">Results: </span>
+                      <span>{cycle.results}</span>
+                    </div>
+                  )}
+                  {cycle.decision && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">Decision: </span>
+                      <span>{cycle.decision}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
