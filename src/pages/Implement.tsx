@@ -16,6 +16,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { addDays, format, isBefore, parseISO, startOfDay } from "date-fns";
 import { TimelineTracker } from "@/components/TimelineTracker";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
+import { AdaptationLog } from "@/components/AdaptationLog";
 import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { FidelityTrendsChart } from "@/components/dashboard/FidelityTrendsChart";
@@ -144,6 +145,11 @@ export default function Implement() {
 
       {/* PDSA Cycle Assistant */}
       <PDSACycleAssistant initiativeId={effectiveInitiativeId} />
+
+      {/* Living Adaptation Protocol: propose, boundary-check, decide, log */}
+      {effectiveInitiativeId && (
+        <AdaptationLog initiativeId={effectiveInitiativeId} activeIngredients={activeIngredients} />
+      )}
 
       {/* PD Completion Tracker */}
       <PDCompletionTracker initiativeId={effectiveInitiativeId} />
