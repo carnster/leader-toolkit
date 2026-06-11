@@ -5,6 +5,7 @@ import { Network, Edit } from "lucide-react";
 import { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 import { useState } from "react";
+import { ericLabel, type EricCategory } from "@/lib/ericClusters";
 
 interface StrategyIngredientConnectionsProps {
   activeIngredients: ActiveIngredient[];
@@ -12,18 +13,16 @@ interface StrategyIngredientConnectionsProps {
   onEditStrategy: (strategy: ImplementationStrategy) => void;
 }
 
-const ericCategoryColors = {
-  enable: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200",
-  redesign: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200",
-  integrate: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200",
-  create: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200",
-};
-
-const ericCategoryLabels = {
-  enable: "Enable",
-  redesign: "Redesign",
-  integrate: "Integrate",
-  create: "Create",
+const ericCategoryColors: Record<EricCategory, string> = {
+  evaluative_iterative: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200",
+  provide_interactive_assistance: "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900 dark:text-cyan-200",
+  adapt_practice: "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900 dark:text-teal-200",
+  develop_stakeholder_relationships: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-200",
+  train_educate: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-200",
+  support_clinicians: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900 dark:text-purple-200",
+  engage_consumers: "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900 dark:text-pink-200",
+  use_financial_strategies: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900 dark:text-amber-200",
+  change_infrastructure: "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200",
 };
 
 export function StrategyIngredientConnections({
@@ -107,8 +106,8 @@ export function StrategyIngredientConnections({
           {Object.entries(groupedStrategies).map(([category, categoryStrategies]) => (
             <div key={category} className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className={ericCategoryColors[category as keyof typeof ericCategoryColors]}>
-                  {ericCategoryLabels[category as keyof typeof ericCategoryLabels]}
+                <Badge className={ericCategoryColors[category as EricCategory] ?? ""}>
+                  {ericLabel(category)}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   {categoryStrategies.length} {categoryStrategies.length === 1 ? 'strategy' : 'strategies'}

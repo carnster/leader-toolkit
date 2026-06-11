@@ -5,53 +5,72 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, BookOpen, Plus } from "lucide-react";
 import { useState } from "react";
+import { ERIC_CLUSTERS, ERIC_CLUSTER_MAP, type EricCategory } from "@/lib/ericClusters";
 
 interface ERICStrategy {
   id: string;
   name: string;
   definition: string;
-  category: "enable" | "redesign" | "integrate" | "create";
+  category: EricCategory;
 }
 
+// A curated education-adapted subset of the 73 ERIC strategies (Powell et al. 2015),
+// cluster assignments per Waltz et al. (2015) concept mapping.
 const ERIC_STRATEGIES: ERICStrategy[] = [
-  // Enable strategies
-  { id: "conduct-training", name: "Conduct ongoing training", definition: "Plan for and conduct training in the clinical innovation in an ongoing way", category: "enable" },
-  { id: "provide-supervision", name: "Provide clinical supervision", definition: "Provide clinicians with ongoing supervision focusing on the innovation", category: "enable" },
-  { id: "educational-meetings", name: "Conduct educational meetings", definition: "Hold meetings targeted toward different stakeholder groups to teach them about the innovation", category: "enable" },
-  { id: "develop-materials", name: "Develop educational materials", definition: "Develop and format manuals, toolkits, and other supporting materials", category: "enable" },
-  { id: "facilitation", name: "Facilitation", definition: "A process of interactive problem solving and support in a context of recognized need for improvement", category: "enable" },
-  { id: "identify-champions", name: "Identify and prepare champions", definition: "Identify and prepare individuals who dedicate themselves to supporting and driving through implementation", category: "enable" },
-  { id: "local-technical-assistance", name: "Provide local technical assistance", definition: "Develop and use a system to deliver technical assistance using local personnel", category: "enable" },
-  { id: "audit-feedback", name: "Audit and provide feedback", definition: "Collect and summarize performance data and give it to staff to monitor and modify practice", category: "enable" },
-  
-  // Redesign strategies
-  { id: "change-physical-structure", name: "Change physical structure and equipment", definition: "Adapt the physical structure and/or equipment to best accommodate the innovation", category: "redesign" },
-  { id: "change-record-systems", name: "Change record systems", definition: "Change records systems to allow better assessment of implementation or outcomes", category: "redesign" },
-  { id: "create-clinical-teams", name: "Create new clinical teams", definition: "Change who serves on the team, adding different disciplines and skills", category: "redesign" },
-  { id: "revise-roles", name: "Revise professional roles", definition: "Shift and revise roles among professionals who provide care and clarify their relationships", category: "redesign" },
-  { id: "change-service-sites", name: "Change service sites", definition: "Change the location of service sites to increase access", category: "redesign" },
-  
-  // Integrate strategies
-  { id: "conduct-small-tests", name: "Conduct cyclical small tests of change", definition: "Implement changes using small tests before taking changes system-wide (PDSA cycles)", category: "integrate" },
-  { id: "develop-formal-blueprint", name: "Develop a formal implementation blueprint", definition: "Develop a formal blueprint with goals, strategies, scope, timeframe, and progress measures", category: "integrate" },
-  { id: "quality-monitoring", name: "Develop and organize quality monitoring systems", definition: "Develop systems and procedures that monitor processes and outcomes for quality assurance", category: "integrate" },
-  { id: "mandate-change", name: "Mandate change", definition: "Have leadership declare the priority of the innovation and determination to have it implemented", category: "integrate" },
-  { id: "stage-scale-up", name: "Stage implementation scale up", definition: "Phase implementation efforts by starting with small pilots or demonstration projects", category: "integrate" },
-  
-  // Create strategies
-  { id: "build-coalition", name: "Build a coalition", definition: "Recruit and cultivate relationships with partners in the implementation effort", category: "create" },
-  { id: "learning-collaborative", name: "Create a learning collaborative", definition: "Facilitate formation of groups of providers and foster collaborative learning environment", category: "create" },
-  { id: "develop-partnerships", name: "Develop academic partnerships", definition: "Partner with a university for shared training and bringing research skills", category: "create" },
-  { id: "resource-sharing", name: "Develop resource sharing agreements", definition: "Develop partnerships with organizations that have resources needed", category: "create" },
-  { id: "implementation-teams", name: "Organize clinician implementation team meetings", definition: "Develop teams of implementers with protected time to reflect and support learning", category: "create" }
-];
+  // Use evaluative and iterative strategies
+  { id: "audit-feedback", name: "Audit and provide feedback", definition: "Collect and summarize implementation data and share it with staff to monitor and improve practice", category: "evaluative_iterative" },
+  { id: "conduct-small-tests", name: "Conduct cyclical small tests of change", definition: "Test changes with small PDSA cycles before taking them school- or system-wide", category: "evaluative_iterative" },
+  { id: "develop-formal-blueprint", name: "Develop a formal implementation blueprint", definition: "Create a formal plan with goals, strategies, scope, timeframe, and progress measures", category: "evaluative_iterative" },
+  { id: "quality-monitoring", name: "Develop and organize quality monitoring systems", definition: "Build systems and procedures that monitor implementation processes and outcomes", category: "evaluative_iterative" },
+  { id: "assess-readiness", name: "Assess for readiness; identify barriers and facilitators", definition: "Assess the school's readiness for change and identify what will help or hinder implementation", category: "evaluative_iterative" },
+  { id: "stage-scale-up", name: "Stage implementation scale up", definition: "Phase implementation by starting with small pilots or demonstration classrooms before expanding", category: "evaluative_iterative" },
 
-const CATEGORY_INFO = {
-  enable: { label: "Enable", color: "primary", description: "Build capacity and skills" },
-  redesign: { label: "Redesign", color: "secondary", description: "Adapt context and structures" },
-  integrate: { label: "Integrate", color: "accent", description: "Embed in routine practice" },
-  create: { label: "Create", color: "success", description: "Build new supports and systems" }
-};
+  // Provide interactive assistance
+  { id: "facilitation", name: "Facilitation", definition: "Interactive problem solving and support delivered in the context of a recognized need for improvement", category: "provide_interactive_assistance" },
+  { id: "provide-supervision", name: "Provide instructional coaching and supervision", definition: "Give educators ongoing, practice-focused coaching centered on the new approach", category: "provide_interactive_assistance" },
+  { id: "local-technical-assistance", name: "Provide local technical assistance", definition: "Develop and use a system to deliver hands-on assistance using local personnel", category: "provide_interactive_assistance" },
+
+  // Adapt and tailor to context
+  { id: "tailor-strategies", name: "Tailor strategies to local context", definition: "Choose and adapt implementation strategies to address the barriers and assets identified in your context", category: "adapt_practice" },
+  { id: "promote-adaptability", name: "Promote adaptability", definition: "Identify how the practice can be adapted to local needs while protecting its core active ingredients", category: "adapt_practice" },
+
+  // Develop stakeholder interrelationships
+  { id: "identify-champions", name: "Identify and prepare champions", definition: "Identify and prepare individuals who will dedicate themselves to supporting and driving the implementation", category: "develop_stakeholder_relationships" },
+  { id: "build-coalition", name: "Build a coalition", definition: "Recruit and cultivate relationships with partners in the implementation effort", category: "develop_stakeholder_relationships" },
+  { id: "develop-partnerships", name: "Develop academic partnerships", definition: "Partner with universities or external experts for shared training and research support", category: "develop_stakeholder_relationships" },
+  { id: "implementation-teams", name: "Organize implementation team meetings", definition: "Develop teams of implementers with protected time to reflect on progress and support each other's learning", category: "develop_stakeholder_relationships" },
+  { id: "consensus-discussions", name: "Conduct local consensus discussions", definition: "Include staff in discussions to establish that the problem matters and the chosen approach is right", category: "develop_stakeholder_relationships" },
+  { id: "early-adopters", name: "Identify early adopters", definition: "Learn from staff who adopt the practice first and use their experience to inform wider rollout", category: "develop_stakeholder_relationships" },
+
+  // Train and educate stakeholders
+  { id: "conduct-training", name: "Conduct ongoing training", definition: "Plan for and deliver training on the new practice in an ongoing way, not as a one-off event", category: "train_educate" },
+  { id: "educational-meetings", name: "Conduct educational meetings", definition: "Hold meetings targeted to different groups — teachers, leaders, families — to teach them about the practice", category: "train_educate" },
+  { id: "develop-materials", name: "Develop educational materials", definition: "Create manuals, toolkits, and supporting materials that make the practice easier to learn and use", category: "train_educate" },
+  { id: "learning-collaborative", name: "Create a learning collaborative", definition: "Form groups of educators who learn the practice together and hold each other accountable", category: "train_educate" },
+  { id: "train-the-trainer", name: "Use train-the-trainer strategies", definition: "Train designated staff to train others in the practice, building internal capacity", category: "train_educate" },
+  { id: "dynamic-training", name: "Make training dynamic", definition: "Vary training methods, make them interactive, and tie them to real classroom practice", category: "train_educate" },
+
+  // Support educators
+  { id: "revise-roles", name: "Revise professional roles", definition: "Shift and clarify roles and responsibilities so the practice has protected time and clear ownership", category: "support_clinicians" },
+  { id: "create-teaching-teams", name: "Create new teaching teams", definition: "Change team composition, adding different skills and perspectives to support the practice", category: "support_clinicians" },
+  { id: "remind-practitioners", name: "Remind and prompt educators", definition: "Build in reminders and prompts that help staff use the practice consistently", category: "support_clinicians" },
+  { id: "resource-sharing", name: "Develop resource sharing agreements", definition: "Partner with organizations that have resources the implementation needs", category: "support_clinicians" },
+
+  // Engage students and families
+  { id: "involve-students-families", name: "Involve students and families", definition: "Engage students and family members in design decisions, feedback, and implementation", category: "engage_consumers" },
+  { id: "prepare-active-participants", name: "Prepare students to be active participants", definition: "Equip students to understand and engage with the new practice rather than receive it passively", category: "engage_consumers" },
+  { id: "mass-communication", name: "Use mass communication", definition: "Use newsletters, assemblies, and media to build awareness and demand for the change", category: "engage_consumers" },
+
+  // Utilize financial strategies
+  { id: "access-funding", name: "Access new funding", definition: "Secure new or repurposed funding to enable and sustain the implementation", category: "use_financial_strategies" },
+  { id: "alter-incentives", name: "Alter incentive and recognition structures", definition: "Adjust how effort is recognized and rewarded to encourage adoption of the practice", category: "use_financial_strategies" },
+
+  // Change infrastructure
+  { id: "mandate-change", name: "Mandate change", definition: "Have leadership declare the priority of the practice and their determination to see it implemented", category: "change_infrastructure" },
+  { id: "change-physical-structure", name: "Change physical structure and equipment", definition: "Adapt spaces, materials, and equipment to accommodate the new practice", category: "change_infrastructure" },
+  { id: "change-record-systems", name: "Change record systems", definition: "Update data and record systems to allow better assessment of implementation and outcomes", category: "change_infrastructure" },
+  { id: "change-schedules", name: "Change schedules and calendars", definition: "Restructure timetables, meeting schedules, and calendars so the practice has time to live in", category: "change_infrastructure" },
+];
 
 interface ERICStrategySelectorProps {
   onSelect?: (strategy: ERICStrategy) => void;
@@ -59,7 +78,7 @@ interface ERICStrategySelectorProps {
 
 export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<EricCategory | null>(null);
   const [selectedStrategies, setSelectedStrategies] = useState<string[]>([]);
 
   const filteredStrategies = ERIC_STRATEGIES.filter((strategy) => {
@@ -89,7 +108,7 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
           <div>
             <CardTitle>ERIC Implementation Strategies Library</CardTitle>
             <CardDescription>
-              Evidence-based strategies organized by the ERIC framework (73 total strategies)
+              Expert Recommendations for Implementing Change (Powell et al., 2015) — 73 evidence-based strategies in 9 clusters, adapted here for schools
             </CardDescription>
           </div>
         </div>
@@ -106,7 +125,7 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
           />
         </div>
 
-        {/* Category Filters */}
+        {/* Cluster Filters */}
         <div className="flex gap-2 flex-wrap">
           <Button
             variant={selectedCategory === null ? "default" : "outline"}
@@ -115,14 +134,14 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
           >
             All Strategies
           </Button>
-          {Object.entries(CATEGORY_INFO).map(([key, info]) => (
+          {ERIC_CLUSTERS.map((cluster) => (
             <Button
-              key={key}
-              variant={selectedCategory === key ? "default" : "outline"}
+              key={cluster.value}
+              variant={selectedCategory === cluster.value ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory(key)}
+              onClick={() => setSelectedCategory(cluster.value)}
             >
-              {info.label}
+              {cluster.label}
             </Button>
           ))}
         </div>
@@ -138,9 +157,9 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
         <ScrollArea className="h-[400px] rounded-md border">
           <div className="space-y-2 p-4">
             {filteredStrategies.map((strategy) => {
-              const categoryInfo = CATEGORY_INFO[strategy.category];
+              const cluster = ERIC_CLUSTER_MAP[strategy.category];
               const isSelected = selectedStrategies.includes(strategy.id);
-              
+
               return (
                 <div
                   key={strategy.id}
@@ -151,10 +170,10 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-medium text-sm">{strategy.name}</h4>
-                        <Badge variant="outline" className="text-xs capitalize">
-                          {categoryInfo.label}
+                        <Badge variant="outline" className="text-xs">
+                          {cluster.label}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{strategy.definition}</p>
@@ -174,7 +193,7 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
         </ScrollArea>
 
         <div className="text-xs text-muted-foreground">
-          Showing {filteredStrategies.length} of {ERIC_STRATEGIES.length} strategies
+          Showing {filteredStrategies.length} of {ERIC_STRATEGIES.length} curated strategies (full ERIC compilation: 73)
         </div>
       </CardContent>
     </Card>

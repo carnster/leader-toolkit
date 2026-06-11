@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
+import { ERIC_CLUSTERS, ericLabel } from "@/lib/ericClusters";
 
 interface StrategicFoundationSectionProps {
   activeIngredients: ActiveIngredient[];
@@ -78,12 +79,12 @@ export function StrategicFoundationSection({
   const coreIngredients = activeIngredients.filter((ing) => ing.is_core);
   const adaptableIngredients = activeIngredients.filter((ing) => !ing.is_core);
 
-  const strategiesByCategory = {
-    enable: strategies.filter((s) => s.eric_category === "enable"),
-    redesign: strategies.filter((s) => s.eric_category === "redesign"),
-    integrate: strategies.filter((s) => s.eric_category === "integrate"),
-    create: strategies.filter((s) => s.eric_category === "create"),
-  };
+  const strategiesByCategory = Object.fromEntries(
+    ERIC_CLUSTERS.map((cluster) => [
+      cluster.value,
+      strategies.filter((s) => s.eric_category === cluster.value),
+    ])
+  );
 
   return (
     <div className="space-y-6">
@@ -273,8 +274,8 @@ export function StrategicFoundationSection({
                     if (categoryStrategies.length === 0) return null;
                     return (
                       <div key={category} className="space-y-3">
-                        <h4 className="font-semibold capitalize flex items-center gap-2">
-                          <Badge variant="outline">{category}</Badge>
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Badge variant="outline">{ericLabel(category)}</Badge>
                           {categoryStrategies.length} {categoryStrategies.length === 1 ? "Strategy" : "Strategies"}
                         </h4>
                         <div className="space-y-3">

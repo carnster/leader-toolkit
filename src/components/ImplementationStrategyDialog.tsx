@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, HelpCircle } from "lucide-react";
 import { TeamMember } from "@/hooks/useTeamMembers";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ERIC_CLUSTERS, type EricCategory } from "@/lib/ericClusters";
 
 interface ImplementationStrategyDialogProps {
   open: boolean;
@@ -18,64 +19,7 @@ interface ImplementationStrategyDialogProps {
   teamMembers?: TeamMember[];
 }
 
-const ericCategories = [
-  { 
-    value: "enable", 
-    label: "Enable - Support capacity building", 
-    description: "Train, educate, provide tools",
-    examples: [
-      "Conduct educational meetings",
-      "Conduct ongoing training",
-      "Develop educational materials",
-      "Provide clinical supervision",
-      "Use train-the-trainer strategies",
-      "Make training dynamic",
-      "Facilitate relay of clinical data to providers"
-    ]
-  },
-  { 
-    value: "redesign", 
-    label: "Redesign - Adjust context", 
-    description: "Modify workflows, systems, structures",
-    examples: [
-      "Change physical structure and equipment",
-      "Change record systems",
-      "Revise professional roles",
-      "Create new clinical teams",
-      "Change service sites",
-      "Alter incentive/allowance structures",
-      "Make billing easier"
-    ]
-  },
-  { 
-    value: "integrate", 
-    label: "Integrate - Embed in routine", 
-    description: "Make it part of standard practice",
-    examples: [
-      "Conduct cyclical small tests of change (PDSA)",
-      "Remind clinicians",
-      "Develop and organize quality monitoring systems",
-      "Audit and provide feedback",
-      "Purposely reexamine the implementation",
-      "Tailor strategies to local context",
-      "Promote adaptability"
-    ]
-  },
-  { 
-    value: "create", 
-    label: "Create - Build new supports", 
-    description: "Develop new policies, teams, resources",
-    examples: [
-      "Build a coalition",
-      "Identify and prepare champions",
-      "Develop a formal implementation blueprint",
-      "Create a learning collaborative",
-      "Use advisory boards and workgroups",
-      "Access new funding",
-      "Develop resource sharing agreements"
-    ]
-  },
-];
+const ericCategories = ERIC_CLUSTERS;
 
 const statusOptions = [
   { value: "planned", label: "Planned" },
@@ -86,7 +30,7 @@ const statusOptions = [
 
 export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strategy, teamMembers = [] }: ImplementationStrategyDialogProps) {
   const [formData, setFormData] = useState<Partial<ImplementationStrategy>>({
-    eric_category: "enable",
+    eric_category: "train_educate",
     strategy_name: "",
     description: "",
     target_barrier: "",
@@ -103,7 +47,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
       setFormData(strategy);
     } else {
       setFormData({
-        eric_category: "enable",
+        eric_category: "train_educate",
         strategy_name: "",
         description: "",
         target_barrier: "",
@@ -136,7 +80,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
               <div className="flex-1">
                 <p className="text-sm font-medium">About ERIC Strategies</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  The ERIC framework provides 73 evidence-based implementation strategies organized into four categories. Choose strategies that address your specific implementation barriers.
+                  ERIC (Expert Recommendations for Implementing Change, Powell et al. 2015) provides 73 evidence-based implementation strategies organized into nine clusters. Choose strategies that address your specific implementation barriers.
                 </p>
               </div>
             </div>
@@ -160,7 +104,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
               id="eric_category"
               className="w-full rounded-md border px-3 py-2"
               value={formData.eric_category}
-              onChange={(e) => setFormData({ ...formData, eric_category: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, eric_category: e.target.value as EricCategory })}
               required
             >
               {ericCategories.map((cat) => (

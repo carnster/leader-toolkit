@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { ericLabel } from "@/lib/ericClusters";
 
 interface ImplementationPlanExportProps {
   initiativeTitle: string;
@@ -98,7 +99,7 @@ export function ImplementationPlanExport({
           head: [["Strategy", "Category", "Responsible Party", "Status"]],
           body: strategies.map((strat) => [
             strat.strategy_name,
-            strat.eric_category.toUpperCase(),
+            ericLabel(strat.eric_category),
             strat.responsible_party || "Unassigned",
             strat.status.replace("_", " ").toUpperCase(),
           ]),

@@ -5,6 +5,7 @@ import { Sparkles, Loader2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { ericLabel } from "@/lib/ericClusters";
 
 interface StrategyRecommendation {
   strategy_name: string;
@@ -26,18 +27,6 @@ interface ImplementationStrategyRecommendationsProps {
   }>;
   onApplyRecommendation: (recommendation: StrategyRecommendation) => void;
 }
-
-const ericCategoryLabels: Record<string, string> = {
-  evaluative_iterative: "Evaluative & Iterative",
-  provide_interactive_assistance: "Provide Interactive Assistance",
-  adapt_practice: "Adapt Practice",
-  develop_stakeholder_relationships: "Develop Stakeholder Relationships",
-  train_educate: "Train & Educate",
-  support_clinicians: "Support Clinicians",
-  engage_consumers: "Engage Consumers",
-  use_financial_strategies: "Use Financial Strategies",
-  change_infrastructure: "Change Infrastructure"
-};
 
 export function ImplementationStrategyRecommendations({
   initiativeId,
@@ -170,7 +159,7 @@ export function ImplementationStrategyRecommendations({
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline">
-                              {ericCategoryLabels[strategy.eric_category] || strategy.eric_category}
+                              {ericLabel(strategy.eric_category)}
                             </Badge>
                             {isApplied && (
                               <Badge variant="secondary" className="gap-1">

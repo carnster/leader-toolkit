@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { ericLabel } from "@/lib/ericClusters";
 
 interface TeamDashboardProps {
   teamMembers: TeamMember[];
@@ -305,7 +306,7 @@ export function TeamDashboard({
                   </div>
                   {item.eric_category && (
                     <Badge variant="outline" className="text-xs">
-                      {item.eric_category.toUpperCase()}
+                      {ericLabel(item.eric_category)}
                     </Badge>
                   )}
                   {item.target_date && (

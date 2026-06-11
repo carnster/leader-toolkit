@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, ArrowRight, Shield, CheckCircle2, AlertCircle } from "lucide-react";
 import { useImplementationRisks } from "@/hooks/useImplementationRisks";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
+import { ericLabel } from "@/lib/ericClusters";
 
 interface RiskStrategyMappingProps {
   initiativeId: string;
@@ -96,7 +97,7 @@ export function RiskStrategyMapping({ initiativeId }: RiskStrategyMappingProps) 
                           {relatedStrategies.map((strategy) => (
                             <div key={strategy.id} className="text-xs p-2 rounded bg-primary/5 border border-primary/20">
                               <Badge variant="secondary" className="text-[10px] mb-1">
-                                {strategy.eric_category}
+                                {ericLabel(strategy.eric_category)}
                               </Badge>
                               <p className="font-medium">{strategy.strategy_name}</p>
                             </div>
