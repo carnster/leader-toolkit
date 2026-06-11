@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const requestSchema = z.object({
   type: z.enum(['decision-brief', 'active-ingredients', 'pdsa-suggestion', 'sustainability']),
-  context: z.any().optional(),
+  context: z.any().nullish(),
 });
 
 serve(async (req) => {

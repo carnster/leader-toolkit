@@ -11,10 +11,10 @@ const requestSchema = z.object({
   decisionBrief: z.object({
     problem_statement: z.string().max(5000),
     target_group: z.string().max(1000),
-    feasibility_factors: z.any().optional(),
-    chosen_approach: z.string().max(2000).optional(),
-    root_causes: z.array(z.string()).optional(),
-    stakeholder_input: z.string().max(5000).optional(),
+    feasibility_factors: z.any().nullish(),
+    chosen_approach: z.string().max(2000).nullish(),
+    root_causes: z.array(z.string()).nullish(),
+    stakeholder_input: z.string().max(5000).nullish(),
   }),
 });
 

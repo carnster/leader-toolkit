@@ -11,30 +11,30 @@ const requestSchema = z.object({
   decisionBrief: z.object({
     problem_statement: z.string().max(5000),
     target_group: z.string().max(1000),
-    chosen_approach: z.string().max(2000).optional(),
-    measurement_timeline: z.array(z.string()).max(100).optional(),
-    goals: z.string().max(10000).optional(),
+    chosen_approach: z.string().max(2000).nullish(),
+    measurement_timeline: z.array(z.string()).max(100).nullish(),
+    goals: z.string().max(10000).nullish(),
   }),
   activeIngredients: z.array(z.object({
     name: z.string().max(200),
     is_core: z.boolean(),
-    description: z.string().max(1000).optional(),
+    description: z.string().max(1000).nullish(),
   })).max(50),
   implementationStrategies: z.array(z.object({
     strategy_name: z.string().max(200),
     eric_category: z.string(),
     timeline: z.string().max(500).optional().nullable(),
-  })).max(50).optional(),
+  })).max(50).nullish(),
   pdActivities: z.array(z.object({
     title: z.string().max(200),
     activity_type: z.string(),
-    scheduled_date: z.string().nullable().optional(),
-  })).max(50).optional(),
+    scheduled_date: z.string().nullable().nullish(),
+  })).max(50).nullish(),
   communicationActivities: z.array(z.object({
     description: z.string().max(500),
     stakeholder_group: z.string().max(200),
-    scheduled_date: z.string().nullable().optional(),
-  })).max(50).optional(),
+    scheduled_date: z.string().nullable().nullish(),
+  })).max(50).nullish(),
 });
 
 serve(async (req) => {

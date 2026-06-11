@@ -11,15 +11,15 @@ const requestSchema = z.object({
   decisionBrief: z.object({
     problem_statement: z.string().max(5000),
     target_group: z.string().max(1000),
-    goals: z.string().max(10000).optional(),
-    chosen_approach: z.string().max(2000).optional(),
-    stakeholder_input: z.string().max(5000).optional(),
-    equity_notes: z.string().max(5000).optional(),
+    goals: z.string().max(10000).nullish(),
+    chosen_approach: z.string().max(2000).nullish(),
+    stakeholder_input: z.string().max(5000).nullish(),
+    equity_notes: z.string().max(5000).nullish(),
   }),
   teamMembers: z.array(z.object({
-    name: z.string().optional(),
+    name: z.string().nullish(),
     role_in_initiative: z.string(),
-  })).optional(),
+  })).nullish(),
 });
 
 serve(async (req) => {

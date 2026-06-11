@@ -11,11 +11,11 @@ const requestSchema = z.object({
   activeIngredients: z.array(z.object({
     name: z.string().max(200),
     is_core: z.boolean(),
-    look_fors: z.array(z.string()).optional(),
+    look_fors: z.array(z.string()).nullish(),
   })).max(50),
   teamMembers: z.array(z.object({
     role_in_initiative: z.string().max(100),
-  })).optional(),
+  })).nullish(),
 });
 
 serve(async (req) => {

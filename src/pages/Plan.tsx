@@ -402,8 +402,28 @@ export default function Plan() {
       if (risks.length === 0) await generateRisksFromDecisionBrief();
       if (milestones.length === 0) await generateTimelineFromContext();
       if (activities.length === 0) await generatePDActivities();
-      
-      toast({ title: "Full plan generated!", description: "All planning components have been created." });
+
+      // Verify what actually landed before declaring success: individual
+      // generators swallow their own errors, so count the real rows.
+      const checkCounts = await Promise.all(
+        ["implementation_strategies", "implementation_risks", "timeline_milestones", "pd_activities", "active_ingredients"].map(async (table) => {
+          const { count } = await supabase
+            .from(table as any)
+            .select("id", { count: "exact", head: true })
+            .eq("initiative_id", effectiveInitiativeId);
+          return { table, count: count ?? 0 };
+        })
+      );
+      const empty = checkCounts.filter((c) => c.count === 0).map((c) => c.table.replace("implementation_", "").replace("timeline_", "").replace("pd_activities", "PD").replace("_", " "));
+      if (empty.length === 0) {
+        toast({ title: "Full plan generated!", description: "All planning components have been created." });
+      } else {
+        toast({
+          title: "Plan partially generated",
+          description: `Created some components, but these are still empty: ${empty.join(", ")}. Use each section's generate button to retry.`,
+          variant: "destructive",
+        });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: "Some components failed to generate. Please try individual sections.", variant: "destructive" });
     } finally {

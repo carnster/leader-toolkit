@@ -9,7 +9,7 @@ const corsHeaders = {
 
 const requestSchema = z.object({
   chosenApproach: z.string().max(1000),
-  evidenceBase: z.string().max(2000).optional(),
+  evidenceBase: z.string().max(2000).nullish(),
   problemStatement: z.string().max(2000),
 });
 
