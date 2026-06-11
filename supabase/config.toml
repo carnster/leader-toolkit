@@ -1,37 +1,37 @@
 project_id = "olxlcpsizneihjxpebzg"
 
 [functions.ai-copilot]
-verify_jwt = false
+verify_jwt = true
 
 [functions.evaluate-goals]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-ebp]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-active-ingredients]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-strategies]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-risks]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-timeline]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-pd]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-metrics]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-communication]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-budget]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-copilot-chat]
-verify_jwt = false
+verify_jwt = true

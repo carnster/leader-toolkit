@@ -20,10 +20,10 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { chosenApproach, evidenceBase, problemStatement } = requestSchema.parse(body);
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
     }
 
     const systemPrompt = `You are an expert in implementation science and evidence-based practice fidelity. 
@@ -46,14 +46,14 @@ Problem Context: ${problemStatement || 'Not specified'}
 
 Identify the essential components that make this intervention effective, with clear implementation indicators.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
