@@ -134,7 +134,7 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
       para("Evidence Base", decisionBrief?.evidence_base);
       para("Stakeholder Input & Organizational Context", decisionBrief?.stakeholder_input);
       if (decisionBrief?.feasibility_score != null) {
-        para("Feasibility Score", `${decisionBrief.feasibility_score} (1-10 scale, averaged across five factors)`);
+        para("Feasibility Score", `${decisionBrief.feasibility_score} of 5 (converted from five 1-10 factor ratings)`);
       }
       const eqNotes = decisionBrief?.equity_checklist?.notes || {};
       const eqRows = Object.entries(eqNotes).map(([k, v]) => [k.replace(/_/g, " "), v]);

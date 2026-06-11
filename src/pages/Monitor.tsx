@@ -211,7 +211,7 @@ export default function Monitor() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <FidelityMonitoringPlan activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />
+          <div id="fidelity-monitoring"><FidelityMonitoringPlan activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} /></div>
         </CardContent>
       </Card>
       
@@ -600,18 +600,22 @@ export default function Monitor() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Button variant="outline" className="h-auto flex-col items-start p-4">
-              <span className="font-semibold mb-1">Enter Fidelity Data</span>
+            <Button
+              variant="outline"
+              className="h-auto flex-col items-start p-4"
+              onClick={() => document.getElementById("fidelity-monitoring")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              <span className="font-semibold mb-1">Conduct Fidelity Observation</span>
               <span className="text-sm text-muted-foreground">
-                Weekly aggregate or per-component
+                Jump to the observation tools above
               </span>
             </Button>
-            <Button variant="outline" className="h-auto flex-col items-start p-4">
-              <span className="font-semibold mb-1">Import Assessment Data</span>
+            <div className="rounded-md border border-dashed p-4 text-left">
+              <span className="font-semibold mb-1 block text-muted-foreground">Import Assessment Data</span>
               <span className="text-sm text-muted-foreground">
-                Upload CSV from SIS or LMS
+                CSV import from your SIS or LMS is on the roadmap. For now, record values on each indicator above.
               </span>
-            </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

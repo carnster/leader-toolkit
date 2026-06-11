@@ -123,6 +123,17 @@ export default function Decide() {
     if (sum === 0) return null; // No factors entered yet - return null instead of 0
     return Math.max(1, Math.min(5, Math.round((sum / 5) / 2))); // Convert 0-10 avg to 1-5 scale
   })();
+
+  // Display value on the same 1-10 scale as the sliders and rubric
+  const feasibilityAverage = (() => {
+    const sum = feasibilityFactors.time_scheduling +
+                feasibilityFactors.staff_capacity +
+                feasibilityFactors.resources_budget +
+                feasibilityFactors.leadership_support +
+                feasibilityFactors.school_culture;
+    if (sum === 0) return null;
+    return Math.round((sum / 5) * 10) / 10;
+  })();
   
   // Load initiative title
   useEffect(() => {
@@ -1323,7 +1334,7 @@ export default function Decide() {
                       <p className="text-muted-foreground text-sm">Auto-calculated from factors below</p>
                     </div>
                     <div className="text-4xl font-bold text-primary">
-                      {calculatedFeasibilityScore !== null ? `${calculatedFeasibilityScore}/5` : 'Not assessed'}
+                      {feasibilityAverage !== null ? `${feasibilityAverage}/10` : 'Not assessed'}
                     </div>
                   </div>
                 </div>
