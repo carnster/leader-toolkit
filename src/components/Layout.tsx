@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
+import { InitiativeSwitcher } from "@/components/InitiativeSwitcher";
 import impactLogo from "@/assets/impact-logo.png";
 
 const navigation = [
@@ -101,6 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* User Menu & Notifications */}
           <div className="hidden md:flex items-center gap-2">
+            <InitiativeSwitcher />
             <Button
               variant="ghost"
               size="icon"
