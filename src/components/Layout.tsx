@@ -215,6 +215,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <span>{hub.name}</span>
                 </Link>
               ))}
+              {/* Account actions (no avatar menu on mobile) */}
+              <div className="my-2 border-t" aria-hidden="true" />
+              <Link
+                to="/settings"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+              <button
+                onClick={() => { setMobileMenuOpen(false); signOut(); }}
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </button>
             </nav>
           </div>
         )}
