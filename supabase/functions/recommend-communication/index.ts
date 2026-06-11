@@ -63,7 +63,9 @@ Consider:
 - Appropriate channels (meetings, newsletters, presentations, etc.)
 - Timing and frequency of communication
 - Two-way communication opportunities for feedback
-- Cultural and linguistic accessibility`;
+- Cultural and linguistic accessibility
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const teamContext = teamMembers && teamMembers.length > 0 
       ? `\n\nTeam Members:\n${teamMembers.map(m => `- ${m.name || 'Unnamed'} (${m.role_in_initiative})`).join('\n')}`

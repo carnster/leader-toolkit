@@ -31,7 +31,9 @@ Guidelines:
 - Each indicator/activity should include a realistic measurement frequency from: weekly, fortnightly, monthly, bi-monthly, half-termly, termly, end-of-year
 - Recommend 3-5 leading indicators, 3-5 lagging indicators, and 4-6 data collection activities
 - Make recommendations practical and appropriate for the school context
-- Ensure indicators align with the problem statement and goals`;
+- Ensure indicators align with the problem statement and goals
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const userPrompt = `Decision Brief Context:
 Problem: ${decisionBrief.problem_statement || 'Not specified'}

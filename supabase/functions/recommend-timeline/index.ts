@@ -81,7 +81,9 @@ Each milestone should include:
 - Specific, measurable milestone
 - Implementation phase
 - Realistic target date (relative to start)
-- Success criteria`;
+- Success criteria
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const userPrompt = `Create an implementation timeline for this initiative:
 

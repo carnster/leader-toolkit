@@ -57,7 +57,9 @@ Each activity should include:
 - Target audience (which team roles)
 - Duration
 - Fidelity focus (which active ingredients)
-- Facilitator suggestions`;
+- Facilitator suggestions
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const ingredientsList = activeIngredients?.map((ing: any) => 
       `- ${ing.name} (${ing.is_core ? 'CORE' : 'Adaptable'})${ing.look_fors ? '\n  Look-fors: ' + ing.look_fors.slice(0, 2).join('; ') : ''}`

@@ -106,7 +106,9 @@ Base your estimates on:
 - Complexity of strategies
 - Professional development needs
 - Duration of initiative
-- Typical education sector costs`;
+- Typical education sector costs
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) {

@@ -39,7 +39,9 @@ For the given educational intervention/approach, identify 4-6 active ingredients
   * Clear name and description
   * Category (e.g., "Relationships", "Monitoring", "Support Systems", "Instruction")
   * 3-5 "look-fors" - observable indicators that this ingredient is being implemented with quality
-  * 2-3 "adaptable boundaries" - what can be flexibly adjusted while maintaining core function`;
+  * 2-3 "adaptable boundaries" - what can be flexibly adjusted while maintaining core function
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const userPrompt = `Generate active ingredients for this intervention:
 

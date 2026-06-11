@@ -55,7 +55,9 @@ Analyze the feasibility data and context to recommend 6-8 specific, actionable s
 - Mix strategies across different ERIC categories
 - Each strategy should directly address identified barriers or leverage enablers
 - Include specific target barriers, timelines, resources needed, and success indicators
-- Strategies should be practical and context-appropriate based on feasibility scores`;
+- Strategies should be practical and context-appropriate based on feasibility scores
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const feasibilityFactors = decisionBrief.feasibility_factors || {};
     const feasibilityAnalysis = `

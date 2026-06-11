@@ -48,7 +48,9 @@ For each risk provide:
 - Likelihood (low/medium/high)
 - Impact (low/medium/high)
 - Specific mitigation strategy
-- Contingency plan if risk materializes`;
+- Contingency plan if risk materializes
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
 
     const feasibilityFactors = decisionBrief.feasibility_factors || {};
     const feasibilityAnalysis = `
