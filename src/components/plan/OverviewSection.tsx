@@ -5,6 +5,7 @@ import { CheckCircle2, AlertCircle, Sparkles, Loader2, ArrowRight } from "lucide
 import { ReadinessChecklist } from "@/components/ReadinessChecklist";
 import { useNavigate } from "react-router-dom";
 import { ImplementationPlanExport } from "@/components/ImplementationPlanExport";
+import { CalendarTaskExport } from "@/components/CalendarTaskExport";
 
 interface OverviewSectionProps {
   activeIngredientsCount: number;
@@ -198,6 +199,22 @@ export function OverviewSection({
           </CardContent>
         </Card>
       )}
+
+      {/* Calendar & Task Export */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h3 className="font-semibold text-lg mb-1">Send Dates to Your Calendar & Task List</h3>
+              <p className="text-sm text-muted-foreground">
+                Milestones, PD sessions, and communication activities as a calendar file (works with Google,
+                Outlook, and Apple Calendar) or a task list CSV
+              </p>
+            </div>
+            <CalendarTaskExport initiativeId={initiativeId} initiativeTitle={initiativeTitle} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Complete Planning Button */}
       {isReady && (
