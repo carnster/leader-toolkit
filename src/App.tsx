@@ -15,6 +15,7 @@ import Monitor from "./pages/Monitor";
 import Sustain from "./pages/Sustain";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
+import SharedView from "./pages/SharedView";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
         <ErrorBoundary>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/share/:token" element={<SharedView />} />
             <Route
               path="/*"
               element={

@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.ai-copilot-chat]
 verify_jwt = true
+
+[functions.get-shared-brief]
+verify_jwt = false
