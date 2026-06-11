@@ -13,7 +13,8 @@ import {
   LogOut,
   Sun,
   Moon,
-  Users
+  Users,
+  Settings as SettingsIcon
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -39,8 +40,8 @@ const navigation = [
 ];
 
 const hubs = [
-  { name: "Team Hub", href: "/team", icon: Users },
-  { name: "Monitoring Hub", href: "/monitor", icon: BarChart3 },
+  { name: "Team", href: "/team", icon: Users },
+  { name: "Monitoring", href: "/monitor", icon: BarChart3 },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -121,16 +122,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NotificationsPanel />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" aria-label="Account menu">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold text-sm">
                     {user?.email?.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm">{user?.email}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel className="font-normal">
+                  <span className="block text-xs text-muted-foreground">Signed in as</span>
+                  <span className="block truncate max-w-[220px]">{user?.email}</span>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
