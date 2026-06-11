@@ -170,6 +170,8 @@ export default function Decide() {
       setGoalsEvaluation(decisionBrief.goals_feedback || null);
       setEquityChecked(decisionBrief.equity_checklist?.checked || {});
       setEquityChecklistNotes(decisionBrief.equity_checklist?.notes || {});
+      // A loaded brief IS saved state: reflect that instead of alarming "Not saved"
+      if (decisionBrief.updated_at) setLastSaved(new Date(decisionBrief.updated_at));
       
       // Load feasibility factors
       if (decisionBrief.feasibility_factors) {

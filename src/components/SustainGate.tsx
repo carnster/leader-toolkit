@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
 import { usePDSACycles } from "@/hooks/usePDSACycles";
 import { useIndicators } from "@/hooks/useIndicators";
+import { useSustainabilityPlan } from "@/hooks/useSustainabilityPlan";
 
 interface SustainGateProps {
   initiativeId: string;
@@ -29,7 +30,15 @@ export function SustainGate({ initiativeId }: SustainGateProps) {
   const { fidelityLogs } = useFidelityLogs(initiativeId);
   const { pdsaCycles } = usePDSACycles(initiativeId);
   const { indicators, indicatorValues } = useIndicators(initiativeId);
+  const { sustainabilityPlan, upsertPlan } = useSustainabilityPlan(initiativeId);
+  const persisted = !!(sustainabilityPlan?.resource_protections as any)?.gateOverride;
   const [overridden, setOverridden] = useState(false);
+  const isOverridden = overridden || persisted;
+  const persistOverride = () => {
+    setOverridden(true);
+    const rp = ((sustainabilityPlan?.resource_protections as any) || {});
+    upsertPlan({ initiative_id: initiativeId, resource_protections: { ...rp, gateOverride: true } } as any);
+  };
 
   const logs = (fidelityLogs as any[]) || [];
   const recent = [...logs]
@@ -140,13 +149,13 @@ export function SustainGate({ initiativeId }: SustainGateProps) {
             </div>
           </div>
         ))}
-        {!overridden ? (
+        {!isOverridden ? (
           <div className="pt-2 flex items-start gap-2 text-xs text-muted-foreground">
             <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <p>
               Entering sustainment before the evidence clears risks embedding a practice that was never fully implemented.
               If your professional judgment says the data lags reality, you can{" "}
-              <Button variant="link" className="h-auto p-0 text-xs underline" onClick={() => setOverridden(true)}>
+              <Button variant="link" className="h-auto p-0 text-xs underline" onClick={persistOverride}>
                 proceed on leader judgment
               </Button>.
             </p>

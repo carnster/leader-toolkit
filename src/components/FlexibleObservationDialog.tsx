@@ -34,7 +34,7 @@ export function FlexibleObservationDialog({
   isSubmitting
 }: FlexibleObservationDialogProps) {
   const [selectedIngredient, setSelectedIngredient] = useState<string>("");
-  const [rating, setRating] = useState<number>(3);
+  const [rating, setRating] = useState<number | null>(null);
   const [notes, setNotes] = useState<string>("");
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [followUpActions, setFollowUpActions] = useState<string[]>([]);
@@ -168,7 +168,7 @@ export function FlexibleObservationDialog({
 
   const config = getModeConfig();
   const selectedIngredientData = activeIngredients.find(ing => ing.id === selectedIngredient);
-  const canSubmit = selectedIngredient && (mode !== 'team' || selectedParticipants.length > 0);
+  const canSubmit = selectedIngredient && rating !== null && (mode !== 'team' || selectedParticipants.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -242,11 +242,11 @@ export function FlexibleObservationDialog({
                 Fidelity Rating {mode === 'team' && '(Group Consensus)'}
               </Label>
               <Badge variant="secondary" className="text-lg font-bold">
-                {rating}
+                {rating ?? "–"}
               </Badge>
             </div>
             <Slider
-              value={[rating]}
+              value={[rating ?? 3]}
               onValueChange={(value) => setRating(value[0])}
               min={1}
               max={5}
