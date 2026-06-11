@@ -283,7 +283,7 @@ export default function Monitor() {
             {isLoadingIngredients ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : coreIngredients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No core ingredients defined. Add them in Plan stage.</p>
+              <p className="text-sm text-muted-foreground">No core ingredients defined. Add them in the Plan & Prepare stage.</p>
             ) : (
               <div className="space-y-2">
                 {coreIngredients.slice(0, 3).map((ingredient: any) => (
@@ -311,7 +311,7 @@ export default function Monitor() {
             {isLoadingStrategies ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : activeStrategies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active strategies. Add them in Plan stage.</p>
+              <p className="text-sm text-muted-foreground">No active strategies. Add them in the Plan & Prepare stage.</p>
             ) : (
               <div className="space-y-2">
                 {activeStrategies.slice(0, 3).map((strategy) => (

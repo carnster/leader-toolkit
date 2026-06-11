@@ -89,6 +89,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
     <>
       {/* Floating button */}
       <Button
+        aria-label={isOpen ? "Close Implementation Coach" : "Open Implementation Coach"}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg transition-all z-50",
@@ -121,6 +122,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
             <Button
               variant="ghost"
               size="sm"
+              aria-label="New conversation"
               onClick={handleNewConversation}
               className="h-8 w-8 p-0"
             >
@@ -129,6 +131,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
             <Button
               variant="ghost"
               size="sm"
+              aria-label="Close"
               onClick={() => setIsOpen(false)}
               className="h-8 w-8 p-0"
             >
@@ -208,6 +211,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
                 onClick={stopStreaming}
                 variant="outline"
                 size="icon"
+                aria-label="Stop response"
                 className="shrink-0"
               >
                 <X className="h-4 w-4" />
@@ -217,6 +221,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
                 onClick={handleSend}
                 disabled={!inputValue.trim() || !currentConversationId}
                 size="icon"
+                aria-label="Send message"
                 className="shrink-0"
               >
                 <Send className="h-4 w-4" />

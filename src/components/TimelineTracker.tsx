@@ -174,7 +174,7 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-primary" />
-            <CardTitle>Implementation Timeline (from Plan Stage)</CardTitle>
+            <CardTitle>Implementation Timeline (from Plan & Prepare)</CardTitle>
           </div>
           <CardDescription>
             Track milestone progress and key dates from your implementation plan

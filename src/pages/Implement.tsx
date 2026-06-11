@@ -110,7 +110,7 @@ export default function Implement() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
-            Core Active Ingredients (from Plan Stage)
+            Core Active Ingredients (from Plan & Prepare)
           </CardTitle>
           <CardDescription>
             These components from your plan should be monitored during implementation
@@ -283,8 +283,8 @@ export default function Implement() {
                   </select>
                   <p className="text-xs text-muted-foreground">
                     {coreIngredients.length > 0 
-                      ? "Select from your core active ingredients defined in Plan stage"
-                      : "Define active ingredients in Plan stage to track them here"}
+                      ? "Select from your core active ingredients defined in Plan & Prepare"
+                      : "Define active ingredients in Plan & Prepare to track them here"}
                   </p>
                 </div>
 

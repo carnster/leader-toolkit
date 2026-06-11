@@ -163,7 +163,7 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
                       
                       toast({
                         title: "Recommendation Selected",
-                        description: `${rec.name} has been noted. Active ingredients will be loaded in Plan stage.`,
+                        description: `${rec.name} has been noted. Active ingredients will be loaded in the Plan & Prepare stage.`,
                       });
                     }}
                   >
