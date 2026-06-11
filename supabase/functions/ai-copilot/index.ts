@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -19,11 +20,13 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { type, context } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     let systemPrompt = '';
     let userPrompt = '';
@@ -64,48 +67,47 @@ Suggest 3-4 specific strategies to sustain this work, including embedding routin
 
     console.log('AI Copilot Request:', { type, systemPrompt: systemPrompt.substring(0, 100) });
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-      }),
-    });
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        console.error('AI Gateway error:', apiError.status, apiError.message);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'Rate limit exceeded. Please try again in a moment.' 
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'AI credits exhausted. Please add credits to continue.' 
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+        if (apiError.status === 429) {
+          return new Response(JSON.stringify({
+            error: 'Rate limit exceeded. Please try again in a moment.'
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
-      throw new Error(`AI Gateway error: ${response.status}`);
+        if (apiError.status === 402) {
+          return new Response(JSON.stringify({
+            error: 'AI credits exhausted. Please add credits to continue.'
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        throw new Error(`AI Gateway error: ${apiError.status}`);
+      }
+      throw apiError;
     }
 
-    const data = await response.json();
-    const suggestion = data.choices?.[0]?.message?.content;
+    const suggestion = msg.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('');
 
     console.log('AI Copilot Response generated successfully');
 

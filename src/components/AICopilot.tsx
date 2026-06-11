@@ -113,8 +113,8 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
               <Sparkles className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm">AI Copilot</h3>
-              <p className="text-xs text-muted-foreground">Your implementation assistant</p>
+              <h3 className="font-semibold text-sm">Implementation Coach</h3>
+              <p className="text-xs text-muted-foreground">Guidance grounded in the IMPACT framework</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -145,9 +145,9 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
                 <MessageCircle className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h4 className="font-semibold mb-2">Welcome to AI Copilot</h4>
+                <h4 className="font-semibold mb-2">Meet your Implementation Coach</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  I'm here to help you with implementation guidance, answer questions, and provide insights.
+                  Ask about any stage of your implementation: defining the problem, choosing strategies, reading your fidelity data, or planning for sustainability.
                 </p>
               </div>
               <Button onClick={handleNewConversation} className="w-full">
@@ -199,7 +199,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask me anything..."
+              placeholder="Ask your Implementation Coach..."
               disabled={isStreaming || !currentConversationId}
               className="flex-1"
             />

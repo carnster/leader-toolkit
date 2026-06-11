@@ -199,9 +199,9 @@ export default function Sustain() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <Shield className="h-4 w-4" />
-          <span>Stage 4: Spread and Sustain</span>
+          <span>Stage 4 of 4: Spread & Sustain</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Spread and Sustain Stage</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Spread & Sustain Stage</h1>
         <p className="text-muted-foreground mt-2">
           Navigate to sustainment, embed practices into standard operations, and prepare for spread
         </p>
@@ -209,7 +209,7 @@ export default function Sustain() {
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              What to do in the Spread and Sustain Stage
+              What to do in the Spread & Sustain Stage
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• <strong>Navigate to sustainment:</strong> Transition from learning the work to doing the work</li>
@@ -238,7 +238,7 @@ export default function Sustain() {
         <CardHeader>
           <CardTitle>Implementation Journey Summary</CardTitle>
           <CardDescription>
-            What you've built through Decide, Plan, Implement, and Monitor stages
+            What you've built through the Decide, Plan & Prepare, and Implement stages, including continuous monitoring
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -318,7 +318,7 @@ export default function Sustain() {
         <CardContent>
           {routines.length === 0 && !routineForm && (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No routines yet. Add the regular practices that will keep this work going — for example,
+              No routines yet. Add the regular practices that will keep this work going, for example
               a weekly planning meeting owned by a grade-level team lead.
             </div>
           )}
@@ -436,7 +436,7 @@ export default function Sustain() {
         <CardContent>
           {onboardingResources.length === 0 && !resourceForm && (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No onboarding resources yet. Add the materials new staff will need — for example,
+              No onboarding resources yet. Add the materials new staff will need, for example
               an induction packet or a core practices walkthrough.
             </div>
           )}
@@ -583,7 +583,7 @@ export default function Sustain() {
         <CardContent className="space-y-4">
           {protections.length === 0 && !protectionForm && (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No protections recorded yet. Capture the specific commitments that safeguard this work —
+              No protections recorded yet. Capture the specific commitments that safeguard this work:
               for example, protected meeting time, a dedicated budget line, or a formalized lead role.
             </div>
           )}

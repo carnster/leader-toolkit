@@ -34,10 +34,10 @@ export function QualityAssuranceSection({ activeIngredients, initiativeId }: Qua
           <div className="p-4 rounded-lg border">
             <h4 className="font-semibold mb-2">Fidelity Monitoring</h4>
             <p className="text-sm text-muted-foreground mb-2">
-              Observation scheduling and fidelity tracking now happen in the Monitor stage where active monitoring occurs.
+              Observation scheduling and fidelity tracking happen in the Monitoring Hub, which runs throughout implementation.
             </p>
             <p className="text-xs text-muted-foreground">
-              💡 Visit the Monitor stage to conduct observations, view fidelity trends, and manage your monitoring calendar.
+              💡 Visit the Monitoring Hub to conduct observations, view fidelity trends, and manage your monitoring calendar.
             </p>
           </div>
         </CardContent>

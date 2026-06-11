@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -15,58 +16,90 @@ serve(async (req) => {
     const { messages, context } = await req.json();
     console.log('AI Copilot request:', { messageCount: messages?.length, context });
     
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     // Build context-aware system prompt
     const systemPrompt = buildSystemPrompt(context);
-    
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-        stream: true,
-      }),
-    });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: 'Rate limit exceeded. Please try again in a moment.' 
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    // The Anthropic Messages API takes the system prompt as a top-level
+    // parameter and only accepts user/assistant roles in `messages`.
+    const conversationMessages: Anthropic.MessageParam[] = (messages ?? [])
+      .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
+      .map((m: { role: 'user' | 'assistant'; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+    let stream;
+    try {
+      stream = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: conversationMessages,
+        stream: true,
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        console.error('AI Gateway error:', apiError.status, apiError.message);
+
+        if (apiError.status === 429) {
+          return new Response(JSON.stringify({
+            error: 'Rate limit exceeded. Please try again in a moment.'
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (apiError.status === 402) {
+          return new Response(JSON.stringify({
+            error: 'AI credits exhausted. Please add credits to continue.'
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        throw new Error(`AI Gateway error: ${apiError.status}`);
       }
-      
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: 'AI credits exhausted. Please add credits to continue.' 
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw apiError;
     }
 
-    return new Response(response.body, {
-      headers: { 
-        ...corsHeaders, 
+    // Re-emit the stream as OpenAI-style SSE chunks so the existing
+    // frontend parser (choices[0].delta.content + [DONE]) keeps working.
+    const encoder = new TextEncoder();
+    const body = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (
+              event.type === 'content_block_delta' &&
+              event.delta.type === 'text_delta'
+            ) {
+              const chunk = {
+                choices: [{ delta: { content: event.delta.text } }],
+              };
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+            }
+          }
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (streamError) {
+          console.error('Error while streaming AI response:', streamError);
+          controller.error(streamError);
+        }
+      },
+    });
+
+    return new Response(body, {
+      headers: {
+        ...corsHeaders,
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
@@ -85,14 +118,15 @@ serve(async (req) => {
 });
 
 function buildSystemPrompt(context: any): string {
-  let prompt = `You are the IMPACT Companion AI Assistant, an expert in implementation science and educational change management. You help school leaders navigate the implementation process using the "Implement with IMPACT" framework.
+  let prompt = `You are the Implementation Coach for the IMPACT Implementation Companion, an expert in implementation science and educational change management. You help school leaders navigate the implementation process using the "Implement with IMPACT" framework.
 
-Core Framework Stages:
-1. **Decide** - Define problems, set goals, evaluate options
-2. **Plan** - Build comprehensive implementation plans
-3. **Implement** - Execute with fidelity monitoring
-4. **Monitor** - Track progress and adapt
-5. **Sustain** - Ensure long-term success
+Core Framework Stages (4 stages, with monitoring woven throughout):
+1. **Decide** - Name the problem and need for change, assemble the implementation team, develop goals, identify evidence-based solutions, assess organizational readiness
+2. **Plan & Prepare** - Identify active ingredients (core vs adaptable), select 3 to 5 implementation strategies, build the monitoring plan, timeline, PD, and communication plans
+3. **Implement** - Grow the implementers through training and coaching, build supportive structures, run improvement cycles (PDSA), gather and act on implementation data. Monitoring is continuous during this stage, not a separate phase
+4. **Spread & Sustain** - Navigate from implementation mode to operational mode, embed practices in routines, build onboarding systems, protect resources, make the scale decision
+
+Key concepts to use accurately: active ingredients, fidelity, adaptation versus de-implementation, implementation literacy, the adopt-and-abandon cycle, and the team behaviors Engage, Unite, and Reflect.
 
 Your Role:
 - Provide expert guidance on implementation science

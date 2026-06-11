@@ -12,7 +12,7 @@ import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { usePDActivities } from "@/hooks/usePDActivities";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { addDays, format, isBefore, parseISO, startOfDay } from "date-fns";
 import { TimelineTracker } from "@/components/TimelineTracker";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
@@ -64,7 +64,7 @@ export default function Implement() {
       .map((a) => ({
         id: `pd-${a.id}`,
         text: `PD activity needs follow-up: ${a.title}`,
-        detail: `Scheduled ${format(parseISO(a.scheduled_date!), "MMM d, yyyy")} — mark complete or reschedule`,
+        detail: `Scheduled ${format(parseISO(a.scheduled_date!), "MMM d, yyyy")}. Mark complete or reschedule.`,
         label: "PD",
       })),
   ];
@@ -75,11 +75,15 @@ export default function Implement() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <PlayCircle className="h-4 w-4" />
-          <span>Stage 3: Implement</span>
+          <span>Stage 3 of 4: Implement</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Implement Stage</h1>
         <p className="text-muted-foreground mt-2">
-          Put the plan into action while building supportive structures and cultivating a learning culture
+          Put the plan into action while building supportive structures and cultivating a learning culture. Monitoring runs continuously during this stage: track progress in the{" "}
+          <Link to="/monitor" className="font-medium text-primary underline underline-offset-4">
+            Monitoring Hub
+          </Link>
+          .
         </p>
         <Card className="mt-4 border-primary/20 bg-primary/5">
           <CardContent className="pt-6">
@@ -171,7 +175,7 @@ export default function Implement() {
             ))
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">No nudges right now — nudges appear when milestones approach or PD activities need follow-up.</p>
+              <p className="text-sm">No nudges right now. Nudges appear when milestones approach or PD activities need follow-up.</p>
             </div>
           )}
         </CardContent>

@@ -2,112 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* IMPACT Learning and Leading Group brand system.
+   All colors MUST be HSL. No gradients. Two-color discipline:
+   Navy hsl(220 75% 19%) carries the app; Crimson hsl(0 100% 33%) is an accent, not a wash.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
+    /* Paper - soft off-white, never pure white */
+    --background: 40 30% 98%;
+    /* Ink - body text on light */
+    --foreground: 218 22% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 218 22% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 218 22% 10%;
 
-    /* Deep Navy - Professional & Trust */
-    --primary: 215 80% 25%;
-    --primary-foreground: 0 0% 100%;
-    
-    /* Coral Orange - Energy & Impact */
-    --secondary: 15 85% 55%;
-    --secondary-foreground: 0 0% 100%;
+    /* IMPACT Navy - primary, headings, anchor color */
+    --primary: 220 75% 19%;
+    --primary-foreground: 40 30% 98%;
 
-    --muted: 215 20% 96%;
-    --muted-foreground: 215 15% 45%;
+    /* Light navy-tinted surface */
+    --secondary: 220 30% 94%;
+    --secondary-foreground: 220 75% 19%;
 
-    /* Warm Amber - Highlights */
-    --accent: 35 90% 55%;
-    --accent-foreground: 215 25% 15%;
+    --muted: 220 25% 95%;
+    /* Slate Gray - muted/secondary text */
+    --muted-foreground: 214 10% 40%;
 
-    --destructive: 0 80% 55%;
-    --destructive-foreground: 0 0% 100%;
-    
-    /* Success Teal */
-    --success: 175 70% 38%;
-    --success-foreground: 0 0% 100%;
-    
-    /* Warning Orange */
-    --warning: 35 90% 55%;
-    --warning-foreground: 215 25% 15%;
+    /* IMPACT Crimson - accent, CTAs, emphasis */
+    --accent: 0 100% 33%;
+    --accent-foreground: 40 30% 98%;
 
-    --border: 215 20% 88%;
-    --input: 215 20% 88%;
-    --ring: 215 80% 25%;
+    /* Functional status colors - destructive kept distinct from Crimson */
+    --destructive: 8 75% 50%;
+    --destructive-foreground: 40 30% 98%;
+
+    --success: 175 70% 32%;
+    --success-foreground: 40 30% 98%;
+
+    --warning: 40 90% 45%;
+    --warning-foreground: 218 22% 10%;
+
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 0 100% 33%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 25% 98%;
-
-    --sidebar-foreground: 215 25% 25%;
-
-    --sidebar-primary: 215 80% 25%;
-
-    --sidebar-primary-foreground: 0 0% 100%;
-
-    --sidebar-accent: 215 20% 94%;
-
-    --sidebar-accent-foreground: 215 25% 25%;
-
-    --sidebar-border: 215 20% 88%;
-
-    --sidebar-ring: 215 80% 25%;
+    --sidebar-background: 220 30% 96%;
+    --sidebar-foreground: 220 40% 22%;
+    --sidebar-primary: 220 75% 19%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 220 30% 91%;
+    --sidebar-accent-foreground: 220 75% 19%;
+    --sidebar-border: 220 20% 88%;
+    --sidebar-ring: 0 100% 33%;
   }
 
   .dark {
-    --background: 215 30% 12%;
-    --foreground: 0 0% 98%;
+    /* Navy-anchored dark theme */
+    --background: 220 40% 8%;
+    --foreground: 40 30% 96%;
 
-    --card: 215 28% 16%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 35% 12%;
+    --card-foreground: 40 30% 96%;
 
-    --popover: 215 28% 16%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 35% 12%;
+    --popover-foreground: 40 30% 96%;
 
-    --primary: 215 75% 45%;
-    --primary-foreground: 0 0% 100%;
+    /* Lighter navy-blue for contrast on dark */
+    --primary: 220 60% 70%;
+    --primary-foreground: 220 40% 8%;
 
-    --secondary: 15 80% 60%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 220 30% 16%;
+    --secondary-foreground: 40 30% 96%;
 
-    --muted: 215 25% 20%;
-    --muted-foreground: 215 15% 68%;
+    --muted: 220 30% 15%;
+    --muted-foreground: 214 12% 68%;
 
-    --accent: 35 85% 60%;
-    --accent-foreground: 215 30% 12%;
+    /* Crimson stays the accent; lifted slightly for dark contrast */
+    --accent: 0 85% 45%;
+    --accent-foreground: 40 30% 98%;
 
-    --destructive: 0 75% 50%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --success: 175 65% 42%;
-    --success-foreground: 0 0% 100%;
-    
-    --warning: 35 85% 60%;
-    --warning-foreground: 215 30% 12%;
+    --destructive: 8 75% 55%;
+    --destructive-foreground: 40 30% 98%;
 
-    --border: 215 25% 22%;
-    --input: 215 25% 22%;
-    --ring: 215 75% 45%;
-    --sidebar-background: 215 30% 10%;
-    --sidebar-foreground: 215 15% 90%;
-    --sidebar-primary: 215 75% 45%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 25% 18%;
-    --sidebar-accent-foreground: 215 15% 90%;
-    --sidebar-border: 215 25% 20%;
-    --sidebar-ring: 215 75% 45%;
+    --success: 175 60% 42%;
+    --success-foreground: 220 40% 8%;
+
+    --warning: 40 90% 55%;
+    --warning-foreground: 220 40% 8%;
+
+    --border: 220 30% 18%;
+    --input: 220 30% 18%;
+    --ring: 0 85% 45%;
+
+    --sidebar-background: 220 40% 6%;
+    --sidebar-foreground: 220 15% 88%;
+    --sidebar-primary: 220 60% 70%;
+    --sidebar-primary-foreground: 220 40% 8%;
+    --sidebar-accent: 220 30% 14%;
+    --sidebar-accent-foreground: 220 15% 88%;
+    --sidebar-border: 220 30% 16%;
+    --sidebar-ring: 0 85% 45%;
   }
 }
 
@@ -118,5 +118,13 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Source Serif 4', Georgia, serif;
   }
 }

@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -18,10 +19,12 @@ serve(async (req) => {
     
     const { goals } = requestSchema.parse(await req.json());
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an educational goal evaluation expert. Evaluate goals based on SMART and SMARTIE criteria:
 
@@ -38,27 +41,22 @@ SMARTIE (extends SMART):
 
 Provide constructive, actionable feedback.`;
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
-          { 
-            role: "user", 
+          {
+            role: "user",
             content: `Evaluate these initiative goals against SMART/SMARTIE criteria and provide specific feedback:\n\n${goals}`
           }
         ],
         tools: [{
-          type: "function",
-          function: {
-            name: "evaluate_goals",
-            description: "Evaluate goals against SMART/SMARTIE criteria",
-            parameters: {
+          name: "evaluate_goals",
+          description: "Evaluate goals against SMART/SMARTIE criteria",
+          input_schema: {
               type: "object",
               properties: {
                 overall_score: {
@@ -111,38 +109,38 @@ Provide constructive, actionable feedback.`;
               },
               required: ["overall_score", "is_smart_compliant", "is_smartie_compliant", "criteria_scores", "strengths", "improvements"],
               additionalProperties: false
-            }
           }
         }],
-        tool_choice: { type: "function", function: { name: "evaluate_goals" } }
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
+        tool_choice: { type: "tool", name: "evaluate_goals" }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        if (apiError.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (apiError.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.error("AI gateway error:", apiError.status, apiError.message);
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "AI evaluation failed" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: "AI evaluation failed" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      throw apiError;
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
+    );
+
+    if (!toolUse) {
       console.error("No tool call in response");
       return new Response(
         JSON.stringify({ error: "Invalid AI response" }),
@@ -150,7 +148,7 @@ Provide constructive, actionable feedback.`;
       );
     }
 
-    const evaluation = JSON.parse(toolCall.function.arguments);
+    const evaluation = toolUse.input;
 
     return new Response(
       JSON.stringify({ evaluation }),

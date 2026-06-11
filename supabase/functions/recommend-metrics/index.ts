@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -13,11 +14,13 @@ serve(async (req) => {
 
   try {
     const { decisionBrief } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an educational implementation science expert specializing in measurement and evaluation. Based on a school's decision brief, recommend appropriate leading indicators, lagging indicators, and data collection activities with measurement frequencies.
 
@@ -38,26 +41,21 @@ Chosen Approach: ${decisionBrief.chosen_approach || 'Not specified'}
 
 Recommend appropriate metrics and measurement plan.`;
 
-    console.log('Calling Gemini AI for metrics recommendations...');
+    console.log('Calling Claude for metrics recommendations...');
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [{
-          type: 'function',
-          function: {
-            name: 'provide_metrics_recommendations',
-            description: 'Provide recommendations for leading indicators, lagging indicators, and data collection activities',
-            parameters: {
+          name: 'provide_metrics_recommendations',
+          description: 'Provide recommendations for leading indicators, lagging indicators, and data collection activities',
+          input_schema: {
               type: 'object',
               properties: {
                 leading_indicators: {
@@ -101,40 +99,40 @@ Recommend appropriate metrics and measurement plan.`;
                 }
               },
               required: ['leading_indicators', 'lagging_indicators', 'data_collection_activities']
-            }
           }
         }],
-        tool_choice: { type: 'function', function: { name: 'provide_metrics_recommendations' } }
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        tool_choice: { type: 'tool', name: 'provide_metrics_recommendations' }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        if (apiError.status === 429) {
+          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (apiError.status === 402) {
+          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.error('AI Gateway error:', apiError.status, apiError.message);
+        throw new Error(`AI Gateway error: ${apiError.status}`);
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw apiError;
     }
 
-    const data = await response.json();
     console.log('AI response received');
 
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+    if (!toolUse) {
       throw new Error('No tool call in AI response');
     }
 
-    const recommendations = JSON.parse(toolCall.function.arguments);
+    const recommendations = toolUse.input;
     
     return new Response(JSON.stringify({ recommendations }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

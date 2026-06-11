@@ -1,18 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  LayoutDashboard, 
-  Search, 
-  FileText, 
-  PlayCircle, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Search,
+  FileText,
+  PlayCircle,
+  BarChart3,
   Shield,
   Menu,
   X,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,16 +30,19 @@ import { NotificationsPanel } from "@/components/NotificationsPanel";
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Decide", href: "/decide", icon: Search },
-  { name: "Plan", href: "/plan", icon: FileText },
+  { name: "Plan & Prepare", href: "/plan", icon: FileText },
   { name: "Implement", href: "/implement", icon: PlayCircle },
-  { name: "Monitor", href: "/monitor", icon: BarChart3 },
-  { name: "Sustain", href: "/sustain", icon: Shield },
+  { name: "Spread & Sustain", href: "/sustain", icon: Shield },
 ];
+
+const monitoringHub = { name: "Monitoring Hub", href: "/monitor", icon: BarChart3 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
+  const isMonitorActive = location.pathname === monitoringHub.href;
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,11 +81,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
+              {/* Monitoring Hub: continuous companion tool, not a stage */}
+              <div className="mx-2 h-6 w-px bg-border" aria-hidden="true" />
+              <Link
+                to={monitoringHub.href}
+                className={cn(
+                  "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                  isMonitorActive
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <monitoringHub.icon className="h-4 w-4" />
+                <span>{monitoringHub.name}</span>
+              </Link>
             </nav>
           </div>
 
           {/* User Menu & Notifications */}
           <div className="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Toggle dark mode"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-5 w-5 dark:hidden" />
+              <Moon className="hidden h-5 w-5 dark:block" />
+            </Button>
             <NotificationsPanel />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -101,11 +130,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile theme toggle & menu button */}
+          <div className="flex items-center gap-1 md:hidden">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            aria-label="Toggle dark mode"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          >
+            <Sun className="h-5 w-5 dark:hidden" />
+            <Moon className="hidden h-5 w-5 dark:block" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -114,6 +152,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             )}
           </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -139,6 +178,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
+              {/* Monitoring Hub: continuous companion tool, not a stage */}
+              <div className="my-2 border-t" aria-hidden="true" />
+              <Link
+                to={monitoringHub.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                  isMonitorActive
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <monitoringHub.icon className="h-4 w-4" />
+                <span>{monitoringHub.name}</span>
+              </Link>
             </nav>
           </div>
         )}

@@ -44,7 +44,7 @@ const ERIC_STRATEGIES: ERICStrategy[] = [
 
   // Train and educate stakeholders
   { id: "conduct-training", name: "Conduct ongoing training", definition: "Plan for and deliver training on the new practice in an ongoing way, not as a one-off event", category: "train_educate" },
-  { id: "educational-meetings", name: "Conduct educational meetings", definition: "Hold meetings targeted to different groups — teachers, leaders, families — to teach them about the practice", category: "train_educate" },
+  { id: "educational-meetings", name: "Conduct educational meetings", definition: "Hold meetings targeted to different groups (teachers, leaders, families) to teach them about the practice", category: "train_educate" },
   { id: "develop-materials", name: "Develop educational materials", definition: "Create manuals, toolkits, and supporting materials that make the practice easier to learn and use", category: "train_educate" },
   { id: "learning-collaborative", name: "Create a learning collaborative", definition: "Form groups of educators who learn the practice together and hold each other accountable", category: "train_educate" },
   { id: "train-the-trainer", name: "Use train-the-trainer strategies", definition: "Train designated staff to train others in the practice, building internal capacity", category: "train_educate" },
@@ -108,7 +108,7 @@ export function ERICStrategySelector({ onSelect }: ERICStrategySelectorProps) {
           <div>
             <CardTitle>ERIC Implementation Strategies Library</CardTitle>
             <CardDescription>
-              Expert Recommendations for Implementing Change (Powell et al., 2015) — 73 evidence-based strategies in 9 clusters, adapted here for schools
+              Expert Recommendations for Implementing Change (Powell et al., 2015): 73 evidence-based strategies in 9 clusters, adapted here for schools
             </CardDescription>
           </div>
         </div>

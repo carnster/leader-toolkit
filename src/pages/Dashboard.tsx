@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DashboardExport } from "@/components/DashboardExport";
 import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
+import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
 
 export default function Dashboard() {
   const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
@@ -30,6 +31,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
+
+  const handleNewInitiative = () => navigate('/decide');
 
   const handleDeleteClick = (id: string) => {
     setInitiativeToDelete(id);
@@ -73,33 +76,41 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Select initiative" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Initiatives</SelectItem>
-              {initiatives.map((initiative) => (
-                <SelectItem key={initiative.id} value={initiative.id}>
-                  {initiative.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <DashboardExport 
-            analytics={analytics} 
-            initiatives={initiatives} 
-            selectedInitiativeId={selectedInitiativeId}
-            fidelityTrends={fidelityTrends}
-            budgetData={budgetData}
-          />
-          <Button onClick={() => navigate('/decide')}>
+          {initiatives.length > 0 && (
+            <>
+              <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Select initiative" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Initiatives</SelectItem>
+                  {initiatives.map((initiative) => (
+                    <SelectItem key={initiative.id} value={initiative.id}>
+                      {initiative.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <DashboardExport
+                analytics={analytics}
+                initiatives={initiatives}
+                selectedInitiativeId={selectedInitiativeId}
+                fidelityTrends={fidelityTrends}
+                budgetData={budgetData}
+              />
+            </>
+          )}
+          <Button onClick={handleNewInitiative}>
             <Plus className="mr-2 h-4 w-4" />
             New Initiative
           </Button>
         </div>
       </div>
 
+      {initiatives.length === 0 ? (
+        <FirstRunWelcome onStartInitiative={handleNewInitiative} />
+      ) : (
+        <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -273,6 +284,8 @@ export default function Dashboard() {
           )}
         </TabsContent>
       </Tabs>
+        </>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

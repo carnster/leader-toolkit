@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <AlertTriangle className="h-10 w-10 text-destructive mx-auto" aria-hidden="true" />
             <h1 className="text-xl font-semibold">Something went wrong</h1>
             <p className="text-sm text-muted-foreground">
-              Your data is safe — this is a display error, not a data loss. Return to the
+              Your data is safe. This is a display error, not data loss. Return to the
               dashboard and try again. If it keeps happening, note what you were doing and
               report it.
             </p>

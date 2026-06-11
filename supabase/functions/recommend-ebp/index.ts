@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -28,11 +29,13 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { decisionBrief } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an expert in evidence-based educational practices and interventions. Your role is to recommend appropriate Evidence-Based Practices (EBPs), programs, or innovations based on the problem context provided.
 
@@ -67,94 +70,89 @@ Baseline Data: ${decisionBrief.baseline_data || 'Not specified'}
 
 Provide recommendations in a clear, structured format.`;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [
           {
-            type: 'function',
-            function: {
-              name: 'provide_recommendations',
-              description: 'Provide structured EBP recommendations',
-              parameters: {
-                type: 'object',
-                properties: {
-                  recommendations: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        name: { type: 'string' },
-                        description: { type: 'string' },
-                        evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
-                        fit_score: { type: 'number', minimum: 1, maximum: 100 },
-                        implementation_notes: { type: 'string' },
-                        active_ingredients: {
-                          type: 'array',
-                          items: {
-                            type: 'object',
-                            properties: {
-                              name: { type: 'string' },
-                              description: { type: 'string' },
-                              is_core: { type: 'boolean' },
-                              category: { type: 'string' },
-                              look_fors: { type: 'array', items: { type: 'string' } },
-                              adaptable_boundaries: { type: 'array', items: { type: 'string' } }
-                            },
-                            required: ['name', 'description', 'is_core']
-                          }
+            name: 'provide_recommendations',
+            description: 'Provide structured EBP recommendations',
+            input_schema: {
+              type: 'object',
+              properties: {
+                recommendations: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
+                      fit_score: { type: 'number', minimum: 1, maximum: 100 },
+                      implementation_notes: { type: 'string' },
+                      active_ingredients: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            description: { type: 'string' },
+                            is_core: { type: 'boolean' },
+                            category: { type: 'string' },
+                            look_fors: { type: 'array', items: { type: 'string' } },
+                            adaptable_boundaries: { type: 'array', items: { type: 'string' } }
+                          },
+                          required: ['name', 'description', 'is_core']
                         }
-                      },
-                      required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes', 'active_ingredients'],
-                      additionalProperties: false
-                    }
+                      }
+                    },
+                    required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes', 'active_ingredients'],
+                    additionalProperties: false
                   }
-                },
-                required: ['recommendations'],
-                additionalProperties: false
-              }
+                }
+              },
+              required: ['recommendations'],
+              additionalProperties: false
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'provide_recommendations' } }
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        tool_choice: { type: 'tool', name: 'provide_recommendations' }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        if (apiError.status === 429) {
+          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (apiError.status === 402) {
+          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.error('AI gateway error:', apiError.status, apiError.message);
+        throw new Error('Failed to get recommendations from AI');
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error('Failed to get recommendations from AI');
+      throw apiError;
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+
+    if (!toolUse) {
       throw new Error('No recommendations returned');
     }
 
-    const recommendations = JSON.parse(toolCall.function.arguments);
+    const recommendations = toolUse.input;
 
     return new Response(JSON.stringify(recommendations), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

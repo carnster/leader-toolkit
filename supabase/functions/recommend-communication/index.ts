@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -29,13 +30,15 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { decisionBrief, teamMembers } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
-    console.log('Calling Gemini AI for communication recommendations...');
+    const anthropic = new Anthropic({ apiKey });
+
+    console.log('Calling Claude for communication recommendations...');
 
     const systemPrompt = `You are an expert in educational change management and stakeholder engagement.
 
@@ -89,83 +92,78 @@ Generate 8-12 communication activities that:
 5. Create opportunities for two-way communication and feedback
 6. Address equity and accessibility in communication`;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [
           {
-            type: 'function',
-            function: {
-              name: 'provide_communication_plan',
-              description: 'Provide structured communication activities for stakeholder engagement',
-              parameters: {
-                type: 'object',
-                properties: {
-                  activities: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        stakeholder_group: {
-                          type: 'string',
-                          description: 'Target stakeholder group (e.g., Teachers, Parents, Leadership)'
-                        },
-                        activity_type: {
-                          type: 'string',
-                          description: 'Type of communication activity (e.g., Launch Meeting, Newsletter, Feedback Session)'
-                        },
-                        description: {
-                          type: 'string',
-                          description: 'Brief description of the activity and its purpose'
-                        },
-                        channel: {
-                          type: 'string',
-                          description: 'Communication channel (e.g., Email, In-person Meeting, Newsletter)'
-                        },
-                        timing: {
-                          type: 'string',
-                          description: 'When to conduct this activity (e.g., Week 1, Monthly, Quarterly)'
-                        }
+            name: 'provide_communication_plan',
+            description: 'Provide structured communication activities for stakeholder engagement',
+            input_schema: {
+              type: 'object',
+              properties: {
+                activities: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      stakeholder_group: {
+                        type: 'string',
+                        description: 'Target stakeholder group (e.g., Teachers, Parents, Leadership)'
                       },
-                      required: ['stakeholder_group', 'activity_type', 'description', 'channel', 'timing'],
-                      additionalProperties: false
-                    }
+                      activity_type: {
+                        type: 'string',
+                        description: 'Type of communication activity (e.g., Launch Meeting, Newsletter, Feedback Session)'
+                      },
+                      description: {
+                        type: 'string',
+                        description: 'Brief description of the activity and its purpose'
+                      },
+                      channel: {
+                        type: 'string',
+                        description: 'Communication channel (e.g., Email, In-person Meeting, Newsletter)'
+                      },
+                      timing: {
+                        type: 'string',
+                        description: 'When to conduct this activity (e.g., Week 1, Monthly, Quarterly)'
+                      }
+                    },
+                    required: ['stakeholder_group', 'activity_type', 'description', 'channel', 'timing'],
+                    additionalProperties: false
                   }
-                },
-                required: ['activities'],
-                additionalProperties: false
-              }
+                }
+              },
+              required: ['activities'],
+              additionalProperties: false
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'provide_communication_plan' } }
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error(`AI gateway returned ${response.status}: ${errorText}`);
+        tool_choice: { type: 'tool', name: 'provide_communication_plan' }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        console.error('AI gateway error:', apiError.status, apiError.message);
+        throw new Error(`AI gateway returned ${apiError.status}: ${apiError.message}`);
+      }
+      throw apiError;
     }
 
-    const data = await response.json();
     console.log('AI response received');
 
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+    if (!toolUse) {
       throw new Error('No tool call in AI response');
     }
 
-    const recommendations = JSON.parse(toolCall.function.arguments);
+    const recommendations = toolUse.input;
 
     return new Response(JSON.stringify(recommendations), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

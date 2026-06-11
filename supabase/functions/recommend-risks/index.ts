@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -25,11 +26,13 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { decisionBrief } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an expert in implementation science and risk management for educational initiatives.
 
@@ -75,78 +78,73 @@ ${decisionBrief.stakeholder_input || 'Not specified'}
 
 Identify specific, actionable risks with mitigation strategies.`;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [
           {
-            type: 'function',
-            function: {
-              name: 'provide_risks',
-              description: 'Provide structured implementation risks',
-              parameters: {
-                type: 'object',
-                properties: {
-                  risks: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        risk_description: { type: 'string' },
-                        risk_category: { type: 'string' },
-                        likelihood: { type: 'string', enum: ['low', 'medium', 'high'] },
-                        impact: { type: 'string', enum: ['low', 'medium', 'high'] },
-                        mitigation_strategy: { type: 'string' },
-                        contingency_plan: { type: 'string' }
-                      },
-                      required: ['risk_description', 'risk_category', 'likelihood', 'impact', 'mitigation_strategy']
-                    }
+            name: 'provide_risks',
+            description: 'Provide structured implementation risks',
+            input_schema: {
+              type: 'object',
+              properties: {
+                risks: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      risk_description: { type: 'string' },
+                      risk_category: { type: 'string' },
+                      likelihood: { type: 'string', enum: ['low', 'medium', 'high'] },
+                      impact: { type: 'string', enum: ['low', 'medium', 'high'] },
+                      mitigation_strategy: { type: 'string' },
+                      contingency_plan: { type: 'string' }
+                    },
+                    required: ['risk_description', 'risk_category', 'likelihood', 'impact', 'mitigation_strategy']
                   }
-                },
-                required: ['risks']
-              }
+                }
+              },
+              required: ['risks']
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'provide_risks' } }
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        tool_choice: { type: 'tool', name: 'provide_risks' }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        if (apiError.status === 429) {
+          return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (apiError.status === 402) {
+          return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.error('AI gateway error:', apiError.status, apiError.message);
+        throw new Error('Failed to get risk recommendations from AI');
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }), {
-          status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      throw new Error('Failed to get risk recommendations from AI');
+      throw apiError;
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+
+    if (!toolUse) {
       throw new Error('No risks returned');
     }
 
-    const result = JSON.parse(toolCall.function.arguments);
+    const result = toolUse.input;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

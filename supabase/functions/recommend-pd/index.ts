@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -25,11 +26,13 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { activeIngredients, teamMembers } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an expert in professional development design for educational implementation.
 
@@ -79,90 +82,86 @@ Roles: ${teamRoles}
 
 Create a comprehensive PD plan that ensures fidelity to the active ingredients.`;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let aiMessage;
+    try {
+      aiMessage = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [
           {
-            type: 'function',
-            function: {
-              name: 'provide_pd_activities',
-              description: 'Provide structured professional development activities',
-              parameters: {
-                type: 'object',
-                properties: {
-                  activities: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        title: { type: 'string' },
-                        activity_type: { 
-                          type: 'string',
-                          enum: ['initial_training', 'ongoing_coaching', 'collaborative_learning', 'external_workshop', 'self_directed']
-                        },
-                        description: { type: 'string' },
-                        target_audience: { type: 'array', items: { type: 'string' } },
-                        duration_minutes: { type: 'number' },
-                        fidelity_focus: { type: 'array', items: { type: 'string' } },
-                        facilitator: { type: 'string' }
+            name: 'provide_pd_activities',
+            description: 'Provide structured professional development activities',
+            input_schema: {
+              type: 'object',
+              properties: {
+                activities: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      title: { type: 'string' },
+                      activity_type: {
+                        type: 'string',
+                        enum: ['initial_training', 'ongoing_coaching', 'collaborative_learning', 'external_workshop', 'self_directed']
                       },
-                      required: ['title', 'activity_type', 'description', 'target_audience', 'duration_minutes']
-                    }
+                      description: { type: 'string' },
+                      target_audience: { type: 'array', items: { type: 'string' } },
+                      duration_minutes: { type: 'number' },
+                      fidelity_focus: { type: 'array', items: { type: 'string' } },
+                      facilitator: { type: 'string' }
+                    },
+                    required: ['title', 'activity_type', 'description', 'target_audience', 'duration_minutes']
                   }
-                },
-                required: ['activities']
-              }
+                }
+              },
+              required: ['activities']
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'provide_pd_activities' } }
-      }),
-    });
-
-    if (!response.ok) {
-      const msg = response.status === 429
-        ? 'Rate limit exceeded. Please try again later.'
-        : response.status === 402
-          ? 'AI credits exhausted. Please add credits to continue.'
-          : `AI gateway error (status: ${response.status})`;
-      console.error('AI gateway non-2xx for PD:', response.status);
-      // Return 200 with an error payload so the client (using supabase.functions.invoke)
-      // can surface a friendly message. We still include a code for client-side handling.
-      return new Response(JSON.stringify({ error: msg, code: response.status }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        tool_choice: { type: 'tool', name: 'provide_pd_activities' }
       });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        const msg = apiError.status === 429
+          ? 'Rate limit exceeded. Please try again later.'
+          : apiError.status === 402
+            ? 'AI credits exhausted. Please add credits to continue.'
+            : `AI gateway error (status: ${apiError.status})`;
+        console.error('AI gateway non-2xx for PD:', apiError.status);
+        // Return 200 with an error payload so the client (using supabase.functions.invoke)
+        // can surface a friendly message. We still include a code for client-side handling.
+        return new Response(JSON.stringify({ error: msg, code: apiError.status }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw apiError;
     }
 
-    const data = await response.json();
-    
-    // Try to extract tool call first (preferred)
-    const toolCalls = data.choices?.[0]?.message?.tool_calls ?? [];
+    // Try to extract tool use first (preferred)
     let activitiesResult: any = null;
 
-    try {
-      const toolCall = toolCalls.find((tc: any) => tc?.function?.name === 'provide_pd_activities') || toolCalls[0];
-      if (toolCall?.function?.arguments) {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        activitiesResult = parsed?.activities ? parsed : null;
-      }
-    } catch (e) {
-      console.error('Failed parsing tool call arguments:', e);
+    const toolUse = aiMessage.content.find(
+      (b): b is Anthropic.ToolUseBlock =>
+        b.type === 'tool_use' && b.name === 'provide_pd_activities'
+    ) || aiMessage.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+    if (toolUse?.input) {
+      const parsed = toolUse.input as any;
+      activitiesResult = parsed?.activities ? parsed : null;
     }
 
-    // Fallback: try to parse JSON from the assistant content when no tool call is present
+    // Fallback: try to parse JSON from the assistant text content when no tool use is present
     if (!activitiesResult) {
-      const content = data.choices?.[0]?.message?.content;
+      const content = aiMessage.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('');
       if (typeof content === 'string') {
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -177,9 +176,9 @@ Create a comprehensive PD plan that ensures fidelity to the active ingredients.`
         }
       }
     }
-    
+
     if (!activitiesResult?.activities || !Array.isArray(activitiesResult.activities)) {
-      console.error('No PD activities returned from AI. Raw response:', JSON.stringify(data, null, 2));
+      console.error('No PD activities returned from AI. Raw response:', JSON.stringify(aiMessage, null, 2));
       return new Response(JSON.stringify({ error: 'The AI did not return PD activities. Please try again.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -27,11 +28,13 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { decisionBrief } = requestSchema.parse(body);
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    const anthropic = new Anthropic({ apiKey });
 
     const systemPrompt = `You are an expert in implementation science and the ERIC framework (Expert Recommendations for Implementing Change).
 
@@ -83,99 +86,95 @@ ${decisionBrief.equity_notes || 'Not specified'}
 
 Provide practical strategies that address the specific barriers and feasibility concerns identified above.`;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.5-flash',
+    let aiMessage;
+    try {
+      aiMessage = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
         tools: [
           {
-            type: 'function',
-            function: {
-              name: 'provide_strategies',
-              description: 'Provide structured implementation strategies',
-              parameters: {
-                type: 'object',
-                properties: {
-                  strategies: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        strategy_name: { type: 'string' },
-                        eric_category: { 
-                          type: 'string', 
-                          enum: [
-                            'evaluative_iterative',
-                            'provide_interactive_assistance', 
-                            'adapt_practice',
-                            'develop_stakeholder_relationships',
-                            'train_educate',
-                            'support_clinicians',
-                            'engage_consumers',
-                            'use_financial_strategies',
-                            'change_infrastructure'
-                          ]
-                        },
-                        description: { type: 'string' },
-                        target_barrier: { type: 'string' },
-                        timeline: { type: 'string' },
-                        resources_needed: { type: 'string' },
-                        success_indicators: { type: 'string' },
-                        responsible_party: { type: 'string' }
+            name: 'provide_strategies',
+            description: 'Provide structured implementation strategies',
+            input_schema: {
+              type: 'object',
+              properties: {
+                strategies: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      strategy_name: { type: 'string' },
+                      eric_category: {
+                        type: 'string',
+                        enum: [
+                          'evaluative_iterative',
+                          'provide_interactive_assistance',
+                          'adapt_practice',
+                          'develop_stakeholder_relationships',
+                          'train_educate',
+                          'support_clinicians',
+                          'engage_consumers',
+                          'use_financial_strategies',
+                          'change_infrastructure'
+                        ]
                       },
-                      required: ['strategy_name', 'eric_category', 'description', 'target_barrier']
-                    }
+                      description: { type: 'string' },
+                      target_barrier: { type: 'string' },
+                      timeline: { type: 'string' },
+                      resources_needed: { type: 'string' },
+                      success_indicators: { type: 'string' },
+                      responsible_party: { type: 'string' }
+                    },
+                    required: ['strategy_name', 'eric_category', 'description', 'target_barrier']
                   }
-                },
-                required: ['strategies']
-              }
+                }
+              },
+              required: ['strategies']
             }
           }
         ],
-        tool_choice: { type: 'function', function: { name: 'provide_strategies' } }
-      }),
-    });
-
-    if (!response.ok) {
-      const msg = response.status === 429
-        ? 'Rate limit exceeded. Please try again later.'
-        : response.status === 402
-          ? 'AI credits exhausted. Please add credits to continue.'
-          : `AI gateway error (status: ${response.status})`;
-      console.error('AI gateway non-2xx for strategies:', response.status);
-      return new Response(JSON.stringify({ error: msg, code: response.status }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        tool_choice: { type: 'tool', name: 'provide_strategies' }
       });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        const msg = apiError.status === 429
+          ? 'Rate limit exceeded. Please try again later.'
+          : apiError.status === 402
+            ? 'AI credits exhausted. Please add credits to continue.'
+            : `AI gateway error (status: ${apiError.status})`;
+        console.error('AI gateway non-2xx for strategies:', apiError.status);
+        return new Response(JSON.stringify({ error: msg, code: apiError.status }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      throw apiError;
     }
 
-    const data = await response.json();
-    
-    // Try to extract tool call first (preferred)
-    const toolCalls = data.choices?.[0]?.message?.tool_calls ?? [];
+    // Try to extract tool use first (preferred)
     let strategiesResult: any = null;
 
-    try {
-      const toolCall = toolCalls.find((tc: any) => tc?.function?.name === 'provide_strategies') || toolCalls[0];
-      if (toolCall?.function?.arguments) {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        strategiesResult = parsed?.strategies ? parsed : null;
-      }
-    } catch (e) {
-      console.error('Failed parsing tool call arguments:', e);
+    const toolUse = aiMessage.content.find(
+      (b): b is Anthropic.ToolUseBlock =>
+        b.type === 'tool_use' && b.name === 'provide_strategies'
+    ) || aiMessage.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+    );
+    if (toolUse?.input) {
+      const parsed = toolUse.input as any;
+      strategiesResult = parsed?.strategies ? parsed : null;
     }
 
-    // Fallback: try to parse JSON from the assistant content when no tool call is present
+    // Fallback: try to parse JSON from the assistant text content when no tool use is present
     if (!strategiesResult) {
-      const content = data.choices?.[0]?.message?.content;
+      const content = aiMessage.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('');
       if (typeof content === 'string') {
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -190,9 +189,9 @@ Provide practical strategies that address the specific barriers and feasibility 
         }
       }
     }
-    
+
     if (!strategiesResult?.strategies || !Array.isArray(strategiesResult.strategies)) {
-      console.error('No strategies returned from AI. Raw response:', JSON.stringify(data, null, 2));
+      console.error('No strategies returned from AI. Raw response:', JSON.stringify(aiMessage, null, 2));
       return new Response(JSON.stringify({ error: 'The AI did not return strategies. Please try again.' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

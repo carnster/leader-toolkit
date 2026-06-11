@@ -12,7 +12,38 @@ interface StageProgressProps {
   stages: Stage[];
 }
 
-export function StageProgress({ stages }: StageProgressProps) {
+// Book-aligned display labels (Implement with IMPACT): four stages.
+// The DB value 'monitor' is not a stage; it displays as part of Implement.
+const STAGE_DISPLAY: Record<string, string> = {
+  decide: "Decide",
+  plan: "Plan & Prepare",
+  implement: "Implement",
+  monitor: "Implement",
+  sustain: "Spread & Sustain",
+};
+
+// Collapse the legacy 5-stage sequence into the book's 4 stages:
+// 'monitor' merges into 'implement' (an initiative in monitoring IS in the Implement stage).
+function toDisplayStages(stages: Stage[]): Stage[] {
+  const monitor = stages.find((s) => s.id === "monitor");
+  return stages
+    .filter((s) => s.id !== "monitor")
+    .map((s) => {
+      const name = STAGE_DISPLAY[s.id] ?? s.name;
+      if (s.id === "implement" && monitor) {
+        return {
+          ...s,
+          name,
+          completed: s.completed && monitor.completed,
+          current: s.current || monitor.current,
+        };
+      }
+      return { ...s, name };
+    });
+}
+
+export function StageProgress({ stages: rawStages }: StageProgressProps) {
+  const stages = toDisplayStages(rawStages);
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">

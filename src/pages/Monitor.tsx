@@ -173,11 +173,11 @@ export default function Monitor() {
       <div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
           <BarChart3 className="h-4 w-4" />
-          <span>Stage 4: Monitor & Adjust</span>
+          <span>Monitoring Hub: continuous, not a stage</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Monitor & Adjust</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Monitoring Hub</h1>
         <p className="text-muted-foreground mt-2">
-          Track implementation progress, assess fidelity, and use data to drive continuous improvement
+          Continuous monitoring that runs throughout implementation, not a separate stage. Track progress, assess fidelity, and use data to drive improvement at any point in your journey.
         </p>
         
         {/* Indicator Import Banner */}
@@ -189,7 +189,7 @@ export default function Monitor() {
           <CardContent className="pt-6">
             <h3 className="font-semibold mb-2 flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              What to do in Monitor & Adjust
+              What to do in the Monitoring Hub
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• <strong>Track leading indicators:</strong> Monitor fidelity, adoption, and implementation quality</li>

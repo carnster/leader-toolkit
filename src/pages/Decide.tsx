@@ -569,7 +569,7 @@ export default function Decide() {
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Search className="h-4 w-4" />
-            <span>Stage 1: Decide</span>
+            <span>Stage 1 of 4: Decide</span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Decide Stage</h1>
           <p className="text-muted-foreground mt-2">

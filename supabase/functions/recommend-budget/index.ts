@@ -1,3 +1,4 @@
+import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -107,86 +108,81 @@ Base your estimates on:
 - Duration of initiative
 - Typical education sector costs`;
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
-    const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GEMINI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
+    const anthropic = new Anthropic({ apiKey });
+
+    let msg;
+    try {
+      msg = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 8192,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: context }
         ],
         tools: [
           {
-            type: "function",
-            function: {
-              name: "recommend_budget",
-              description: "Return budget recommendations for the implementation initiative",
-              parameters: {
-                type: "object",
-                properties: {
-                  budget_items: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        category: { type: "string", description: "Budget category name" },
-                        description: { type: "string", description: "What this line item covers" },
-                        estimated_cost: { type: "number", description: "Cost estimate in dollars" },
-                        funding_source: { type: "string", description: "Suggested funding source" },
-                        notes: { type: "string", description: "Rationale for the estimate" }
-                      },
-                      required: ["category", "description", "estimated_cost", "funding_source", "notes"],
-                      additionalProperties: false
-                    }
+            name: "recommend_budget",
+            description: "Return budget recommendations for the implementation initiative",
+            input_schema: {
+              type: "object",
+              properties: {
+                budget_items: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      category: { type: "string", description: "Budget category name" },
+                      description: { type: "string", description: "What this line item covers" },
+                      estimated_cost: { type: "number", description: "Cost estimate in dollars" },
+                      funding_source: { type: "string", description: "Suggested funding source" },
+                      notes: { type: "string", description: "Rationale for the estimate" }
+                    },
+                    required: ["category", "description", "estimated_cost", "funding_source", "notes"],
+                    additionalProperties: false
                   }
-                },
-                required: ["budget_items"],
-                additionalProperties: false
-              }
+                }
+              },
+              required: ["budget_items"],
+              additionalProperties: false
             }
           }
         ],
-        tool_choice: { type: "function", function: { name: "recommend_budget" } }
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        tool_choice: { type: "tool", name: "recommend_budget" }
+      });
+    } catch (apiError) {
+      if (apiError instanceof Anthropic.APIError) {
+        if (apiError.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (apiError.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.error("AI API error:", apiError.status, apiError.message);
+        throw new Error("AI API request failed");
       }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
-      throw new Error("AI API request failed");
+      throw apiError;
     }
 
-    const aiData = await aiResponse.json();
-    const toolCall = aiData.choices[0]?.message?.tool_calls?.[0];
-    
-    if (!toolCall) {
+    const toolUse = msg.content.find(
+      (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
+    );
+
+    if (!toolUse) {
       throw new Error("No tool call in AI response");
     }
 
-    const recommendations: { budget_items: BudgetRecommendation[] } = JSON.parse(
-      toolCall.function.arguments
-    );
+    const recommendations = toolUse.input as { budget_items: BudgetRecommendation[] };
 
     return new Response(
       JSON.stringify({ budget_recommendations: recommendations.budget_items }),

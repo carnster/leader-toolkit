@@ -210,7 +210,7 @@ export function TimelineTracker({ initiativeId, stage }: TimelineTrackerProps) {
           <div className="space-y-2">
             <span className="text-sm font-medium">Overall Milestone Progress</span>
             <p className="text-xs text-muted-foreground">
-              No milestones to track yet — progress will appear once milestones are added in the Plan stage.
+              No milestones to track yet. Progress will appear once milestones are added in the Plan & Prepare stage.
             </p>
           </div>
         )}

@@ -18,7 +18,7 @@ export function MonitorPreview({ leadingIndicators, laggingIndicators }: Monitor
       <CardHeader>
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          <CardTitle className="text-lg">Monitor Stage Preview</CardTitle>
+          <CardTitle className="text-lg">Monitoring Hub Preview</CardTitle>
         </div>
         <p className="text-sm text-muted-foreground">
           These indicators will be automatically set up for tracking when you move to the Plan stage
@@ -97,7 +97,7 @@ export function MonitorPreview({ leadingIndicators, laggingIndicators }: Monitor
 
         <div className="pt-2 border-t">
           <p className="text-xs text-muted-foreground">
-            💡 In the Monitor stage, you'll be able to record values for these indicators, view trends over time, and track implementation progress.
+            💡 In the Monitoring Hub, you'll be able to record values for these indicators, view trends over time, and track implementation progress.
           </p>
         </div>
       </CardContent>

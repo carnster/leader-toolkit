@@ -621,8 +621,8 @@ export default function Plan() {
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-primary" />
               <div>
-                <h1 className="text-xl font-bold">Plan & Prepare Stage</h1>
-                <p className="text-xs text-muted-foreground">Design a comprehensive implementation plan</p>
+                <h1 className="text-xl font-bold">Plan & Prepare</h1>
+                <p className="text-xs text-muted-foreground">Stage 2 of 4: design a comprehensive implementation plan</p>
               </div>
             </div>
           </header>
