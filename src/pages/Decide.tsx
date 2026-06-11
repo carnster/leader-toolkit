@@ -1230,9 +1230,23 @@ export default function Decide() {
             
             <div className="space-y-2">
               <Label htmlFor="stakeholders">Stakeholder Input & Organizational Context</Label>
+              <div className="rounded-md border bg-muted/50 p-3 text-sm space-y-1">
+                <p className="font-medium">What this means and what to include:</p>
+                <p className="text-muted-foreground">
+                  Implementation succeeds or fails on whether the people doing the work were heard before the decision.
+                  Capture what each stakeholder group actually said, not what you assume they think:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-0.5 ml-1">
+                  <li><strong>Teachers and staff:</strong> concerns, requests, and capacity from PLC notes, surveys, or conversations</li>
+                  <li><strong>Students:</strong> what they say about the problem (focus groups, surveys)</li>
+                  <li><strong>Families:</strong> input on the problem and how they can support at home</li>
+                  <li><strong>Leadership commitments:</strong> protected time, paused competing initiatives, resources promised</li>
+                  <li><strong>Organizational history:</strong> how past initiatives went here and why</li>
+                </ul>
+              </div>
               <Textarea
                 id="stakeholders"
-                placeholder="Example: Year 9 teachers expressed need for better differentiation resources. Parents want more guidance on supporting maths at home. SLT committed to protecting PPA time for planning. School culture supports trying new approaches. Previous initiatives showed strong staff engagement when properly supported..."
+                placeholder="Example: Grade 6 teachers want a shared routine but worry about pacing (October PLC notes). Family survey: 72% want home support guidance. Principal committed Tuesday PLC time and delayed the gradebook rollout. Our writing initiative two years ago succeeded with coaching cycles, so staff trust this approach..."
                 rows={4}
                 value={stakeholderInput}
                 onChange={(e) => setStakeholderInput(e.target.value)}
@@ -1240,7 +1254,7 @@ export default function Decide() {
                 onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
-                Document stakeholder perspectives and organizational context
+                Name the evidence source for each perspective (survey, PLC notes, focus group) rather than general impressions
               </p>
             </div>
 
