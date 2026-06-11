@@ -178,7 +178,8 @@ export default function Decide() {
   const isStep2Complete = teamMembers.length > 0; // Team Assembly
   const isStep3Complete = goals && goals.length > 0; // Goal Development
   const isStep4Complete = chosenApproach && evidenceBase; // Solution Selection
-  const isStep5Complete = stakeholderInput && equityNotes && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
+  const equityAddressed = !!equityNotes || Object.values(equityChecked).some(Boolean);
+  const isStep5Complete = stakeholderInput && equityAddressed && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators.length > 0 && laggingIndicators.length > 0 && measurementTimeline.length > 0; // Success Metrics
   
   const autoCheckedItems = {

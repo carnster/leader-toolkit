@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
+import impactLogo from "@/assets/impact-logo.png";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -51,9 +52,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center space-x-3">
-              <img 
-                src="/src/assets/impact-logo.jpg" 
-                alt="IMPACT" 
+              <img
+                src={impactLogo}
+                alt="IMPACT"
                 className="h-10 w-auto object-contain"
               />
               <span className="hidden font-bold text-lg sm:inline-block">
