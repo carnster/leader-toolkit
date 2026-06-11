@@ -18,6 +18,7 @@ import { TestNotifications } from "@/components/TestNotifications";
 import { TeamDashboard } from "@/components/TeamDashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardExport } from "@/components/DashboardExport";
+import { EvidencePackExport } from "@/components/EvidencePackExport";
 import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
@@ -98,6 +99,12 @@ export default function Dashboard() {
                 fidelityTrends={fidelityTrends}
                 budgetData={budgetData}
               />
+              {selectedInitiativeId && (
+                <EvidencePackExport
+                  initiativeId={selectedInitiativeId}
+                  initiativeTitle={initiatives.find((i) => i.id === selectedInitiativeId)?.title || "Initiative"}
+                />
+              )}
             </>
           )}
           <Button onClick={handleNewInitiative}>
