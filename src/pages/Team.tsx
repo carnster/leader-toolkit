@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
+import { MeetingLog } from "@/components/MeetingLog";
 
 // Team composition guidance from Implement with IMPACT (Ch. 3): effective
 // implementation teams blend roles and perspectives. Detection is keyword-based
@@ -219,6 +220,12 @@ export default function Team() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Meeting Log: the protocol made practical */}
+      <MeetingLog
+        initiativeId={initiativeId}
+        rosterNames={teamMembers.map((m: any) => m.profiles?.full_name || m.name).filter(Boolean)}
+      />
 
       {/* Engage / Unite / Reflect */}
       <div>
