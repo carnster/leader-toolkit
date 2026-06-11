@@ -22,6 +22,7 @@ interface EBPRecommendation {
   fit_score: number;
   implementation_notes: string;
   active_ingredients?: ActiveIngredient[];
+  equity_checklist?: Record<string, string>;
 }
 
 interface EBPRecommendationsProps {

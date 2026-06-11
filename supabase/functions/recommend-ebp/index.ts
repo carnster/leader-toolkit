@@ -54,6 +54,7 @@ For each recommendation, provide:
   * Mark 2 as "core" (non-negotiable elements), the rest adaptable
   * Include 2-3 "look-fors" as short phrases (under 10 words each)
   * Include "adaptable boundaries" as short phrases (under 10 words each)
+- An equity_checklist: one sentence per item, specific to THIS EBP and the stated problem context (not generic equity language). Ground each note in what the evidence says about this practice for underserved groups.
 
 BE CONCISE. Every text field is one to two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than thoroughness; the user can ask the Implementation Coach for depth.`;
 
@@ -109,9 +110,23 @@ Provide recommendations in a clear, structured format.`;
                           },
                           required: ['name', 'description', 'is_core']
                         }
+                      },
+                      equity_checklist: {
+                        type: 'object',
+                        description: 'One short EBP-specific note per equity checklist item, grounded in the evidence base and the stated problem context',
+                        properties: {
+                          disproportionate_impact: { type: 'string', description: 'Which groups this EBP most helps, tied to the stated problem' },
+                          access_barriers: { type: 'string', description: 'Access barriers this EBP raises or removes and how to mitigate' },
+                          culturally_responsive: { type: 'string', description: 'How to deliver this EBP in a culturally responsive way' },
+                          family_engagement: { type: 'string', description: 'How families connect to this EBP inclusively' },
+                          monitoring_equity: { type: 'string', description: 'How to monitor this EBP outcomes by subgroup' },
+                          resource_allocation: { type: 'string', description: 'Resources needed for equitable implementation of this EBP' }
+                        },
+                        required: ['disproportionate_impact', 'access_barriers', 'culturally_responsive', 'family_engagement', 'monitoring_equity', 'resource_allocation'],
+                        additionalProperties: false
                       }
                     },
-                    required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes', 'active_ingredients'],
+                    required: ['name', 'description', 'evidence_level', 'fit_score', 'implementation_notes', 'active_ingredients', 'equity_checklist'],
                     additionalProperties: false
                   }
                 }

@@ -21,6 +21,7 @@ export interface DecisionBrief {
   measurement_timeline: string[] | null;
   checklist_completed: boolean | null;
   goals_feedback: any | null;
+  equity_checklist: { checked: Record<string, boolean>; notes: Record<string, string> } | null;
   created_at: string;
   updated_at: string;
 }

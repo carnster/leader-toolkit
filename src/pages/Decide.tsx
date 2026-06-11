@@ -157,6 +157,8 @@ export default function Decide() {
       setLaggingIndicators(decisionBrief.lagging_indicators || []);
       setMeasurementTimeline(decisionBrief.measurement_timeline || []);
       setGoalsEvaluation(decisionBrief.goals_feedback || null);
+      setEquityChecked(decisionBrief.equity_checklist?.checked || {});
+      setEquityChecklistNotes(decisionBrief.equity_checklist?.notes || {});
       
       // Load feasibility factors
       if (decisionBrief.feasibility_factors) {
@@ -291,12 +293,14 @@ export default function Decide() {
       lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
       measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
       checklist_completed: completionRate === 100,
+      equity_checklist: { checked: equityChecked, notes: equityChecklistNotes },
     });
-    
+
     return true;
   }, [effectiveInitiativeId, problemStatement, targetGroup, baselineData, rootCauses, goals,
       equityNotes, stakeholderInput, chosenApproach, evidenceBase, calculatedFeasibilityScore,
       feasibilityFactors, leadingIndicators, laggingIndicators, measurementTimeline, completionRate,
+      equityChecked, equityChecklistNotes,
       newInitiative, navigate, toast, upsertDecisionBrief, setDialogOpen]);
 
   const triggerAutoSave = useCallback(() => {
@@ -1178,6 +1182,22 @@ export default function Decide() {
             onSelectRecommendation={(rec) => {
               setChosenApproach(rec.name + ": " + rec.description);
               setEvidenceBase(rec.evidence_level + " evidence. " + rec.implementation_notes);
+              if (rec.equity_checklist && Object.keys(rec.equity_checklist).length > 0) {
+                const checked: Record<string, boolean> = {};
+                const notes: Record<string, string> = {};
+                for (const [itemId, note] of Object.entries(rec.equity_checklist)) {
+                  if (note) {
+                    checked[itemId] = true;
+                    notes[itemId] = `[Drafted from ${rec.name}] ${note}`;
+                  }
+                }
+                setEquityChecked(prev => ({ ...prev, ...checked }));
+                setEquityChecklistNotes(prev => ({ ...prev, ...notes }));
+                toast({
+                  title: "Equity checklist drafted",
+                  description: "The Equity & Inclusion Checklist in Step 5 was prefilled from this EBP. Review and adjust each item for your context.",
+                });
+              }
             }}
           />
         </>
