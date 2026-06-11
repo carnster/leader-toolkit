@@ -20,7 +20,7 @@ const CHECKLIST_ITEMS = {
   decide: [
     {
       id: "identified-need",
-      text: "Are we confident that we have identified the right pupil need(s) by drawing on a range of data and perspectives?",
+      text: "Are we confident that we have identified the right student need(s) by drawing on a range of data and perspectives?",
       category: "Problem Definition"
     },
     {
@@ -35,7 +35,7 @@ const CHECKLIST_ITEMS = {
     },
     {
       id: "evidence-approach",
-      text: "Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?",
+      text: "Have we selected an evidence-informed approach that meets student needs and is suitable for our setting?",
       category: "Solution Selection"
     },
     {
@@ -52,12 +52,12 @@ const CHECKLIST_ITEMS = {
   explore: [
     {
       id: "identified-need",
-      text: "Are we confident that we have identified the right pupil need(s) by drawing on a range of data and perspectives?",
+      text: "Are we confident that we have identified the right student need(s) by drawing on a range of data and perspectives?",
       category: "Problem Definition"
     },
     {
       id: "evidence-approach",
-      text: "Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?",
+      text: "Have we selected an evidence-informed approach that meets student needs and is suitable for our setting?",
       category: "Solution Selection"
     },
     {

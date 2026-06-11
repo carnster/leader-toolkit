@@ -12,7 +12,8 @@ import {
   X,
   LogOut,
   Sun,
-  Moon
+  Moon,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
@@ -37,14 +38,16 @@ const navigation = [
   { name: "Spread & Sustain", href: "/sustain", icon: Shield },
 ];
 
-const monitoringHub = { name: "Monitoring Hub", href: "/monitor", icon: BarChart3 };
+const hubs = [
+  { name: "Team Hub", href: "/team", icon: Users },
+  { name: "Monitoring Hub", href: "/monitor", icon: BarChart3 },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const isMonitorActive = location.pathname === monitoringHub.href;
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,20 +86,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
-              {/* Monitoring Hub: continuous companion tool, not a stage */}
+              {/* Cross-cutting hubs: continuous companions, not stages */}
               <div className="mx-2 h-6 w-px bg-border" aria-hidden="true" />
-              <Link
-                to={monitoringHub.href}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
-                  isMonitorActive
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <monitoringHub.icon className="h-4 w-4" />
-                <span>{monitoringHub.name}</span>
-              </Link>
+              {hubs.map((hub) => (
+                <Link
+                  key={hub.name}
+                  to={hub.href}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                    location.pathname === hub.href
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <hub.icon className="h-4 w-4" />
+                  <span>{hub.name}</span>
+                </Link>
+              ))}
             </nav>
           </div>
 
@@ -182,21 +188,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
-              {/* Monitoring Hub: continuous companion tool, not a stage */}
+              {/* Cross-cutting hubs: continuous companions, not stages */}
               <div className="my-2 border-t" aria-hidden="true" />
-              <Link
-                to={monitoringHub.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
-                  isMonitorActive
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <monitoringHub.icon className="h-4 w-4" />
-                <span>{monitoringHub.name}</span>
-              </Link>
+              {hubs.map((hub) => (
+                <Link
+                  key={hub.name}
+                  to={hub.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                    location.pathname === hub.href
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <hub.icon className="h-4 w-4" />
+                  <span>{hub.name}</span>
+                </Link>
+              ))}
             </nav>
           </div>
         )}

@@ -16,7 +16,7 @@ const equityItems = [
   {
     id: "disproportionate_impact",
     label: "Identified groups disproportionately affected by the problem",
-    prompt: "Which groups (e.g., SEND, EAL, PP, ethnic minorities) are most impacted?",
+    prompt: "Which groups (students with IEPs, English learners, economically disadvantaged students, students of color) are most impacted?",
   },
   {
     id: "access_barriers",

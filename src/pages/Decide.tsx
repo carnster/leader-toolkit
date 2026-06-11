@@ -37,7 +37,7 @@ import { MultiItemInput } from "@/components/MultiItemInput";
 import { TimelineItemInput } from "@/components/TimelineItemInput";
 
 const exploreChecklist = [
-  { id: "identified-need", text: "Problem & target pupils defined", required: true },
+  { id: "identified-need", text: "Problem & target students defined", required: true },
   { id: "evidence-approach", text: "Evidence-based approach selected", required: true },
   { id: "barriers-enablers", text: "Barriers & enablers identified", required: true },
   { id: "feasibility", text: "Feasibility assessed", required: true },
@@ -694,7 +694,7 @@ export default function Decide() {
               <CardTitle>Step 1: Define the Priority Problem</CardTitle>
             </div>
             <CardDescription>
-              What specific challenge are you addressing? Who are the target pupils?
+              What specific challenge are you addressing? Who are the target students?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -702,7 +702,7 @@ export default function Decide() {
               <h4 className="font-medium mb-2">What to do in this step:</h4>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
                 <li>Clearly articulate the specific problem you're trying to solve</li>
-                <li>Identify which pupils or groups are most affected</li>
+                <li>Identify which students or groups are most affected</li>
                 <li>Gather and document baseline data showing the current state</li>
                 <li>Consider the root causes contributing to this problem</li>
               </ul>
@@ -712,7 +712,7 @@ export default function Decide() {
               <Label htmlFor="problem">Problem Statement</Label>
               <Textarea
                 id="problem"
-                placeholder="Example: Year 9 students are not meeting expected progress in mathematics. Only 45% of students achieved age-related expectations in autumn term assessments, compared to 62% in Year 8. This gap is particularly pronounced for disadvantaged pupils (32% vs 48%)."
+                placeholder="Example: Grade 8 students are not meeting expected growth in mathematics. Only 45% scored proficient on the fall benchmark, compared to 62% for the same cohort last year. The gap is most pronounced for economically disadvantaged students (32% vs 48%)."
                 rows={5}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
@@ -725,17 +725,17 @@ export default function Decide() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="target">Target Pupil Group</Label>
+              <Label htmlFor="target">Target Student Group</Label>
               <Input
                 id="target"
-                placeholder="Example: Year 9 students, particularly disadvantaged pupils in Sets 2 and 3 (approximately 65 students)"
+                placeholder="Example: Grade 8 students, with a priority focus on economically disadvantaged students in sections 8-2 and 8-3 (approximately 65 students)"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
               />
               <p className="text-sm text-muted-foreground">
-                Specify year group, demographics, class/set, or other defining characteristics
+                Specify grade level, demographics, sections, or other defining characteristics
               </p>
             </div>
 
@@ -743,7 +743,7 @@ export default function Decide() {
               <Label htmlFor="baseline">Baseline Data</Label>
               <Textarea
                 id="baseline"
-                placeholder="Example: Autumn 2024 end-of-term assessments show 45% at expected standard. Teacher observations indicate 60% of students lack confidence in problem-solving. Attendance data shows target group has 89% attendance vs 94% whole-school average. Parent survey indicates 35% of families feel they can support maths homework."
+                placeholder="Example: Fall benchmark shows 45% proficient. Teacher observations indicate 60% of students lack confidence in problem solving. Target group attendance is 89% vs 94% school-wide. Family survey: 35% of families feel equipped to support math homework."
                 rows={4}
                 value={baselineData}
                 onChange={(e) => setBaselineData(e.target.value)}
@@ -763,7 +763,7 @@ export default function Decide() {
                   <ol className="list-decimal list-inside space-y-1 text-muted-foreground ml-2">
                     <li><strong>Use the "5 Whys" technique:</strong> Keep asking "why" to dig deeper</li>
                     <li><strong>Look at multiple data sources:</strong> Academic, behavioral, attendance, surveys</li>
-                    <li><strong>Involve stakeholders:</strong> Ask teachers, pupils, and families</li>
+                    <li><strong>Involve stakeholders:</strong> Ask teachers, students, and families</li>
                     <li><strong>Consider systemic factors:</strong> Resources, training, time, culture</li>
                     <li><strong>Distinguish symptoms from causes:</strong> Low scores are symptoms; lack of practice is a cause</li>
                   </ol>
@@ -771,7 +771,7 @@ export default function Decide() {
               </div>
               <Textarea
                 id="rootCauses"
-                placeholder="Example: Limited differentiation in lessons (teacher feedback), Insufficient retrieval practice built into schemes of work (curriculum review), Lack of targeted intervention for students falling behind (progress data analysis), Parent uncertainty about how to support at home (parent survey)"
+                placeholder="Example: Limited differentiation in lessons (teacher feedback), Insufficient retrieval practice in the curriculum (curriculum review), No targeted intervention for students falling behind (progress data), Family uncertainty about how to support at home (family survey)"
                 rows={4}
                 value={rootCauses}
                 onChange={(e) => setRootCauses(e.target.value)}
@@ -958,7 +958,7 @@ export default function Decide() {
                 <Label htmlFor="goals">Initiative Goals</Label>
                 <Textarea
                   id="goals"
-                  placeholder="Example: By July 2025, increase the percentage of Year 9 disadvantaged pupils achieving age-related expectations in maths from 32% to 50%. Achieve 90% fidelity to the mastery learning framework by March 2025 as measured by classroom observations. Increase student confidence in problem-solving from baseline of 40% to 70% by summer term..."
+                  placeholder="Example: By July 2025, increase the percentage of Grade 8 disadvantaged students achieving age-related expectations in math from 32% to 50%. Achieve 90% fidelity to the mastery learning framework by March 2025 as measured by classroom observations. Increase student confidence in problem-solving from baseline of 40% to 70% by summer term..."
                   rows={6}
                   value={goals}
                   onChange={(e) => {
@@ -1114,7 +1114,7 @@ export default function Decide() {
                 <CardTitle>Step 4: Solution Selection</CardTitle>
               </div>
               <CardDescription>
-                Have we selected an evidence-informed approach that meets pupil needs and is suitable for our setting?
+                Have we selected an evidence-informed approach that meets student needs and is suitable for our setting?
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1132,7 +1132,7 @@ export default function Decide() {
                 <Label htmlFor="approach">Chosen Approach</Label>
                 <Input
                   id="approach"
-                  placeholder="Example: Mastery Learning framework for Year 9 maths"
+                  placeholder="Example: Mastery learning framework for Grade 8 mathematics"
                   value={chosenApproach}
                   onChange={(e) => setChosenApproach(e.target.value)}
                 />
@@ -1145,7 +1145,7 @@ export default function Decide() {
                 <Label htmlFor="evidence">Evidence Base</Label>
               <Textarea
                 id="evidence"
-                placeholder="Example: EEF Teaching and Learning Toolkit shows +5 months progress for mastery learning. Research from [source] demonstrates effectiveness with similar student populations..."
+                placeholder="Example: What Works Clearinghouse and EEF Toolkit evidence shows roughly +5 months of progress for mastery learning. Research from [source] demonstrates effectiveness with similar student populations..."
                 rows={4}
                 value={evidenceBase}
                 onChange={(e) => setEvidenceBase(e.target.value)}
@@ -1277,7 +1277,7 @@ export default function Decide() {
               <Label htmlFor="equity">Additional Equity & Access Notes</Label>
               <Textarea
                 id="equity"
-                placeholder="Example: Disadvantaged pupils are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for EAL families. Consider timing to avoid clash with Ramadan..."
+                placeholder="Example: Disadvantaged students are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for multilingual families. Consider timing to avoid clash with Ramadan..."
                 rows={4}
                 value={equityNotes}
                 onChange={(e) => setEquityNotes(e.target.value)}
@@ -1351,7 +1351,7 @@ export default function Decide() {
                     key: "leadership_support", 
                     factor: "Leadership Support", 
                     description: "Active backing and protection from competing priorities?",
-                    examples: "Consider: SLT commitment, priority status, resource allocation support"
+                    examples: "Consider: Leadership commitment, priority status, resource allocation support"
                   },
                   { 
                     key: "school_culture", 

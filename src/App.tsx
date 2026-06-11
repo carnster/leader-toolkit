@@ -13,6 +13,7 @@ import Plan from "./pages/Plan";
 import Implement from "./pages/Implement";
 import Monitor from "./pages/Monitor";
 import Sustain from "./pages/Sustain";
+import Team from "./pages/Team";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                       <Route path="/plan" element={<Plan />} />
                       <Route path="/implement" element={<Implement />} />
                       <Route path="/monitor" element={<Monitor />} />
+                      <Route path="/team" element={<Team />} />
                       <Route path="/sustain" element={<Sustain />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>

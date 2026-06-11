@@ -27,9 +27,9 @@ export function SMARTCriteriaChecker({ goals }: SMARTCriteriaCheckerProps) {
       },
       {
         name: "Measurable",
-        met: /\d+%|\d+ (students|pupils|percent)/.test(goals),
+        met: /\d+%|\d+ (students|learners|percent)/.test(goals),
         hint: "Include specific numbers or percentages",
-        pattern: /\d+%|\d+ (students|pupils|percent)/,
+        pattern: /\d+%|\d+ (students|learners|percent)/,
       },
       {
         name: "Achievable",
@@ -39,9 +39,9 @@ export function SMARTCriteriaChecker({ goals }: SMARTCriteriaCheckerProps) {
       },
       {
         name: "Relevant",
-        met: /\b(students?|pupils?|learning|academic|attainment|progress)\b/i.test(goals),
+        met: /\b(students?|learners?|learning|academic|attainment|progress)\b/i.test(goals),
         hint: "Mention students, learning, or educational outcomes",
-        pattern: /\b(students?|pupils?|learning|academic|attainment|progress)\b/i,
+        pattern: /\b(students?|learners?|learning|academic|attainment|progress)\b/i,
       },
       {
         name: "Time-bound",

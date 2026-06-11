@@ -4,7 +4,7 @@ import { useInitiatives } from "@/hooks/useInitiatives";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { Briefcase } from "lucide-react";
 
-const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain"];
+const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain", "/team"];
 
 /**
  * Header control showing which initiative the stage pages are operating on.
