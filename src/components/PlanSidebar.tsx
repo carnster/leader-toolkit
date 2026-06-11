@@ -57,7 +57,7 @@ export function PlanSidebar({ completionCounts }: PlanSidebarProps) {
 
   const getNavClass = (section: string) =>
     currentSection === section
-      ? "bg-primary/10 text-primary font-medium"
+      ? "bg-[hsl(var(--stage-plan))]/10 text-[hsl(var(--stage-plan))] font-medium"
       : "hover:bg-muted/50";
 
   const hasContent = (count: number) => count > 0;

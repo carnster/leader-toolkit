@@ -385,6 +385,14 @@ export default function Plan() {
   };
 
   const generateFullPlan = async () => {
+    if (!decisionBrief?.problem_statement || !decisionBrief?.target_group) {
+      toast({
+        title: "Decision Brief needed first",
+        description: "The AI builds your plan from the Decide stage. Complete and save at least the problem statement and target group there, then come back.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsGeneratingFullPlan(true);
     toast({ title: "Generating full plan...", description: "This may take a moment. We'll generate all components in sequence." });
     

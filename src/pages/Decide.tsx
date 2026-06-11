@@ -535,6 +535,23 @@ export default function Decide() {
   };
 
   // Check for template on mount
+  // Open the create dialog when arriving via "Start your first initiative"
+  // or the Dashboard's New Initiative button (?new=true)
+  useEffect(() => {
+    if (searchParams.get("new") === "true" && !effectiveInitiativeId) {
+      setDialogOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Finding: after "Use This Template" creates the initiative, the create
+  // dialog used to stay open over the populated page. Close it.
+  useEffect(() => {
+    if (effectiveInitiativeId) {
+      setDialogOpen(false);
+    }
+  }, [effectiveInitiativeId]);
+
   useEffect(() => {
     const templateId = sessionStorage.getItem("templateId");
     const initiativeId = searchParams.get("initiative");
@@ -557,16 +574,37 @@ export default function Decide() {
       const templateData = template as any;
       if (templateData && templateData.decision_brief_template) {
         const brief = templateData.decision_brief_template;
+        // Template JSON stores some list fields as semicolon-joined strings;
+        // the database columns are text[]. Normalize before using.
+        const toList = (v: unknown): string[] =>
+          Array.isArray(v) ? v.filter(Boolean)
+          : typeof v === "string" && v.trim() ? v.split(";").map((x) => x.trim()).filter(Boolean)
+          : [];
+        const timeline = toList(brief.measurement_timeline);
+        const leading = toList(brief.leading_indicators);
+        const lagging = toList(brief.lagging_indicators);
         setProblemStatement(brief.problem_statement || "");
         setTargetGroup(brief.target_group || "");
-        setMeasurementTimeline(brief.measurement_timeline || []);
-        setLeadingIndicators(brief.leading_indicators || []);
-        setLaggingIndicators(brief.lagging_indicators || []);
+        setMeasurementTimeline(timeline);
+        setLeadingIndicators(leading);
+        setLaggingIndicators(lagging);
+
+        // Persist immediately: the AI generators and the Plan stage read the
+        // decision brief from the database, so a template that only prefills
+        // the form leaves the initiative broken until the user happens to save.
+        upsertDecisionBrief({
+          initiative_id: initiativeId,
+          problem_statement: brief.problem_statement || "",
+          target_group: brief.target_group || "",
+          measurement_timeline: timeline.length ? timeline : null,
+          leading_indicators: leading.length ? leading : null,
+          lagging_indicators: lagging.length ? lagging : null,
+        });
       }
 
       toast({
         title: "Template loaded",
-        description: "Decision brief pre-filled from template",
+        description: "Decision brief pre-filled and saved. Customize it to your context as you go.",
       });
 
       // Keep templateId for Plan page to import active ingredients

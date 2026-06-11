@@ -27,7 +27,7 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
         {/* Progress Line */}
         <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
         <div 
-          className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-300"
+          className="absolute top-5 left-0 h-0.5 bg-[hsl(var(--stage-decide))] transition-all duration-300"
           style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
         />
         
@@ -45,13 +45,13 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
               <div
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all bg-background",
-                  step.number === currentStep && "border-primary bg-primary text-primary-foreground",
-                  step.completed && step.number !== currentStep && "border-primary bg-primary/10",
+                  step.number === currentStep && "border-[hsl(var(--stage-decide))] bg-[hsl(var(--stage-decide))] text-white",
+                  step.completed && step.number !== currentStep && "border-[hsl(var(--stage-decide))] bg-[hsl(var(--stage-decide))]/10",
                   !step.completed && step.number !== currentStep && "border-muted"
                 )}
               >
                 {step.completed && step.number !== currentStep ? (
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  <CheckCircle2 className="h-5 w-5 text-[hsl(var(--stage-decide))]" />
                 ) : (
                   <span className="text-sm font-semibold">{step.number}</span>
                 )}
@@ -60,7 +60,7 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
                 <p
                   className={cn(
                     "text-xs font-medium transition-colors",
-                    step.number === currentStep ? "text-primary" : "text-muted-foreground"
+                    step.number === currentStep ? "text-[hsl(var(--stage-decide))]" : "text-muted-foreground"
                   )}
                 >
                   {step.title}
@@ -71,7 +71,7 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+      <div className="mt-6 p-4 bg-[hsl(var(--stage-decide))]/5 rounded-lg border border-[hsl(var(--stage-decide))]/25">
         <p className="text-sm text-muted-foreground">
           <span className="font-semibold text-foreground">Current Step:</span> {steps[currentStep - 1]?.title}
         </p>

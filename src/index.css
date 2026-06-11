@@ -9,6 +9,12 @@
 
 @layer base {
   :root {
+    /* Stage identity colors: wayfinding through the IMPACT journey */
+    --stage-decide: 225 55% 45%;
+    --stage-plan: 175 60% 30%;
+    --stage-implement: 0 80% 38%;
+    --stage-sustain: 150 40% 32%;
+
     /* Paper - soft off-white, never pure white */
     --background: 40 30% 98%;
     /* Ink - body text on light */
@@ -63,6 +69,11 @@
   }
 
   .dark {
+    --stage-decide: 225 65% 68%;
+    --stage-plan: 175 55% 55%;
+    --stage-implement: 0 75% 62%;
+    --stage-sustain: 150 45% 58%;
+
     /* Navy-anchored dark theme */
     --background: 220 40% 8%;
     --foreground: 40 30% 96%;

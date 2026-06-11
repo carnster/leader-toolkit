@@ -30,6 +30,7 @@ import {
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { InitiativeSwitcher } from "@/components/InitiativeSwitcher";
 import impactLogo from "@/assets/impact-logo.png";
+import { stageColorFor } from "@/lib/stageColors";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -71,6 +72,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <nav className="hidden md:flex items-center space-x-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
+                const stageColor = stageColorFor(item.href);
                 return (
                   <Link
                     key={item.name}
@@ -78,10 +80,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      isActive && !stageColor && "bg-primary"
                     )}
+                    style={isActive && stageColor ? { backgroundColor: stageColor } : undefined}
                   >
+                    {stageColor && (
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : stageColor }}
+                      />
+                    )}
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>
@@ -174,12 +185,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* Stage identity bar: which stage of the journey this page is */}
+        {stageColorFor(location.pathname) && (
+          <div
+            aria-hidden="true"
+            className="h-1 w-full"
+            style={{ backgroundColor: stageColorFor(location.pathname)! }}
+          />
+        )}
+
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t">
             <nav className="container py-4 space-y-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
+                const stageColor = stageColorFor(item.href);
                 return (
                   <Link
                     key={item.name}
@@ -188,10 +209,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      isActive && !stageColor && "bg-primary"
                     )}
+                    style={isActive && stageColor ? { backgroundColor: stageColor } : undefined}
                   >
+                    {stageColor && (
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: isActive ? "rgba(255,255,255,0.9)" : stageColor }}
+                      />
+                    )}
                     <item.icon className="h-4 w-4" />
                     <span>{item.name}</span>
                   </Link>

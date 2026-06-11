@@ -33,7 +33,7 @@ export default function Dashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
 
-  const handleNewInitiative = () => navigate('/decide');
+  const handleNewInitiative = () => navigate('/decide?new=true');
 
   const handleDeleteClick = (id: string) => {
     setInitiativeToDelete(id);
@@ -50,10 +50,10 @@ export default function Dashboard() {
 
   const stageMap: Record<string, string> = {
     decide: "Decide",
-    plan: "Plan",
+    plan: "Plan & Prepare",
     implement: "Implement",
-    monitor: "Monitor",
-    sustain: "Sustain",
+    monitor: "Implement (Monitoring)",
+    sustain: "Spread & Sustain",
   };
 
   if (isLoading) {
@@ -280,7 +280,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Get started by creating your first school improvement initiative
                     </p>
-                    <Button onClick={() => navigate('/decide')}>
+                    <Button onClick={() => navigate('/decide?new=true')}>
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Initiative
                     </Button>
