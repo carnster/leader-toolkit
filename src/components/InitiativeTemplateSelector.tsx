@@ -112,7 +112,7 @@ export function InitiativeTemplateSelector() {
   const [open, setOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<InitiativeTemplate | null>(null);
 
-  const categories = getAllCategories();
+  const categories = ["All", ...getAllCategories()];
 
   const handleSelectTemplate = async (template: InitiativeTemplate) => {
     try {
@@ -184,8 +184,8 @@ export function InitiativeTemplateSelector() {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue={categories[0] || "all"} className="w-full">
-          <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}>
+        <Tabs defaultValue="All" className="w-full">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
             {categories.map(category => (
               <TabsTrigger key={category} value={category}>
                 {category}
@@ -194,11 +194,11 @@ export function InitiativeTemplateSelector() {
           </TabsList>
 
           {categories.map(category => {
-            const categoryTemplates = templates.filter(t => t.category === category);
+            const categoryTemplates = category === "All" ? templates : templates.filter(t => t.category === category);
             
             return (
               <TabsContent key={category} value={category} className="space-y-4 mt-4">
-                {selectedTemplate && selectedTemplate.category === category ? (
+                {selectedTemplate && (category === "All" || selectedTemplate.category === category) ? (
                   <div>
                     <Button
                       variant="ghost"
