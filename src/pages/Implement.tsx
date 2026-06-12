@@ -14,12 +14,10 @@ import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { usePDActivities } from "@/hooks/usePDActivities";
 import { Link, useSearchParams } from "react-router-dom";
 import { addDays, format, isBefore, parseISO, startOfDay } from "date-fns";
-import { TimelineTracker } from "@/components/TimelineTracker";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
 import { AdaptationLog } from "@/components/AdaptationLog";
 import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
-import { FidelityTrendsChart } from "@/components/dashboard/FidelityTrendsChart";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
 
@@ -103,9 +101,6 @@ export default function Implement() {
         </Card>
       </div>
 
-      {/* Timeline Tracker */}
-      <TimelineTracker initiativeId={effectiveInitiativeId} stage="implement" />
-      
       {/* Active Ingredients from Plan Stage */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
@@ -139,9 +134,6 @@ export default function Implement() {
           )}
         </CardContent>
       </Card>
-
-      {/* Fidelity Trends */}
-      <FidelityTrendsChart />
 
       {/* PDSA Cycle Assistant */}
       <PDSACycleAssistant initiativeId={effectiveInitiativeId} />

@@ -21,11 +21,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Progress } from "@/components/ui/progress";
-import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
 import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams , Link as RouterLink} from "react-router-dom";
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -584,8 +583,17 @@ export default function Monitor() {
         </CardContent>
       </Card>
 
-      {/* PDSA Cycle Assistant */}
-      <PDSACycleAssistant initiativeId={effectiveInitiativeId} />
+      {/* PDSA creation lives on Implement (act there, read here) */}
+      <Card>
+        <CardContent className="pt-6 flex items-center justify-between flex-wrap gap-3">
+          <p className="text-sm text-muted-foreground">
+            Want to test a change? Improvement cycles are run from the Implement stage.
+          </p>
+          <Button variant="outline" asChild>
+            <RouterLink to={`/implement?initiative=${effectiveInitiativeId}`}>Start a PDSA in Implement</RouterLink>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Master Checklist */}
       <MasterChecklist stage="deliver" initiativeId={effectiveInitiativeId} />
