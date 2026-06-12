@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import { ericLabel } from "@/lib/ericClusters";
 
 interface TeamDashboardProps {
@@ -311,7 +312,7 @@ export function TeamDashboard({
                   )}
                   {item.target_date && (
                     <div className="text-sm text-muted-foreground">
-                      Due: {new Date(item.target_date).toLocaleDateString()}
+                      Due: {parseDateOnly(item.target_date).toLocaleDateString()}
                     </div>
                   )}
                   {item.status && (

@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseDateOnly } from "@/lib/dates";
 import { useObservationSchedules, ObservationSchedule } from "@/hooks/useObservationSchedules";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -39,7 +40,7 @@ export function ObservationScheduleDialog({ schedule, open, onOpenChange, initia
     active_ingredient_id: schedule?.active_ingredient_id || "",
     observer_id: schedule?.observer_id || "",
     implementer_id: schedule?.implementer_id || "",
-    scheduled_date: schedule?.scheduled_date ? new Date(schedule.scheduled_date) : undefined,
+    scheduled_date: schedule?.scheduled_date ? parseDateOnly(schedule.scheduled_date) : undefined,
     scheduled_time: schedule?.scheduled_time || "",
     duration_minutes: schedule?.duration_minutes?.toString() || "30",
     observation_type: schedule?.observation_type || "direct_observation",
@@ -53,7 +54,7 @@ export function ObservationScheduleDialog({ schedule, open, onOpenChange, initia
         active_ingredient_id: schedule.active_ingredient_id || "",
         observer_id: schedule.observer_id || "",
         implementer_id: schedule.implementer_id || "",
-        scheduled_date: new Date(schedule.scheduled_date),
+        scheduled_date: parseDateOnly(schedule.scheduled_date),
         scheduled_time: schedule.scheduled_time || "",
         duration_minutes: schedule.duration_minutes?.toString() || "30",
         observation_type: schedule.observation_type,

@@ -17,18 +17,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const { data: link } = await supabase.from('share_links').select('initiative_id, revoked').eq('token', token).maybeSingle();
+    const { data: link } = await supabase.from('share_links').select('initiative_id, revoked, expires_at').eq('token', token).maybeSingle();
     if (!link || link.revoked) {
       return new Response(JSON.stringify({ error: 'This share link is invalid or has been revoked.' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (link.expires_at && new Date(link.expires_at).getTime() < Date.now()) {
+      return new Response(JSON.stringify({ error: 'This share link has expired. Ask the initiative owner for a fresh one.' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     const id = link.initiative_id;
     const [init, brief, ingredients, strategies, milestones, team] = await Promise.all([
       supabase.from('initiatives').select('title, description, stage').eq('id', id).maybeSingle(),
-      supabase.from('decision_briefs').select('problem_statement, target_group, baseline_data, goals, chosen_approach, evidence_base, equity_notes').eq('initiative_id', id).maybeSingle(),
+      supabase.from('decision_briefs').select('problem_statement, target_group, goals, chosen_approach, evidence_base').eq('initiative_id', id).maybeSingle(),
       supabase.from('active_ingredients').select('name, description, is_core').eq('initiative_id', id),
       supabase.from('implementation_strategies').select('strategy_name, eric_category, target_barrier, status').eq('initiative_id', id),
       supabase.from('timeline_milestones').select('milestone, phase, target_date, status').eq('initiative_id', id).order('target_date'),
-      supabase.from('initiative_team_members').select('name, role_in_initiative').eq('initiative_id', id),
+      supabase.from('initiative_team_members').select('role_in_initiative').eq('initiative_id', id),
     ]);
     return new Response(JSON.stringify({
       initiative: init.data,

@@ -7,6 +7,7 @@ import { useObservationSchedules } from "@/hooks/useObservationSchedules";
 import { ObservationScheduleDialog } from "@/components/ObservationScheduleDialog";
 import { ConductObservationDialog } from "@/components/ConductObservationDialog";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import type { ObservationSchedule } from "@/hooks/useObservationSchedules";
 
 interface ObservationCalendarProps {
@@ -22,16 +23,16 @@ export function ObservationCalendar({ initiativeId }: ObservationCalendarProps) 
 
   const today = startOfDay(new Date());
   const upcomingSchedules = schedules
-    .filter(s => s.status === "scheduled" && !isBefore(new Date(s.scheduled_date), today))
-    .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime());
+    .filter(s => s.status === "scheduled" && !isBefore(parseDateOnly(s.scheduled_date), today))
+    .sort((a, b) => parseDateOnly(a.scheduled_date).getTime() - parseDateOnly(b.scheduled_date).getTime());
 
   const pastSchedules = schedules
     .filter(s => s.status === "completed")
-    .sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime())
+    .sort((a, b) => parseDateOnly(b.scheduled_date).getTime() - parseDateOnly(a.scheduled_date).getTime())
     .slice(0, 5);
 
   const getStatusBadge = (schedule: ObservationSchedule) => {
-    const date = new Date(schedule.scheduled_date);
+    const date = parseDateOnly(schedule.scheduled_date);
     if (schedule.status === "completed") {
       return <Badge variant="default">Completed</Badge>;
     }
@@ -104,7 +105,7 @@ export function ObservationCalendar({ initiativeId }: ObservationCalendarProps) 
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <h5 className="font-medium">
-                                  {format(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
+                                  {format(parseDateOnly(schedule.scheduled_date), "MMM dd, yyyy")}
                                   {schedule.scheduled_time && ` at ${schedule.scheduled_time}`}
                                 </h5>
                                 {getStatusBadge(schedule)}
@@ -158,7 +159,7 @@ export function ObservationCalendar({ initiativeId }: ObservationCalendarProps) 
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium">
-                                {format(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
+                                {format(parseDateOnly(schedule.scheduled_date), "MMM dd, yyyy")}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {getObservationTypeLabel(schedule.observation_type)}

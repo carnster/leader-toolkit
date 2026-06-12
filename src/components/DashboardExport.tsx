@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { parseDateOnly } from "@/lib/dates";
 import { DashboardStats } from "@/hooks/useDashboardAnalytics";
 import { Initiative } from "@/hooks/useInitiatives";
 import { FidelityTrendData } from "@/hooks/useFidelityTrends";
@@ -205,7 +206,7 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId, 
           init.title,
           stageMap[init.stage] || init.stage,
           init.status.charAt(0).toUpperCase() + init.status.slice(1),
-          init.target_end_date ? new Date(init.target_end_date).toLocaleDateString() : "-",
+          init.target_end_date ? parseDateOnly(init.target_end_date).toLocaleDateString() : "-",
         ]);
 
         autoTable(doc, {

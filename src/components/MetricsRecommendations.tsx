@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,13 +36,16 @@ export function MetricsRecommendations({ decisionBrief, onApplyRecommendations }
 
     setIsLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Sign in to use AI features.");
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommend-metrics`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ decisionBrief }),
         }

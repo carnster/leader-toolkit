@@ -3,6 +3,7 @@ import { FileStack } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import { useToast } from "@/hooks/use-toast";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -165,7 +166,7 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
       );
       table(
         ["Milestone", "Phase", "Target Date", "Status"],
-        milestones.map((m) => [m.milestone, m.phase || "", m.target_date ? format(new Date(m.target_date), "PP") : "", m.status]),
+        milestones.map((m) => [m.milestone, m.phase || "", m.target_date ? format(parseDateOnly(m.target_date), "PP") : "", m.status]),
         "No milestones defined."
       );
       table(
@@ -175,12 +176,12 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
       );
       table(
         ["PD Activity", "Type", "Scheduled", "Status"],
-        pdActivities.map((p: any) => [p.title, p.activity_type, p.scheduled_date ? format(new Date(p.scheduled_date), "PP") : "", p.completion_status || ""]),
+        pdActivities.map((p: any) => [p.title, p.activity_type, p.scheduled_date ? format(parseDateOnly(p.scheduled_date), "PP") : "", p.completion_status || ""]),
         "No professional development planned."
       );
       table(
         ["Communication", "Audience", "Scheduled"],
-        commActivities.map((c: any) => [c.description, c.stakeholder_group || "", c.scheduled_date ? format(new Date(c.scheduled_date), "PP") : ""]),
+        commActivities.map((c: any) => [c.description, c.stakeholder_group || "", c.scheduled_date ? format(parseDateOnly(c.scheduled_date), "PP") : ""]),
         "No communication activities planned."
       );
       table(

@@ -2,12 +2,25 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { CheckCircle2, XCircle, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { format } from "date-fns";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
 import { usePDSACycles } from "@/hooks/usePDSACycles";
 import { useIndicators } from "@/hooks/useIndicators";
 import { useSustainabilityPlan } from "@/hooks/useSustainabilityPlan";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SustainGateProps {
   initiativeId: string;
@@ -30,15 +43,34 @@ export function SustainGate({ initiativeId }: SustainGateProps) {
   const { fidelityLogs } = useFidelityLogs(initiativeId);
   const { pdsaCycles } = usePDSACycles(initiativeId);
   const { indicators, indicatorValues } = useIndicators(initiativeId);
-  const { sustainabilityPlan, upsertPlan } = useSustainabilityPlan(initiativeId);
-  const persisted = !!(sustainabilityPlan?.resource_protections as any)?.gateOverride;
+  const { sustainabilityPlan, upsertPlan, isLoading: planLoading } = useSustainabilityPlan(initiativeId);
+  const { user } = useAuth();
+  const overrideRecord = (sustainabilityPlan?.resource_protections as any)?.gateOverride;
+  const persisted = !!overrideRecord;
   const [overridden, setOverridden] = useState(false);
   const isOverridden = overridden || persisted;
   const persistOverride = () => {
+    // Never write while the plan query is unsettled: spreading an empty
+    // object here would wipe the protections, checklist, and scale-readiness
+    // data that live in the same JSONB column.
+    if (planLoading) return;
     setOverridden(true);
     const rp = ((sustainabilityPlan?.resource_protections as any) || {});
-    upsertPlan({ initiative_id: initiativeId, resource_protections: { ...rp, gateOverride: true } } as any);
+    upsertPlan({
+      initiative_id: initiativeId,
+      resource_protections: {
+        ...rp,
+        gateOverride: {
+          overriddenBy: user?.email || user?.id || "unknown",
+          overriddenAt: new Date().toISOString(),
+        },
+      },
+    } as any);
   };
+  const overrideMeta =
+    overrideRecord && typeof overrideRecord === "object"
+      ? `${overrideRecord.overriddenBy}${overrideRecord.overriddenAt ? `, ${format(new Date(overrideRecord.overriddenAt), "PPP")}` : ""}`
+      : null;
 
   const logs = (fidelityLogs as any[]) || [];
   const recent = [...logs]
@@ -155,14 +187,33 @@ export function SustainGate({ initiativeId }: SustainGateProps) {
             <p>
               Entering sustainment before the evidence clears risks embedding a practice that was never fully implemented.
               If your professional judgment says the data lags reality, you can{" "}
-              <Button variant="link" className="h-auto p-0 text-xs underline" onClick={persistOverride}>
-                proceed on leader judgment
-              </Button>.
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="link" className="h-auto p-0 text-xs underline" disabled={planLoading}>
+                    proceed on leader judgment
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Proceed past the evidence gate?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {tests.filter((t) => !t.passed).length} of {tests.length} evidence criteria are not yet met.
+                      Your name and today's date will be recorded on the override so the team knows this was a
+                      judgment call, and the unmet criteria stay visible until the evidence catches up.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep gathering evidence</AlertDialogCancel>
+                    <AlertDialogAction onClick={persistOverride}>Proceed on my judgment</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>.
             </p>
           </div>
         ) : (
           <p className="pt-2 text-xs text-muted-foreground italic">
-            Proceeding on leader judgment. The criteria above stay visible so the team knows what evidence is still owed.
+            Proceeding on leader judgment{overrideMeta ? ` (${overrideMeta})` : ""}. The criteria above stay
+            visible so the team knows what evidence is still owed.
           </p>
         )}
       </CardContent>

@@ -94,6 +94,7 @@ export function useDecisionBrief(initiativeId: string | undefined) {
     decisionBrief,
     isLoading,
     upsertDecisionBrief: upsertDecisionBrief.mutate,
+    upsertDecisionBriefAsync: upsertDecisionBrief.mutateAsync,
     isSaving: upsertDecisionBrief.isPending,
   };
 }

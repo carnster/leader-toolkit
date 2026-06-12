@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DecisionBrief } from "@/hooks/useDecisionBrief";
+import { useInitiativeTemplates } from "@/hooks/useInitiativeTemplates";
 
 interface ActiveIngredient {
   name: string;
@@ -17,6 +19,7 @@ interface ActiveIngredient {
 
 interface EBPRecommendation {
   name: string;
+  template_id?: string | null;
   description: string;
   evidence_level: 'Strong' | 'Moderate' | 'Emerging';
   fit_score: number;
@@ -28,9 +31,12 @@ interface EBPRecommendation {
 interface EBPRecommendationsProps {
   decisionBrief: DecisionBrief | null;
   onSelectRecommendation?: (recommendation: EBPRecommendation) => void;
+  /** Adopt a matched in-app template as the solution (Decide Step 4). */
+  onAdoptTemplate?: (templateId: string) => void;
 }
 
-export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EBPRecommendationsProps) {
+export function EBPRecommendations({ decisionBrief, onSelectRecommendation, onAdoptTemplate }: EBPRecommendationsProps) {
+  const { templates } = useInitiativeTemplates();
   const [recommendations, setRecommendations] = useState<EBPRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -41,15 +47,23 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
 
     setIsLoading(true);
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Sign in to use AI features.");
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/recommend-ebp`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ decisionBrief }),
+          body: JSON.stringify({
+            decisionBrief,
+            availableTemplates: (templates || []).map(t => ({
+              id: t.id, name: t.name, category: t.category, description: t.description,
+            })),
+          }),
         }
       );
 
@@ -148,6 +162,11 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
                       <Badge variant="outline" className={getFitScoreColor(rec.fit_score)}>
                         {rec.fit_score}% Fit
                       </Badge>
+                      {rec.template_id && (
+                        <Badge className="bg-accent/10 text-accent" variant="secondary">
+                          Full template in this app
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -171,6 +190,16 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation }: EB
                     {selectedId === `${index}` ? "Selected" : "Select"}
                   </Button>
                 </div>
+                {rec.template_id && onAdoptTemplate && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => onAdoptTemplate(rec.template_id!)}
+                  >
+                    Adopt Template as Solution
+                  </Button>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">{rec.description}</p>

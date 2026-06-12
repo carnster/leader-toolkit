@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { parseDateOnly } from "@/lib/dates";
 
 export interface DashboardStats {
   totalInitiatives: number;
@@ -68,7 +69,7 @@ export function useDashboardAnalytics(initiativeId?: string) {
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
       const upcomingDeadlines = milestones?.filter(m => {
         if (!m.target_date || m.status === "completed") return false;
-        const targetDate = new Date(m.target_date);
+        const targetDate = parseDateOnly(m.target_date);
         return targetDate <= sevenDaysFromNow && targetDate >= new Date();
       }).length || 0;
 

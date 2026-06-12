@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseDateOnly } from "@/lib/dates";
 import { useCommunicationActivities, CommunicationActivity } from "@/hooks/useCommunicationActivities";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { TeamMember } from "@/hooks/useTeamMembers";
@@ -61,9 +62,9 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
     activity_type: activity?.activity_type || "",
     description: activity?.description || "",
     channel: activity?.channel || "",
-    scheduled_date: activity?.scheduled_date ? new Date(activity.scheduled_date) : undefined,
+    scheduled_date: activity?.scheduled_date ? parseDateOnly(activity.scheduled_date) : undefined,
     completed: activity?.completed || false,
-    completed_date: activity?.completed_date ? new Date(activity.completed_date) : undefined,
+    completed_date: activity?.completed_date ? parseDateOnly(activity.completed_date) : undefined,
     notes: activity?.notes || "",
     assigned_to_id: activity?.assigned_to_id || "",
   });
@@ -75,9 +76,9 @@ export function CommunicationActivityDialog({ activity, open, onOpenChange, init
         activity_type: activity.activity_type,
         description: activity.description,
         channel: activity.channel || "",
-        scheduled_date: activity.scheduled_date ? new Date(activity.scheduled_date) : undefined,
+        scheduled_date: activity.scheduled_date ? parseDateOnly(activity.scheduled_date) : undefined,
         completed: activity.completed,
-        completed_date: activity.completed_date ? new Date(activity.completed_date) : undefined,
+        completed_date: activity.completed_date ? parseDateOnly(activity.completed_date) : undefined,
         notes: activity.notes || "",
         assigned_to_id: activity.assigned_to_id || "",
       });

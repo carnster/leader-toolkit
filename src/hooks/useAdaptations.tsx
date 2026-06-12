@@ -51,11 +51,15 @@ export function useAdaptations(initiativeId: string | undefined) {
 
   const decide = useMutation({
     mutationFn: async (input: { id: string; decision: AdaptationRequest["decision"]; decision_rationale: string }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("adaptation_requests" as any)
         .update({ decision: input.decision, decision_rationale: input.decision_rationale, decided_at: new Date().toISOString() })
-        .eq("id", input.id);
+        .eq("id", input.id)
+        .select();
       if (error) throw error;
+      if (((data as unknown[] | null) ?? []).length === 0) {
+        throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });

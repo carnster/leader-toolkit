@@ -113,7 +113,12 @@ export function useIndicators(initiativeId: string | undefined, includeArchived 
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "PGRST116") {
+          throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -134,12 +139,16 @@ export function useIndicators(initiativeId: string | undefined, includeArchived 
 
   const archiveIndicator = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("indicators")
         .update({ archived: true })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
       if (error) throw error;
+      if ((data ?? []).length === 0) {
+        throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });
@@ -159,12 +168,16 @@ export function useIndicators(initiativeId: string | undefined, includeArchived 
 
   const restoreIndicator = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("indicators")
         .update({ archived: false })
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
       if (error) throw error;
+      if ((data ?? []).length === 0) {
+        throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["indicators", initiativeId] });

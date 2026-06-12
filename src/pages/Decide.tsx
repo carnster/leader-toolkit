@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
+import { getPendingTemplate, setPendingTemplate } from "@/lib/templateHandoff";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
@@ -54,7 +55,7 @@ export default function Decide() {
   const { initiativeId: effectiveInitiativeId, setInitiativeId } = useInitiativeContext();
   
   // Decision brief hook
-  const { decisionBrief, upsertDecisionBrief, isSaving } = useDecisionBrief(effectiveInitiativeId || undefined);
+  const { decisionBrief, upsertDecisionBrief, upsertDecisionBriefAsync, isSaving } = useDecisionBrief(effectiveInitiativeId || undefined);
   
   // Team members hook
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId || undefined);
@@ -290,7 +291,10 @@ export default function Decide() {
       return false;
     }
 
-    upsertDecisionBrief({
+    // Await the actual write: the save indicator must only turn green when
+    // the row really persisted, not when the request was merely fired.
+    try {
+      await upsertDecisionBriefAsync({
       initiative_id: idToUse,
       problem_statement: problemStatement,
       target_group: targetGroup,
@@ -308,14 +312,18 @@ export default function Decide() {
       measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
       checklist_completed: completionRate === 100,
       equity_checklist: { checked: equityChecked, notes: equityChecklistNotes },
-    });
+      });
+    } catch {
+      // The mutation's onError toast already explains the failure
+      return false;
+    }
 
     return true;
   }, [effectiveInitiativeId, problemStatement, targetGroup, baselineData, rootCauses, goals,
       equityNotes, stakeholderInput, chosenApproach, evidenceBase, calculatedFeasibilityScore,
       feasibilityFactors, leadingIndicators, laggingIndicators, measurementTimeline, completionRate,
       equityChecked, equityChecklistNotes,
-      newInitiative, navigate, toast, upsertDecisionBrief, setDialogOpen]);
+      newInitiative, navigate, toast, upsertDecisionBrief, upsertDecisionBriefAsync, setDialogOpen]);
 
   const triggerAutoSave = useCallback(() => {
     if (autoSaveTimeoutRef.current) {
@@ -555,16 +563,27 @@ export default function Decide() {
   }, [effectiveInitiativeId]);
 
   useEffect(() => {
-    const templateId = sessionStorage.getItem("templateId");
     const initiativeId = searchParams.get("initiative");
-    
-    if (templateId && initiativeId) {
+    if (!initiativeId) return;
+    // Scoped to this initiative: a template chosen for initiative A can never
+    // prefill (and overwrite) initiative B's brief.
+    const templateId = getPendingTemplate(initiativeId);
+    if (templateId) {
       loadTemplateData(templateId, initiativeId);
     }
   }, [searchParams]);
 
   const loadTemplateData = async (templateId: string, initiativeId: string) => {
     try {
+      // Never overwrite a brief the user has already written. The pending
+      // template stays stored so Plan can still import active ingredients.
+      const { data: existing } = await supabase
+        .from("decision_briefs")
+        .select("problem_statement")
+        .eq("initiative_id", initiativeId)
+        .maybeSingle();
+      if (existing?.problem_statement?.trim()) return;
+
       const { data: template, error } = await supabase
         .from("initiative_templates" as any)
         .select("*")
@@ -609,11 +628,69 @@ export default function Decide() {
         description: "Decision brief pre-filled and saved. Customize it to your context as you go.",
       });
 
-      // Keep templateId for Plan page to import active ingredients
-      // sessionStorage.removeItem("templateId");
+      // The pending template stays stored (scoped to this initiative) so the
+      // Plan stage can import its active ingredients; Plan clears it.
     } catch (error) {
       console.error("Error loading template:", error);
     }
+  };
+
+  // Step 4: adopt a library template as the solution for THIS initiative.
+  // Fills solution-side fields only; never touches problem, team, or goals.
+  const adoptTemplateSolution = (template: { id: string; name: string; evidence_base: string; decision_brief_template?: any }) => {
+    if (!effectiveInitiativeId) return;
+    setChosenApproach(template.name);
+    setEvidenceBase(template.evidence_base || "");
+
+    // The brief mutation validates problem/target in every payload, so carry
+    // the user's current values through unchanged.
+    const patch: Record<string, unknown> = {
+      initiative_id: effectiveInitiativeId,
+      problem_statement: problemStatement,
+      target_group: targetGroup,
+      chosen_approach: template.name,
+      evidence_base: template.evidence_base || "",
+    };
+
+    // Offer the template's indicators only where the user has none yet.
+    const toList = (v: unknown): string[] =>
+      Array.isArray(v) ? (v as string[]).filter(Boolean)
+      : typeof v === "string" && v.trim() ? v.split(";").map((x) => x.trim()).filter(Boolean)
+      : [];
+    const tBrief = template.decision_brief_template;
+    if (tBrief) {
+      const leading = toList(tBrief.leading_indicators);
+      const lagging = toList(tBrief.lagging_indicators);
+      if (leading.length && !leadingIndicators.filter(Boolean).length) {
+        setLeadingIndicators(leading);
+        patch.leading_indicators = leading;
+      }
+      if (lagging.length && !laggingIndicators.filter(Boolean).length) {
+        setLaggingIndicators(lagging);
+        patch.lagging_indicators = lagging;
+      }
+    }
+
+    upsertDecisionBrief(patch as any);
+    // Hand active ingredients to the Plan stage, scoped to this initiative.
+    setPendingTemplate(effectiveInitiativeId, template.id);
+    toast({
+      title: "Solution adopted",
+      description: `${template.name} is now your chosen approach. Its active ingredients will load in Plan & Prepare.`,
+    });
+  };
+
+  const adoptTemplateById = async (templateId: string) => {
+    const { data, error } = await supabase
+      .from("initiative_templates" as any)
+      .select("*")
+      .eq("id", templateId)
+      .single();
+    if (error || !data) {
+      toast({ title: "Could not load template", variant: "destructive" });
+      return;
+    }
+    adoptTemplateSolution(data as any);
   };
 
   return (
@@ -1179,6 +1256,20 @@ export default function Decide() {
                 </ul>
               </div>
               
+              <div className="rounded-lg border p-4 space-y-2">
+                <p className="text-sm font-medium">Choose from the evidence-based library</p>
+                <p className="text-sm text-muted-foreground">
+                  Thirteen research-backed initiatives with references, active ingredients, and
+                  indicators. Adopting one fills your solution fields; your problem, team, and
+                  goals stay exactly as you wrote them.
+                </p>
+                <InitiativeTemplateSelector
+                  mode="adopt"
+                  onAdopt={adoptTemplateSolution}
+                  triggerLabel="Browse the Evidence-Based Library"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="approach">Chosen Approach</Label>
                 <Input
@@ -1186,6 +1277,8 @@ export default function Decide() {
                   placeholder="Example: Mastery learning framework for Grade 8 mathematics"
                   value={chosenApproach}
                   onChange={(e) => setChosenApproach(e.target.value)}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                 />
                 <p className="text-sm text-muted-foreground">
                   Name the specific program, practice, or intervention you will implement
@@ -1229,8 +1322,9 @@ export default function Decide() {
           </Card>
 
           {/* AI Recommendations for Solution Selection */}
-          <EBPRecommendations 
+          <EBPRecommendations
             decisionBrief={decisionBrief}
+            onAdoptTemplate={adoptTemplateById}
             onSelectRecommendation={(rec) => {
               setChosenApproach(rec.name + ": " + rec.description);
               setEvidenceBase(rec.evidence_level + " evidence. " + rec.implementation_notes);

@@ -9,6 +9,7 @@ import { useInitiatives } from "@/hooks/useInitiatives";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { BookOpen, Target, CheckCircle, Sparkles } from "lucide-react";
+import { setPendingTemplate } from "@/lib/templateHandoff";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -16,9 +17,10 @@ interface TemplateDetailProps {
   template: InitiativeTemplate;
   onSelect: (template: InitiativeTemplate) => void;
   isCreating: boolean;
+  selectLabel?: string;
 }
 
-function TemplateDetail({ template, onSelect, isCreating }: TemplateDetailProps) {
+function TemplateDetail({ template, onSelect, isCreating, selectLabel }: TemplateDetailProps) {
   return (
     <div className="space-y-6">
       {/* Overview */}
@@ -98,13 +100,22 @@ function TemplateDetail({ template, onSelect, isCreating }: TemplateDetailProps)
         className="w-full"
         size="lg"
       >
-        {isCreating ? "Creating Initiative..." : "Use This Template"}
+        {isCreating ? "Creating Initiative..." : (selectLabel || "Use This Template")}
       </Button>
     </div>
   );
 }
 
-export function InitiativeTemplateSelector() {
+interface InitiativeTemplateSelectorProps {
+  /** "create" (default): picking a template creates a new initiative.
+   *  "adopt": picking a template hands it to onAdopt as the solution for the
+   *  current initiative; nothing is created. */
+  mode?: "create" | "adopt";
+  onAdopt?: (template: InitiativeTemplate) => void;
+  triggerLabel?: string;
+}
+
+export function InitiativeTemplateSelector({ mode = "create", onAdopt, triggerLabel }: InitiativeTemplateSelectorProps) {
   const { templates, isLoading, getAllCategories } = useInitiativeTemplates();
   const { createInitiative, isCreating } = useInitiatives();
   const { toast } = useToast();
@@ -115,6 +126,12 @@ export function InitiativeTemplateSelector() {
   const categories = ["All", ...getAllCategories()];
 
   const handleSelectTemplate = async (template: InitiativeTemplate) => {
+    if (mode === "adopt") {
+      onAdopt?.(template);
+      setOpen(false);
+      setSelectedTemplate(null);
+      return;
+    }
     try {
       // Create the initiative
       createInitiative(
@@ -133,8 +150,8 @@ export function InitiativeTemplateSelector() {
               description: "Redirecting to Decision Brief to complete setup...",
             });
             
-            // Store template ID in session storage so Decide page can use it
-            sessionStorage.setItem("templateId", template.id);
+            // Hand the template to Decide/Plan, scoped to the new initiative
+            setPendingTemplate(newInitiative.id, template.id);
             sessionStorage.setItem("initiativeId", newInitiative.id);
             
             setOpen(false);
@@ -153,7 +170,7 @@ export function InitiativeTemplateSelector() {
         <DialogTrigger asChild>
           <Button variant="outline" className="w-full">
             <BookOpen className="mr-2 h-4 w-4" />
-            Browse Evidence-Based Initiatives
+            {triggerLabel || "Browse Evidence-Based Initiatives"}
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -170,7 +187,7 @@ export function InitiativeTemplateSelector() {
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
           <Sparkles className="mr-2 h-4 w-4" />
-          Browse Evidence-Based Initiatives
+          {triggerLabel || "Browse Evidence-Based Initiatives"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
@@ -212,6 +229,7 @@ export function InitiativeTemplateSelector() {
                       template={selectedTemplate}
                       onSelect={handleSelectTemplate}
                       isCreating={isCreating}
+                      selectLabel={mode === "adopt" ? "Adopt as Solution" : undefined}
                     />
                   </div>
                 ) : (

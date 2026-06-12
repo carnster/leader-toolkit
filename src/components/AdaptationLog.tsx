@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GitBranch, Plus, AlertTriangle, CheckCircle2, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { useAdaptations, type AdaptationRequest } from "@/hooks/useAdaptations";
+import { useAuth } from "@/hooks/useAuth";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 
 interface AdaptationLogProps {
@@ -25,6 +27,12 @@ const DECISION_BADGES: Record<AdaptationRequest["decision"], { label: string; va
 
 export function AdaptationLog({ initiativeId, activeIngredients }: AdaptationLogProps) {
   const { adaptations, propose, decide } = useAdaptations(initiativeId);
+  const { user } = useAuth();
+  const { initiatives } = useInitiatives();
+  const initiative = initiatives.find((i) => i.id === initiativeId);
+  // Only hide the decision controls once we positively know the viewer is not the owner;
+  // while data is loading, leave them visible (the mutation itself is still guarded).
+  const isOwner = !initiative || !user ? true : initiative.owner_id === user.id;
   const [open, setOpen] = useState(false);
   const [ingredientId, setIngredientId] = useState<string>("");
   const [description, setDescription] = useState("");
@@ -101,7 +109,12 @@ export function AdaptationLog({ initiativeId, activeIngredients }: AdaptationLog
                   Proposed {format(new Date(a.created_at), "PP")}
                   {a.decided_at && ` · Decided ${format(new Date(a.decided_at), "PP")}`}
                 </p>
-                {a.decision === "pending" && (
+                {a.decision === "pending" && !isOwner && (
+                  <p className="text-xs text-muted-foreground">
+                    Only the initiative owner can record a decision.
+                  </p>
+                )}
+                {a.decision === "pending" && isOwner && (
                   decidingId === a.id ? (
                     <div className="space-y-2 pt-1">
                       <Textarea

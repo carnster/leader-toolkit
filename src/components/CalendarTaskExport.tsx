@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { CalendarPlus, ListTodo } from "lucide-react";
-import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
 import { usePDActivities } from "@/hooks/usePDActivities";
@@ -89,7 +88,8 @@ export function CalendarTaskExport({ initiativeId, initiativeTitle }: CalendarTa
       });
       return;
     }
-    const stamp = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
+    // DTSTAMP must be UTC; derive from toISOString (local time + "Z" would be wrong)
+    const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
     const events = items.map((item, idx) => [
       "BEGIN:VEVENT",
       `UID:${initiativeId}-${idx}@impact-companion`,
@@ -123,7 +123,13 @@ export function CalendarTaskExport({ initiativeId, initiativeTitle }: CalendarTa
       });
       return;
     }
-    const esc = (s: string) => `"${(s || "").replace(/"/g, '""')}"`;
+    // Quote, and neutralize leading formula characters so a cell named
+    // "=HYPERLINK(...)" cannot execute when the CSV opens in Excel or Sheets.
+    const esc = (s: string) => {
+      let v = (s || "").replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+      return `"${v}"`;
+    };
     const rows = [
       ["Task", "Type", "Due Date", "Status", "Notes", "Initiative"].join(","),
       ...items.map((i) =>

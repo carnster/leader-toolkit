@@ -1,6 +1,7 @@
 import Anthropic from "npm:@anthropic-ai/sdk";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { authorizeAiRequest } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,9 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await authorizeAiRequest(req, "recommend-metrics", corsHeaders, { perFiveMinutes: 10, perDay: 200 });
+    if (!auth.ok) return auth.response!;
+
     const { decisionBrief } = await req.json();
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 

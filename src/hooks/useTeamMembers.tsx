@@ -84,7 +84,12 @@ export function useTeamMembers(initiativeId: string | undefined) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "PGRST116") {
+          throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -105,12 +110,16 @@ export function useTeamMembers(initiativeId: string | undefined) {
 
   const removeTeamMember = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("initiative_team_members")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .select();
 
       if (error) throw error;
+      if ((data ?? []).length === 0) {
+        throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["team-members", initiativeId] });

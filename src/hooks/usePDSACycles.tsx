@@ -85,7 +85,12 @@ export function usePDSACycles(initiativeId: string | undefined) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "PGRST116") {
+          throw new Error("Only the initiative owner can do this. Ask the owner to make this change.");
+        }
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

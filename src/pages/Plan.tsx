@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getPendingTemplate, clearPendingTemplate } from "@/lib/templateHandoff";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditActiveIngredientDialog } from "@/components/EditActiveIngredientDialog";
@@ -104,7 +105,7 @@ export default function Plan() {
           .eq("initiative_id", initiativeId);
         if (countError) throw countError;
         if ((count ?? 0) > 0) {
-          sessionStorage.removeItem("templateId");
+          clearPendingTemplate(initiativeId);
           return;
         }
 
@@ -126,7 +127,7 @@ export default function Plan() {
         await queryClient.invalidateQueries({ queryKey: ["active-ingredients", initiativeId] });
         toast({ title: "Active ingredients loaded", description: `${ingredients.length} components added from template` });
       }
-      sessionStorage.removeItem("templateId");
+      clearPendingTemplate(initiativeId);
     } catch (error) {
       console.error("Error loading template ingredients:", error);
     }
@@ -170,7 +171,7 @@ export default function Plan() {
   };
 
   useEffect(() => {
-    const templateId = sessionStorage.getItem("templateId");
+    const templateId = effectiveInitiativeId ? getPendingTemplate(effectiveInitiativeId) : null;
     const aiIngredients = sessionStorage.getItem("aiRecommendationIngredients");
     
     if (templateId && effectiveInitiativeId) {

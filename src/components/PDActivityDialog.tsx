@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseDateOnly } from "@/lib/dates";
 import { usePDActivities, PDActivity } from "@/hooks/usePDActivities";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -36,7 +37,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, t
     facilitator: activity?.facilitator || "",
     facilitator_id: activity?.facilitator_id || "",
     target_audience: activity?.target_audience || [""],
-    scheduled_date: activity?.scheduled_date ? new Date(activity.scheduled_date) : undefined,
+    scheduled_date: activity?.scheduled_date ? parseDateOnly(activity.scheduled_date) : undefined,
     duration_minutes: activity?.duration_minutes || undefined,
     completion_status: activity?.completion_status || "planned",
     attendance_count: activity?.attendance_count || undefined,
@@ -52,7 +53,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, t
         facilitator: activity.facilitator || "",
         facilitator_id: activity.facilitator_id || "",
         target_audience: activity.target_audience && activity.target_audience.length > 0 ? activity.target_audience : [""],
-        scheduled_date: activity.scheduled_date ? new Date(activity.scheduled_date) : undefined,
+        scheduled_date: activity.scheduled_date ? parseDateOnly(activity.scheduled_date) : undefined,
         duration_minutes: activity.duration_minutes || undefined,
         completion_status: activity.completion_status,
         attendance_count: activity.attendance_count || undefined,

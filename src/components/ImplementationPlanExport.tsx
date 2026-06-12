@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import { ericLabel } from "@/lib/ericClusters";
 
 interface ImplementationPlanExportProps {
@@ -200,7 +201,7 @@ export function ImplementationPlanExport({
             comm.description,
             comm.activity_type,
             comm.stakeholder_group,
-            comm.scheduled_date ? format(new Date(comm.scheduled_date), "PP") : "TBD",
+            comm.scheduled_date ? format(parseDateOnly(comm.scheduled_date), "PP") : "TBD",
             comm.completed ? "Completed" : "Pending",
           ]),
           theme: "grid",
@@ -237,7 +238,7 @@ export function ImplementationPlanExport({
           body: milestones.map((milestone) => [
             milestone.milestone,
             milestone.phase,
-            format(new Date(milestone.target_date), "PP"),
+            format(parseDateOnly(milestone.target_date), "PP"),
             milestone.status.replace("_", " ").toUpperCase(),
           ]),
           theme: "grid",
@@ -303,7 +304,7 @@ export function ImplementationPlanExport({
             pd.title,
             pd.activity_type,
             pd.facilitator || "TBD",
-            pd.scheduled_date ? format(new Date(pd.scheduled_date), "PP") : "TBD",
+            pd.scheduled_date ? format(parseDateOnly(pd.scheduled_date), "PP") : "TBD",
             pd.completion_status.replace("_", " ").toUpperCase(),
           ]),
           theme: "grid",

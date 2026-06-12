@@ -1,6 +1,7 @@
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { authorizeAiRequest } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,20 +22,15 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await authorizeAiRequest(req, "recommend-budget", corsHeaders, { perFiveMinutes: 10, perDay: 200 });
+    if (!auth.ok) return auth.response!;
+
+    // Read data as the caller, not the service role, so RLS enforces
+    // initiative membership: a user can only budget their own initiatives.
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("No authorization header");
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      throw new Error("Unauthorized");
-    }
+    const supabase = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: req.headers.get("Authorization")! } },
+    });
 
     const { initiativeId } = await req.json();
 

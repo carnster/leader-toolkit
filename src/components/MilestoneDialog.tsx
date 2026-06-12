@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Trash2, Info } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { parseDateOnly } from "@/lib/dates";
 import { useTimelineMilestones, TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { TeamMember } from "@/hooks/useTeamMembers";
@@ -28,9 +29,9 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
   const [formData, setFormData] = useState({
     phase: milestone?.phase || "",
     milestone: milestone?.milestone || "",
-    target_date: milestone?.target_date ? new Date(milestone.target_date) : undefined,
+    target_date: milestone?.target_date ? parseDateOnly(milestone.target_date) : undefined,
     status: milestone?.status || "pending",
-    completion_date: milestone?.completion_date ? new Date(milestone.completion_date) : undefined,
+    completion_date: milestone?.completion_date ? parseDateOnly(milestone.completion_date) : undefined,
     notes: milestone?.notes || "",
     sub_stage: milestone?.sub_stage || "",
     owner_id: milestone?.owner_id || "",
@@ -42,9 +43,9 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
       setFormData({
         phase: milestone.phase,
         milestone: milestone.milestone,
-        target_date: new Date(milestone.target_date),
+        target_date: parseDateOnly(milestone.target_date),
         status: milestone.status,
-        completion_date: milestone.completion_date ? new Date(milestone.completion_date) : undefined,
+        completion_date: milestone.completion_date ? parseDateOnly(milestone.completion_date) : undefined,
         notes: milestone.notes || "",
         sub_stage: milestone.sub_stage || "",
         owner_id: milestone.owner_id || "",
@@ -334,7 +335,7 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
                       <div className="flex-1">
                         <p className="text-sm">{m.milestone}</p>
                         <p className="text-xs text-muted-foreground">
-                          {m.phase} • {format(new Date(m.target_date), "MMM d, yyyy")}
+                          {m.phase} • {format(parseDateOnly(m.target_date), "MMM d, yyyy")}
                           {m.status === "completed" && " • ✓ Completed"}
                         </p>
                       </div>

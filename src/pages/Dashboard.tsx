@@ -4,6 +4,7 @@ import { StageProgress } from "@/components/StageProgress";
 import { Plus, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInitiatives } from "@/hooks/useInitiatives";
+import { parseDateOnly } from "@/lib/dates";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
 import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -25,7 +26,7 @@ import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
 
 export default function Dashboard() {
-  const { initiatives, isLoading, deleteInitiative, isDeleting } = useInitiatives();
+  const { initiatives, isLoading, error: initiativesError, deleteInitiative, isDeleting } = useInitiatives();
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
   const { data: fidelityTrends } = useFidelityTrends(30, selectedInitiativeId);
@@ -63,6 +64,25 @@ export default function Dashboard() {
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>
           <p className="text-muted-foreground">Loading initiatives...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // A failed query must never masquerade as a fresh account: showing the
+  // first-run welcome over a populated workspace invites duplicate data entry.
+  if (initiativesError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-3 max-w-md">
+          <p className="font-semibold">We could not load your initiatives</p>
+          <p className="text-sm text-muted-foreground">
+            Your work is safe; this is a connection problem, not a data problem.
+            Check your network and try again.
+          </p>
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Reload
+          </Button>
         </div>
       </div>
     );
@@ -237,7 +257,7 @@ export default function Dashboard() {
                             {initiative.target_end_date && (
                               <>
                                 <span>•</span>
-                                <span>Due: {new Date(initiative.target_end_date).toLocaleDateString()}</span>
+                                <span>Due: {parseDateOnly(initiative.target_end_date).toLocaleDateString()}</span>
                               </>
                             )}
                           </div>

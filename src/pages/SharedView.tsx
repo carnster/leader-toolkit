@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import { ericLabel } from "@/lib/ericClusters";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-shared-brief`;
@@ -60,7 +61,7 @@ export default function SharedView() {
           <Card>
             <CardHeader><CardTitle>Decision Brief</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
-              {[["Problem", brief.problem_statement], ["Target Group", brief.target_group], ["Baseline", brief.baseline_data], ["Goals", brief.goals], ["Chosen Approach", brief.chosen_approach], ["Evidence Base", brief.evidence_base], ["Equity Considerations", brief.equity_notes]]
+              {[["Problem", brief.problem_statement], ["Target Group", brief.target_group], ["Goals", brief.goals], ["Chosen Approach", brief.chosen_approach], ["Evidence Base", brief.evidence_base]]
                 .filter(([, v]) => v)
                 .map(([k, v]) => (
                   <div key={k as string}>
@@ -105,7 +106,7 @@ export default function SharedView() {
               {milestones.map((m: any, idx: number) => (
                 <div key={idx} className="flex justify-between gap-4">
                   <span>{m.milestone}</span>
-                  <span className="text-muted-foreground shrink-0">{m.target_date ? format(new Date(m.target_date), "PP") : ""}</span>
+                  <span className="text-muted-foreground shrink-0">{m.target_date ? format(parseDateOnly(m.target_date), "PP") : ""}</span>
                 </div>
               ))}
             </CardContent>
@@ -115,7 +116,7 @@ export default function SharedView() {
           <Card>
             <CardHeader><CardTitle>Implementation Team</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              {team.map((m: any) => `${m.name} (${m.role_in_initiative})`).join(" · ")}
+              {team.map((m: any) => m.role_in_initiative).filter(Boolean).join(" · ")}
             </CardContent>
           </Card>
         )}

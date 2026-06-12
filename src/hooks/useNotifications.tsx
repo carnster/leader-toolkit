@@ -42,15 +42,26 @@ export function useNotifications() {
   // Mark notification as read
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("notifications")
         .update({ read: true })
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .select();
 
       if (error) throw error;
+      if ((data ?? []).length === 0) {
+        throw new Error("This notification could not be updated. It may have already been removed.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating notification",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -79,15 +90,26 @@ export function useNotifications() {
   // Delete notification
   const deleteNotification = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("notifications")
         .delete()
-        .eq("id", notificationId);
+        .eq("id", notificationId)
+        .select();
 
       if (error) throw error;
+      if ((data ?? []).length === 0) {
+        throw new Error("This notification could not be deleted. It may have already been removed.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting notification",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

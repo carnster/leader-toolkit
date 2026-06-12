@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { usePDActivities } from "@/hooks/usePDActivities";
+import { parseDateOnly } from "@/lib/dates";
 import { GraduationCap, Calendar, Clock, Users, CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { PDActivityDialog } from "@/components/PDActivityDialog";
@@ -137,7 +138,7 @@ export function PDCompletionTracker({ initiativeId }: PDCompletionTrackerProps) 
                         {activity.scheduled_date && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(activity.scheduled_date).toLocaleDateString()}
+                            {parseDateOnly(activity.scheduled_date).toLocaleDateString()}
                           </div>
                         )}
                         {activity.duration_minutes && (

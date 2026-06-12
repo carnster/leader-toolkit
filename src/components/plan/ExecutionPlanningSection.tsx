@@ -7,6 +7,7 @@ import { RiskStrategyMapping } from "@/components/RiskStrategyMapping";
 import type { TimelineMilestone } from "@/hooks/useTimelineMilestones";
 import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import { format } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 
 interface ExecutionPlanningSectionProps {
   milestones: TimelineMilestone[];
@@ -144,11 +145,11 @@ export function ExecutionPlanningSection({
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Target: {format(new Date(milestone.target_date), "MMM dd, yyyy")}
+                      Target: {format(parseDateOnly(milestone.target_date), "MMM dd, yyyy")}
                     </p>
                     {milestone.completion_date && (
                       <p className="text-sm text-success">
-                        Completed: {format(new Date(milestone.completion_date), "MMM dd, yyyy")}
+                        Completed: {format(parseDateOnly(milestone.completion_date), "MMM dd, yyyy")}
                       </p>
                     )}
                     {milestone.notes && (

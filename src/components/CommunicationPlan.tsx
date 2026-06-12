@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MessageSquare, Users, Calendar, Target, Plus, Edit, CheckCircle2, Circle, CalendarDays, UserCheck, UserX } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { parseDateOnly } from "@/lib/dates";
 import { useCommunicationActivities } from "@/hooks/useCommunicationActivities";
 import { CommunicationActivityDialog } from "./CommunicationActivityDialog";
 import { CommunicationRecommendations } from "./CommunicationRecommendations";
@@ -214,13 +215,13 @@ export function CommunicationPlan({ initiativeId }: CommunicationPlanProps) {
                                       {activity.scheduled_date && (
                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                                           <Calendar className="h-3 w-3" />
-                                          {format(new Date(activity.scheduled_date), "MMM d, yyyy")}
+                                          {format(parseDateOnly(activity.scheduled_date), "MMM d, yyyy")}
                                         </span>
                                       )}
                                       {activity.completed && activity.completed_date && (
                                         <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                                           <CheckCircle2 className="h-3 w-3" />
-                                          Completed {format(new Date(activity.completed_date), "MMM d")}
+                                          Completed {format(parseDateOnly(activity.completed_date), "MMM d")}
                                         </span>
                                       )}
                                     </div>

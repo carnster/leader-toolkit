@@ -1,6 +1,7 @@
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { authorizeAiRequest } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,6 +20,12 @@ const requestSchema = z.object({
     feasibility_score: z.number().nullable().nullish(),
     baseline_data: z.string().nullish(),
   }),
+  availableTemplates: z.array(z.object({
+    id: z.string().max(100),
+    name: z.string().max(200),
+    category: z.string().max(100),
+    description: z.string().max(1000),
+  })).max(50).nullish(),
 });
 
 serve(async (req) => {
@@ -27,8 +34,11 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await authorizeAiRequest(req, "recommend-ebp", corsHeaders, { perFiveMinutes: 10, perDay: 200 });
+    if (!auth.ok) return auth.response!;
+
     const body = await req.json();
-    const { decisionBrief } = requestSchema.parse(body);
+    const { decisionBrief, availableTemplates } = requestSchema.parse(body);
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
 
     if (!apiKey) {
@@ -54,6 +64,7 @@ For each recommendation, provide:
   * Mark 2 as "core" (non-negotiable elements), the rest adaptable
   * Include 2-3 "look-fors" as short phrases (under 10 words each)
   * Include "adaptable boundaries" as short phrases (under 10 words each)
+- template_id: if the recommendation substantially matches one of the ready-made templates listed in the user message (same practice, not merely the same topic), set template_id to that template's id; otherwise null. Never invent an id.
 - An equity_checklist: one sentence per item, specific to THIS EBP and the stated problem context (not generic equity language). Ground each note in what the evidence says about this practice for underserved groups.
 
 BE CONCISE. Every text field is one to two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than thoroughness; the user can ask the Implementation Coach for depth.`;
@@ -67,6 +78,8 @@ Equity Considerations: ${decisionBrief.equity_notes || 'Not specified'}
 Desired Evidence Base: ${decisionBrief.evidence_base || 'Not specified'}
 Feasibility Score: ${decisionBrief.feasibility_score || 'Not assessed'}/10
 Baseline Data: ${decisionBrief.baseline_data || 'Not specified'}
+
+${(availableTemplates && availableTemplates.length) ? `\nThis app also offers ready-made implementation templates. If a recommendation substantially matches one, reference it by id:\n${availableTemplates.map(t => `- id: ${t.id} | ${t.name} (${t.category}): ${t.description}`).join('\n')}` : ''}
 
 Provide recommendations in a clear, structured format.`;
 
@@ -96,6 +109,7 @@ Provide recommendations in a clear, structured format.`;
                       evidence_level: { type: 'string', enum: ['Strong', 'Moderate', 'Emerging'] },
                       fit_score: { type: 'number', minimum: 1, maximum: 100 },
                       implementation_notes: { type: 'string' },
+                      template_id: { type: ['string', 'null'], description: 'Id of a matching ready-made template from the provided list, or null' },
                       active_ingredients: {
                         type: 'array',
                         items: {
@@ -166,7 +180,14 @@ Provide recommendations in a clear, structured format.`;
       throw new Error('No recommendations returned');
     }
 
-    const recommendations = toolUse.input;
+    const recommendations = toolUse.input as { recommendations?: Array<{ template_id?: string | null }> };
+
+    // Drop any template_id the model invented: only ids from the caller's
+    // library list are allowed through.
+    const validIds = new Set((availableTemplates ?? []).map((t) => t.id));
+    for (const rec of recommendations.recommendations ?? []) {
+      if (rec.template_id && !validIds.has(rec.template_id)) rec.template_id = null;
+    }
 
     return new Response(JSON.stringify(recommendations), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
