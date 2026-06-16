@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 const requestSchema = z.object({
+  currentStage: z.enum(["decide", "plan", "implement", "sustain"]).nullish(),
   decisionBrief: z.object({
     problem_statement: z.string().max(5000),
     target_group: z.string().max(1000),
@@ -61,7 +62,26 @@ Analyze the feasibility data and context to recommend 6-8 specific, actionable s
 - Include specific target barriers, timelines, resources needed, and success indicators
 - Strategies should be practical and context-appropriate based on feasibility scores
 
-BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Speed and scannability matter more than exhaustive detail.`;
+
+
+IMPLEMENTATION PHASE (ISST). Every strategy has a moment when it is most useful. The Implementation Strategy Supplemental Tool maps ERIC strategies to four phases. Use this to time your recommendations:
+- **planning** (ISST Phase 1) maps to the Decide and Plan & Prepare stages: assess readiness and barriers, build a coalition, recruit and prepare leaders and champions, run consensus discussions, develop the implementation blueprint, obtain formal commitments, conduct a needs assessment, hold educational meetings, secure funding.
+- **early_implementation** (ISST Phase 2) maps to the early weeks of the Implement stage: launch implementation teams, identify early adopters and opinion leaders, distribute materials, make training dynamic, shadow experts, start a learning collaborative.
+- **implementation_evaluation** (ISST Phase 3) maps to the active Implement stage with monitoring: provide ongoing coaching and consultation, remind educators, audit and feed back data, relay near-real-time data, adjust incentives, run train-the-trainer, purposely reexamine practice.
+- **confirmation_sustainability** (ISST Phase 4) maps to the Spread & Sustain stage: capture and share local knowledge, weave networks, prepare students and families as active participants, reexamine and confirm, plan dissemination.
+Some strategies are ongoing across all phases: facilitation, modeling the change, ongoing consultation, promoting adaptability, ongoing training, advisory boards.
+
+Stage-aware rule. The leader's current stage is provided below. Lead with strategies whose phase matches the current stage, because those are the moves to make now. You may include at most two strategies from the next stage, clearly flagged as preparation for what is coming. For every strategy, set implementation_phase and write a one-line timing note that tells the leader when to deploy it and why now (or why to hold it).
+
+BE CONCISE. Keep every text field to one or two short sentences or a short phrase. Do not write paragraphs. Never use em dashes; use a period or a semicolon instead. Speed and scannability matter more than exhaustive detail.`;
+
+    const stageLabels: Record<string, string> = {
+      decide: "Decide (stage 1 of 4)",
+      plan: "Plan & Prepare (stage 2 of 4)",
+      implement: "Implement (stage 3 of 4)",
+      sustain: "Spread & Sustain (stage 4 of 4)",
+    };
+    const currentStageLabel = stageLabels[(body?.currentStage as string) || "plan"] || stageLabels.plan;
 
     const feasibilityFactors = decisionBrief.feasibility_factors || {};
     const feasibilityAnalysis = `
@@ -71,7 +91,9 @@ Resources/Budget: ${feasibilityFactors.resources_budget || 0}/10
 Leadership Support: ${feasibilityFactors.leadership_support || 0}/10
 School Culture: ${feasibilityFactors.school_culture || 0}/10`;
 
-    const userPrompt = `Recommend ERIC implementation strategies for this initiative:
+    const userPrompt = `Recommend ERIC implementation strategies for this initiative.
+
+**Current stage:** The leader is in ${currentStageLabel}. Time your recommendations to this moment.
 
 **Initiative Details:**
 Problem: ${decisionBrief.problem_statement || 'Not specified'}
@@ -129,13 +151,19 @@ Provide practical strategies that address the specific barriers and feasibility 
                         ]
                       },
                       description: { type: 'string' },
+                      implementation_phase: {
+                        type: 'string',
+                        enum: ['planning', 'early_implementation', 'implementation_evaluation', 'confirmation_sustainability'],
+                        description: 'The ISST phase when this strategy is most useful'
+                      },
+                      timing: { type: 'string', description: 'One line: when to deploy this and why now, or why to hold it' },
                       target_barrier: { type: 'string' },
                       timeline: { type: 'string' },
                       resources_needed: { type: 'string' },
                       success_indicators: { type: 'string' },
                       responsible_party: { type: 'string' }
                     },
-                    required: ['strategy_name', 'eric_category', 'description', 'target_barrier']
+                    required: ['strategy_name', 'eric_category', 'description', 'implementation_phase', 'target_barrier']
                   }
                 }
               },
@@ -222,9 +250,14 @@ Provide practical strategies that address the specific barriers and feasibility 
         if (!allowedCategories.has(category)) {
           category = 'train_educate'; // default fallback
         }
+        const allowedPhases = new Set(['planning', 'early_implementation', 'implementation_evaluation', 'confirmation_sustainability']);
+        let phase = (s.implementation_phase || '').toString().toLowerCase();
+        if (!allowedPhases.has(phase)) phase = 'planning';
         return {
           strategy_name: s.strategy_name || 'Implementation Strategy',
           eric_category: category,
+          implementation_phase: phase,
+          timing: s.timing || null,
           description: s.description || null,
           target_barrier: s.target_barrier || null,
           timeline: s.timeline || null,

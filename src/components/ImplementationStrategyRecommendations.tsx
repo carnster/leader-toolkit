@@ -1,15 +1,25 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Loader2, Check, X } from "lucide-react";
+import { Sparkles, Loader2, Check, X, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ericLabel } from "@/lib/ericClusters";
 
+// ISST phase to app-stage mapping. Tells a leader when each strategy is most useful.
+const PHASE_META: Record<string, { label: string; stage: string }> = {
+  planning: { label: "Planning", stage: "Decide & Plan" },
+  early_implementation: { label: "Early Implementation", stage: "Implement (early)" },
+  implementation_evaluation: { label: "Implementation & Evaluation", stage: "Implement" },
+  confirmation_sustainability: { label: "Confirmation & Sustainability", stage: "Spread & Sustain" },
+};
+
 interface StrategyRecommendation {
   strategy_name: string;
   eric_category: string;
+  implementation_phase?: string;
+  timing?: string;
   description: string;
   target_barrier: string;
   resources_needed: string;
@@ -25,6 +35,8 @@ interface ImplementationStrategyRecommendationsProps {
     name: string;
     is_core: boolean;
   }>;
+  /** Current stage of the initiative; times the recommendations. Defaults to plan. */
+  currentStage?: string;
   onApplyRecommendation: (recommendation: StrategyRecommendation) => void;
 }
 
@@ -32,6 +44,7 @@ export function ImplementationStrategyRecommendations({
   initiativeId,
   decisionBrief,
   activeIngredients,
+  currentStage = "plan",
   onApplyRecommendation,
 }: ImplementationStrategyRecommendationsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -54,6 +67,7 @@ export function ImplementationStrategyRecommendations({
     try {
       const { data, error } = await supabase.functions.invoke("recommend-strategies", {
         body: {
+          currentStage,
           decisionBrief: {
             problem_statement: decisionBrief.problem_statement,
             target_group: decisionBrief.target_group,
@@ -161,6 +175,12 @@ export function ImplementationStrategyRecommendations({
                             <Badge variant="outline">
                               {ericLabel(strategy.eric_category)}
                             </Badge>
+                            {strategy.implementation_phase && PHASE_META[strategy.implementation_phase] && (
+                              <Badge variant="secondary" className="gap-1">
+                                <Clock className="h-3 w-3" />
+                                {PHASE_META[strategy.implementation_phase].label}
+                              </Badge>
+                            )}
                             {isApplied && (
                               <Badge variant="secondary" className="gap-1">
                                 <Check className="h-3 w-3" />
@@ -170,6 +190,12 @@ export function ImplementationStrategyRecommendations({
                           </div>
                           <h4 className="font-medium">{strategy.strategy_name}</h4>
                           <p className="text-sm text-muted-foreground">{strategy.description}</p>
+                          {strategy.timing && (
+                            <p className="text-sm flex items-start gap-1.5 text-muted-foreground">
+                              <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                              <span><span className="font-medium text-foreground">When to use:</span> {strategy.timing}</span>
+                            </p>
+                          )}
                           {strategy.target_barrier && (
                             <p className="text-sm">
                               <span className="font-medium">Target Barrier:</span> {strategy.target_barrier}
