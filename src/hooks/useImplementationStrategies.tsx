@@ -7,6 +7,7 @@ export interface ImplementationStrategy {
   id: string;
   initiative_id: string;
   eric_category: EricCategory;
+  implementation_phase: string | null;
   strategy_name: string;
   description: string | null;
   target_barrier: string | null;
@@ -47,6 +48,7 @@ export function useImplementationStrategies(initiativeId: string | undefined) {
         .insert({
           initiative_id: initiativeId!,
           eric_category: strategy.eric_category!,
+          implementation_phase: strategy.implementation_phase ?? null,
           strategy_name: strategy.strategy_name!,
           description: strategy.description,
           target_barrier: strategy.target_barrier,

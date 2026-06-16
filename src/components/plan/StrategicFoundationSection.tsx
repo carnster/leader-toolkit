@@ -1,11 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen, Network, UserCheck, UserX } from "lucide-react";
+import { Lightbulb, Target, Plus, Edit, Trash, Loader2, BookOpen, Network, CalendarRange, UserCheck, UserX } from "lucide-react";
 import { AddActiveIngredientDialog } from "@/components/AddActiveIngredientDialog";
 import { ERICStrategySelector } from "@/components/ERICStrategySelector";
 import { ImplementationStrategyRecommendations } from "@/components/ImplementationStrategyRecommendations";
 import { StrategyIngredientConnections } from "@/components/StrategyIngredientConnections";
+import { StrategyTimeline } from "@/components/plan/StrategyTimeline";
 import { AdaptationProtocolSummary } from "@/components/AdaptationProtocolSummary";
 import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -58,6 +59,7 @@ export function StrategicFoundationSection({
       await createStrategy({
         strategy_name: recommendation.strategy_name,
         eric_category: recommendation.eric_category,
+        implementation_phase: recommendation.implementation_phase ?? null,
         description: recommendation.description,
         target_barrier: recommendation.target_barrier,
         timeline: recommendation.timeline,
@@ -235,11 +237,15 @@ export function StrategicFoundationSection({
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="list" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="list">Strategy List</TabsTrigger>
               <TabsTrigger value="connections">
                 <Network className="h-4 w-4 mr-2" />
                 Visual Connections
+              </TabsTrigger>
+              <TabsTrigger value="timeline">
+                <CalendarRange className="h-4 w-4 mr-2" />
+                Timeline
               </TabsTrigger>
             </TabsList>
 
@@ -337,6 +343,10 @@ export function StrategicFoundationSection({
                   })}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="timeline" className="mt-0">
+              <StrategyTimeline strategies={strategies} />
             </TabsContent>
 
             <TabsContent value="connections" className="mt-0">
