@@ -14,8 +14,7 @@ import {
   Sun,
   Moon,
   Users,
-  Settings as SettingsIcon
-} from "lucide-react";
+  Settings as SettingsIcon, GraduationCap } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -45,6 +44,7 @@ const navigation = [
 const hubs = [
   { name: "Team", href: "/team", icon: Users },
   { name: "Monitoring", href: "/monitor", icon: BarChart3 },
+  { name: "Professional Learning", href: "/learning", icon: GraduationCap },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

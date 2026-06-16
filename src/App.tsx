@@ -14,6 +14,7 @@ import Implement from "./pages/Implement";
 import Monitor from "./pages/Monitor";
 import Sustain from "./pages/Sustain";
 import Team from "./pages/Team";
+import Learning from "./pages/Learning";
 import Settings from "./pages/Settings";
 import SharedView from "./pages/SharedView";
 import Auth from "./pages/Auth";
@@ -43,6 +44,7 @@ const App = () => (
                       <Route path="/implement" element={<Implement />} />
                       <Route path="/monitor" element={<Monitor />} />
                       <Route path="/team" element={<Team />} />
+                      <Route path="/learning" element={<Learning />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/sustain" element={<Sustain />} />
                       <Route path="*" element={<NotFound />} />

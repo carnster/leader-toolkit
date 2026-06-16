@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.get-shared-brief]
 verify_jwt = false
+
+[functions.synthesize-learning-plan]
+verify_jwt = true
