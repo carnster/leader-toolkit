@@ -28,9 +28,20 @@ const statusOptions = [
   { value: "on_hold", label: "On Hold" },
 ];
 
+// ISST implementation phase: when in the work this strategy is most useful.
+// "none" maps to a null phase, the Anytime / Ongoing bucket on the timeline.
+const phaseOptions = [
+  { value: "planning", label: "Planning \u00b7 Decide & Plan" },
+  { value: "early_implementation", label: "Early Implementation \u00b7 Implement" },
+  { value: "implementation_evaluation", label: "Implementation & Evaluation \u00b7 Implement" },
+  { value: "confirmation_sustainability", label: "Confirmation & Sustainability \u00b7 Spread & Sustain" },
+  { value: "none", label: "Anytime / Ongoing" },
+];
+
 export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strategy, teamMembers = [] }: ImplementationStrategyDialogProps) {
   const [formData, setFormData] = useState<Partial<ImplementationStrategy>>({
     eric_category: "train_educate",
+    implementation_phase: "planning",
     strategy_name: "",
     description: "",
     target_barrier: "",
@@ -48,6 +59,7 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
     } else {
       setFormData({
         eric_category: "train_educate",
+        implementation_phase: "planning",
         strategy_name: "",
         description: "",
         target_barrier: "",
@@ -131,6 +143,23 @@ export function ImplementationStrategyDialog({ open, onOpenChange, onSave, strat
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="implementation_phase">Implementation Phase</Label>
+            <select
+              id="implementation_phase"
+              className="w-full rounded-md border px-3 py-2"
+              value={formData.implementation_phase ?? "none"}
+              onChange={(e) => setFormData({ ...formData, implementation_phase: e.target.value === "none" ? null : e.target.value })}
+            >
+              {phaseOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <p className="text-sm text-muted-foreground">
+              When in the implementation this strategy is most useful. Places it on the strategy timeline.
+            </p>
           </div>
 
           <div className="space-y-2">
