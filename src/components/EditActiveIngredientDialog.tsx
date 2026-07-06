@@ -158,6 +158,7 @@ export function EditActiveIngredientDialog({ ingredient, open, onOpenChange, ini
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Remove look-for"
                       onClick={() => {
                         const newLookFors = formData.look_fors.filter((_, i) => i !== index);
                         setFormData({ ...formData, look_fors: newLookFors });

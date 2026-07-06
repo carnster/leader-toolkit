@@ -240,6 +240,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Remove responsibility"
                       onClick={() => {
                         const newResponsibilities = formData.responsibilities.filter((_, i) => i !== index);
                         setFormData({ ...formData, responsibilities: newResponsibilities });

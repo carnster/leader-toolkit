@@ -302,6 +302,7 @@ export function FlexibleObservationDialog({
                   type="button"
                   variant="outline"
                   size="icon"
+                  aria-label="Add item"
                   onClick={addFollowUpAction}
                   disabled={!newAction.trim()}
                 >
@@ -321,6 +322,7 @@ export function FlexibleObservationDialog({
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
+                        aria-label="Remove item"
                         onClick={() => removeFollowUpAction(index)}
                       >
                         <X className="h-3 w-3" />

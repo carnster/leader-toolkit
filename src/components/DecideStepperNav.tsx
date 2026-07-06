@@ -23,7 +23,8 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
         </span>
       </div>
       
-      <div className="relative">
+      <div className="overflow-x-auto pb-2">
+      <div className="relative min-w-[34rem]">
         {/* Progress Line */}
         <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
         <div 
@@ -69,6 +70,7 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
             </button>
           ))}
         </div>
+      </div>
       </div>
       
       <div className="mt-6 p-4 bg-[hsl(var(--stage-decide))]/5 rounded-lg border border-[hsl(var(--stage-decide))]/25">

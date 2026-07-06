@@ -1,4 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { NoInitiativeGate } from "@/components/NoInitiativeGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil, Archive, ArchiveRestore } from "lucide-react";
@@ -166,6 +168,10 @@ export default function Monitor() {
   
   const currentDetails = currentSubStage ? subStageDetails[currentSubStage as keyof typeof subStageDetails] : null;
   
+  if (!effectiveInitiativeId) {
+    return <NoInitiativeGate title="Monitoring" sub="No initiative is selected yet." />;
+  }
+
   return (
     <div className="space-y-8 max-w-7xl">
       {/* Header */}
@@ -282,7 +288,7 @@ export default function Monitor() {
             {isLoadingIngredients ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : coreIngredients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No core ingredients defined. Add them in the Plan & Prepare stage.</p>
+              <p className="text-sm text-muted-foreground">No core ingredients defined. Add them in <Link to={`/plan?initiative=${effectiveInitiativeId}&section=ingredients`} className="text-accent underline underline-offset-2">Plan &amp; Prepare</Link>.</p>
             ) : (
               <div className="space-y-2">
                 {coreIngredients.slice(0, 3).map((ingredient: any) => (
@@ -310,7 +316,7 @@ export default function Monitor() {
             {isLoadingStrategies ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : activeStrategies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No active strategies. Add them in the Plan & Prepare stage.</p>
+              <p className="text-sm text-muted-foreground">No active strategies. Add them in <Link to={`/plan?initiative=${effectiveInitiativeId}&section=strategies`} className="text-accent underline underline-offset-2">Plan &amp; Prepare</Link>.</p>
             ) : (
               <div className="space-y-2">
                 {activeStrategies.slice(0, 3).map((strategy) => (

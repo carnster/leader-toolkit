@@ -122,6 +122,7 @@ export function NotificationsPanel() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7"
+                          aria-label="Mark as read"
                           onClick={() => markAsRead(notification.id)}
                         >
                           <Check className="h-3 w-3" />
@@ -131,6 +132,7 @@ export function NotificationsPanel() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
+                        aria-label="Delete notification"
                         onClick={() => deleteNotification(notification.id)}
                       >
                         <Trash2 className="h-3 w-3" />

@@ -20,6 +20,7 @@ import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialo
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
+import { NoInitiativeGate } from "@/components/NoInitiativeGate";
 
 export default function Implement() {
   const [searchParams] = useSearchParams();
@@ -67,6 +68,10 @@ export default function Implement() {
         label: "PD",
       })),
   ];
+
+  if (!effectiveInitiativeId) {
+    return <NoInitiativeGate title="Implement" sub="No initiative is selected yet." />;
+  }
 
   return (
     <div className="space-y-8 max-w-7xl">
@@ -116,7 +121,7 @@ export default function Implement() {
           {isLoadingIngredients ? (
             <p className="text-sm text-muted-foreground text-center py-4">Loading...</p>
           ) : coreIngredients.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No core ingredients defined yet. Add them in the Plan stage.</p>
+            <p className="text-sm text-muted-foreground">No core ingredients defined yet. Add them in <Link to={`/plan?initiative=${effectiveInitiativeId}&section=ingredients`} className="text-accent underline underline-offset-2">Plan &amp; Prepare</Link>.</p>
           ) : (
             <div className="space-y-2">
               {coreIngredients.map((ingredient: any) => (

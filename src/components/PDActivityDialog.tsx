@@ -272,6 +272,7 @@ export function PDActivityDialog({ activity, open, onOpenChange, initiativeId, t
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label="Remove audience"
                       onClick={() => {
                         const newAudience = formData.target_audience.filter((_, i) => i !== index);
                         setFormData({ ...formData, target_audience: newAudience });
