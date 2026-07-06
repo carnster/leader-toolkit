@@ -241,6 +241,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {mobileMenuOpen && (
           <div className="lg:hidden border-t">
             <nav className="container py-4 space-y-1">
+              {/* Initiative context: the only place to see/set it on mobile */}
+              <div className="px-3 pb-1">
+                <InitiativeSwitcher variant="mobile" />
+              </div>
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);

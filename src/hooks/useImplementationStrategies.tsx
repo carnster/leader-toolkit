@@ -25,7 +25,7 @@ export function useImplementationStrategies(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: strategies, isLoading } = useQuery({
+  const { data: strategies, isLoading, error, isError } = useQuery({
     queryKey: ["implementation-strategies", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -146,6 +146,8 @@ export function useImplementationStrategies(initiativeId: string | undefined) {
   return {
     strategies: strategies || [],
     isLoading,
+    error,
+    isError,
     createStrategy: createStrategy.mutate,
     updateStrategy: updateStrategy.mutate,
     deleteStrategy: deleteStrategy.mutate,

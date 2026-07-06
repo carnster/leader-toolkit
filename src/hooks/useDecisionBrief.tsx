@@ -30,7 +30,7 @@ export function useDecisionBrief(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: decisionBrief, isLoading } = useQuery({
+  const { data: decisionBrief, isLoading, error, isError } = useQuery({
     queryKey: ["decision-brief", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return null;
@@ -93,6 +93,8 @@ export function useDecisionBrief(initiativeId: string | undefined) {
   return {
     decisionBrief,
     isLoading,
+    error,
+    isError,
     upsertDecisionBrief: upsertDecisionBrief.mutate,
     upsertDecisionBriefAsync: upsertDecisionBrief.mutateAsync,
     isSaving: upsertDecisionBrief.isPending,

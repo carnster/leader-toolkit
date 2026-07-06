@@ -9,6 +9,7 @@ import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { MeetingLog } from "@/components/MeetingLog";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 // Team composition guidance from Implement with IMPACT (Ch. 3): effective
 // implementation teams blend roles and perspectives. Detection is keyword-based
@@ -87,7 +88,7 @@ const BEHAVIORS = [
 
 export default function Team() {
   const { initiativeId } = useInitiativeContext();
-  const { teamMembers, isLoading } = useTeamMembers(initiativeId || undefined);
+  const { teamMembers, isLoading, error } = useTeamMembers(initiativeId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const roleText = teamMembers
@@ -114,6 +115,19 @@ export default function Team() {
             </p>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  // A failed fetch must not render as an empty roster: that invites
+  // re-adding members who are already there.
+  if (error) {
+    return (
+      <div className="container py-8">
+        <h1 className="text-3xl font-bold mb-2">Team Hub</h1>
+        <div className="mt-6">
+          <QueryErrorState title="We could not load your team" />
+        </div>
       </div>
     );
   }

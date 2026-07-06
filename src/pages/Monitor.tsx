@@ -29,6 +29,7 @@ import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
 import { useSearchParams , Link as RouterLink} from "react-router-dom";
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useIndicators, Indicator } from "@/hooks/useIndicators";
@@ -57,9 +58,9 @@ export default function Monitor() {
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [showArchivedSheet, setShowArchivedSheet] = useState(false);
   
-  const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
-  const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
-  const { indicators, indicatorValues, isLoading: isLoadingIndicators, updateIndicator, archiveIndicator, restoreIndicator } = useIndicators(effectiveInitiativeId);
+  const { activeIngredients, isLoading: isLoadingIngredients, error: ingredientsError } = useActiveIngredients(effectiveInitiativeId);
+  const { strategies, isLoading: isLoadingStrategies, error: strategiesError } = useImplementationStrategies(effectiveInitiativeId);
+  const { indicators, indicatorValues, isLoading: isLoadingIndicators, error: indicatorsError, updateIndicator, archiveIndicator, restoreIndicator } = useIndicators(effectiveInitiativeId);
   const { indicators: archivedIndicators } = useIndicators(effectiveInitiativeId, true);
   const { milestones, isLoading: isLoadingMilestones } = useTimelineMilestones(effectiveInitiativeId);
   const { pdsaCycles, isLoading: isLoadingPDSA } = usePDSACycles(effectiveInitiativeId);
@@ -170,6 +171,16 @@ export default function Monitor() {
   
   if (!effectiveInitiativeId) {
     return <NoInitiativeGate title="Monitoring" sub="No initiative is selected yet." />;
+  }
+
+  // A failed fetch on a populated initiative must not render as an empty
+  // monitoring view: that invites re-entering indicators and strategies.
+  if (indicatorsError || ingredientsError || strategiesError) {
+    return (
+      <div className="space-y-8 max-w-7xl">
+        <QueryErrorState title="We could not load your monitoring data" />
+      </div>
+    );
   }
 
   return (

@@ -4,10 +4,20 @@ import { AlertTriangle } from "lucide-react";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  /** "fullscreen" (app backstop) or "page" (card-sized, keeps the nav around it). */
+  variant?: "fullscreen" | "page";
+  label?: string;
+  /** When any value here changes (e.g. the route path), the error clears itself. */
+  resetKeys?: unknown[];
 }
 
 interface ErrorBoundaryState {
   error: Error | null;
+}
+
+function keysChanged(a?: unknown[], b?: unknown[]): boolean {
+  if (!a || !b || a.length !== b.length) return true;
+  return a.some((v, i) => v !== b[i]);
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -21,24 +31,54 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error("Unhandled error:", error, errorInfo.componentStack);
   }
 
-  handleReset = () => {
+  componentDidUpdate(prev: ErrorBoundaryProps) {
+    // Recover automatically when the caller's reset keys change, e.g. the user
+    // navigates to another route after one page hit a render error.
+    if (this.state.error && keysChanged(prev.resetKeys, this.props.resetKeys)) {
+      this.setState({ error: null });
+    }
+  }
+
+  resetError = () => this.setState({ error: null });
+
+  goHome = () => {
     this.setState({ error: null });
     window.location.href = "/";
   };
 
   render() {
     if (this.state.error) {
+      if (this.props.variant === "page") {
+        return (
+          <div className="container py-12">
+            <div className="max-w-md mx-auto text-center space-y-4 rounded-lg border p-8">
+              <AlertTriangle className="h-9 w-9 text-destructive mx-auto" aria-hidden="true" />
+              <h2 className="text-lg font-semibold">{this.props.label || "This page hit a display error"}</h2>
+              <p className="text-sm text-muted-foreground">
+                Your data is safe. This is a display error, not data loss. Try again, or move to another
+                section using the menu.
+              </p>
+              <div className="flex justify-center gap-2">
+                <Button onClick={this.resetError}>Try again</Button>
+                <Button variant="outline" onClick={this.goHome}>Back to Dashboard</Button>
+              </div>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="max-w-md text-center space-y-4">
             <AlertTriangle className="h-10 w-10 text-destructive mx-auto" aria-hidden="true" />
             <h1 className="text-xl font-semibold">Something went wrong</h1>
             <p className="text-sm text-muted-foreground">
-              Your data is safe. This is a display error, not data loss. Return to the
-              dashboard and try again. If it keeps happening, note what you were doing and
-              report it.
+              Your data is safe. This is a display error, not data loss. Try again, or return to the
+              dashboard. If it keeps happening, note what you were doing and report it.
             </p>
-            <Button onClick={this.handleReset}>Back to Dashboard</Button>
+            <div className="flex justify-center gap-2">
+              <Button onClick={this.resetError}>Try again</Button>
+              <Button variant="outline" onClick={this.goHome}>Back to Dashboard</Button>
+            </div>
           </div>
         </div>
       );

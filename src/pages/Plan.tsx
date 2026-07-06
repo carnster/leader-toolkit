@@ -59,6 +59,7 @@ export default function Plan() {
   const [isGeneratingTimeline, setIsGeneratingTimeline] = useState(false);
   const [isGeneratingPD, setIsGeneratingPD] = useState(false);
   const [isGeneratingFullPlan, setIsGeneratingFullPlan] = useState(false);
+  const [genStep, setGenStep] = useState<string | null>(null);
   
   const { teamMembers, isLoading: isLoadingTeam } = useTeamMembers(effectiveInitiativeId);
   const { milestones, isLoading: isLoadingMilestones, createMilestone, deleteMilestone } = useTimelineMilestones(effectiveInitiativeId);
@@ -395,13 +396,23 @@ export default function Plan() {
       return;
     }
     setIsGeneratingFullPlan(true);
+    setGenStep("Step 1 of 5: Analyzing active ingredients...");
     toast({ title: "Generating full plan...", description: "This may take a moment. We'll generate all components in sequence." });
-    
+
     try {
+      setGenStep("Step 1 of 5: Analyzing active ingredients...");
       if (activeIngredients.length === 0) await generateIngredientsFromApproach();
+
+      setGenStep("Step 2 of 5: Recommending strategies...");
       if (strategies.length === 0) await generateStrategiesFromDecisionBrief();
+
+      setGenStep("Step 3 of 5: Identifying risks...");
       if (risks.length === 0) await generateRisksFromDecisionBrief();
+
+      setGenStep("Step 4 of 5: Building timeline...");
       if (milestones.length === 0) await generateTimelineFromContext();
+
+      setGenStep("Step 5 of 5: Planning professional learning...");
       if (activities.length === 0) await generatePDActivities();
 
       // Verify what actually landed before declaring success: individual
@@ -429,6 +440,7 @@ export default function Plan() {
       toast({ title: "Error", description: "Some components failed to generate. Please try individual sections.", variant: "destructive" });
     } finally {
       setIsGeneratingFullPlan(false);
+      setGenStep(null);
     }
   };
 
@@ -659,6 +671,16 @@ export default function Plan() {
           {/* Main Content */}
           <main className="flex-1 overflow-auto p-8">
             <div className="max-w-6xl mx-auto">
+              {isGeneratingFullPlan && genStep && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="mb-6 flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3"
+                >
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">{genStep}</span>
+                </div>
+              )}
               {renderSection()}
             </div>
           </main>

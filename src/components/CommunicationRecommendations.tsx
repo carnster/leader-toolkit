@@ -76,6 +76,9 @@ export function CommunicationRecommendations({
             {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</> : <><Sparkles className="mr-2 h-4 w-4" />Generate Plan</>}
           </Button>
         </div>
+        {isLoading && (
+          <p className="text-xs text-muted-foreground mt-2">This usually takes 30 to 60 seconds.</p>
+        )}
       </CardHeader>
       {recommendations.length > 0 && (
         <CardContent className="space-y-4">

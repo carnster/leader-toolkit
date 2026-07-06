@@ -132,19 +132,24 @@ export function ImplementationStrategyRecommendations({
       </CardHeader>
       <CardContent className="space-y-4">
         {recommendations.length === 0 ? (
-          <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generating recommendations...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4" />
-                Generate AI Recommendations
-              </>
+          <>
+            <Button onClick={handleGenerate} disabled={isGenerating} className="w-full">
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating recommendations...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Generate AI Recommendations
+                </>
+              )}
+            </Button>
+            {isGenerating && (
+              <p className="text-xs text-muted-foreground">This usually takes 30 to 60 seconds.</p>
             )}
-          </Button>
+          </>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">

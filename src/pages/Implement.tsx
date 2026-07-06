@@ -21,6 +21,7 @@ import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
+import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function Implement() {
   const [searchParams] = useSearchParams();
@@ -28,8 +29,8 @@ export default function Implement() {
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
   
-  const { activeIngredients, isLoading: isLoadingIngredients } = useActiveIngredients(effectiveInitiativeId);
-  const { strategies, isLoading: isLoadingStrategies } = useImplementationStrategies(effectiveInitiativeId);
+  const { activeIngredients, isLoading: isLoadingIngredients, error: ingredientsError } = useActiveIngredients(effectiveInitiativeId);
+  const { strategies, isLoading: isLoadingStrategies, error: strategiesError } = useImplementationStrategies(effectiveInitiativeId);
   const { teamMembers } = useTeamMembers(effectiveInitiativeId);
   const { fidelityLogs, createLog, isCreating } = useFidelityLogs(effectiveInitiativeId);
   const { milestones } = useTimelineMilestones(effectiveInitiativeId);
@@ -71,6 +72,16 @@ export default function Implement() {
 
   if (!effectiveInitiativeId) {
     return <NoInitiativeGate title="Implement" sub="No initiative is selected yet." />;
+  }
+
+  // A failed fetch on a populated initiative must not render as an empty
+  // Implement stage: that invites re-entering ingredients and strategies.
+  if (ingredientsError || strategiesError) {
+    return (
+      <div className="space-y-8 max-w-7xl">
+        <QueryErrorState title="We could not load this initiative" />
+      </div>
+    );
   }
 
   return (

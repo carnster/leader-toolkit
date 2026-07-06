@@ -16,6 +16,9 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [streamingMessage, setStreamingMessage] = useState("");
+  // Optimistically-rendered copy of the message the user just sent, shown
+  // immediately so the thread never looks empty while we wait for the stream.
+  const [pendingUserMessage, setPendingUserMessage] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
@@ -36,7 +39,18 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, streamingMessage]);
+  }, [messages, streamingMessage, pendingUserMessage]);
+
+  // Once the saved user message lands from the server, drop the optimistic copy
+  // so we never render the same message twice.
+  useEffect(() => {
+    if (
+      pendingUserMessage &&
+      messages?.some((m) => m.role === "user" && m.content === pendingUserMessage)
+    ) {
+      setPendingUserMessage(null);
+    }
+  }, [messages, pendingUserMessage]);
 
   // Build context from current page and data
   const buildContext = () => {
@@ -61,6 +75,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
     const userMessage = inputValue;
     setInputValue("");
     setStreamingMessage("");
+    setPendingUserMessage(userMessage);
 
     await sendMessage(
       userMessage,
@@ -71,10 +86,12 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
     );
 
     setStreamingMessage("");
+    setPendingUserMessage(null);
   };
 
   const handleNewConversation = () => {
     setStreamingMessage("");
+    setPendingUserMessage(null);
     createConversation();
   };
 
@@ -183,6 +200,23 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
                   </div>
                 </div>
               ))}
+              {pendingUserMessage && (
+                <div className="flex justify-end">
+                  <div className="max-w-[85%] rounded-lg px-4 py-2 text-sm bg-primary text-primary-foreground">
+                    {pendingUserMessage}
+                  </div>
+                </div>
+              )}
+              {isStreaming && !streamingMessage && (
+                <div className="flex justify-start">
+                  <div className="rounded-lg px-4 py-3 bg-muted flex items-center gap-1">
+                    <span className="sr-only">Coach is thinking</span>
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-pulse [animation-delay:150ms]" />
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-pulse [animation-delay:300ms]" />
+                  </div>
+                </div>
+              )}
               {streamingMessage && (
                 <div className="flex justify-start">
                   <div className="max-w-[85%] rounded-lg px-4 py-2 text-sm bg-muted">

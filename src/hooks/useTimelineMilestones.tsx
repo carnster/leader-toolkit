@@ -22,7 +22,7 @@ export function useTimelineMilestones(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: milestones, isLoading } = useQuery({
+  const { data: milestones, isLoading, error, isError } = useQuery({
     queryKey: ["timeline-milestones", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -139,6 +139,8 @@ export function useTimelineMilestones(initiativeId: string | undefined) {
   return {
     milestones: milestones || [],
     isLoading,
+    error,
+    isError,
     createMilestone: createMilestone.mutate,
     updateMilestone: updateMilestone.mutate,
     deleteMilestone: deleteMilestone.mutate,

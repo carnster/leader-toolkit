@@ -131,10 +131,13 @@ export function EBPRecommendations({ decisionBrief, onSelectRecommendation, onAd
             </Button>
           )}
         </div>
-        {recommendations.length === 0 && (
+        {recommendations.length === 0 && !isLoading && (
           <p className="text-sm text-muted-foreground mt-2">
             💡 Already have an initiative from templates or your own approach? Feel free to continue without recommendations.
           </p>
+        )}
+        {isLoading && (
+          <p className="text-xs text-muted-foreground mt-2">This usually takes 30 to 60 seconds.</p>
         )}
       </CardHeader>
       {recommendations.length > 0 && (

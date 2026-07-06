@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { type ReactNode } from "react";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AICopilot } from "@/components/AICopilot";
@@ -22,6 +23,17 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// One display error in a page degrades to a card inside the nav instead of
+// blanking the whole app; navigating to another route clears it automatically.
+function PageBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  return (
+    <ErrorBoundary variant="page" resetKeys={[location.pathname]}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -37,6 +49,7 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Layout>
+                    <PageBoundary>
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/decide" element={<Decide />} />
@@ -49,6 +62,7 @@ const App = () => (
                       <Route path="/sustain" element={<Sustain />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </PageBoundary>
                   </Layout>
                   <AICopilot />
                 </ProtectedRoute>

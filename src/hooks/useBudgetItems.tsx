@@ -19,7 +19,7 @@ export function useBudgetItems(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: budgetItems, isLoading } = useQuery({
+  const { data: budgetItems, isLoading, error, isError } = useQuery({
     queryKey: ["budget-items", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -127,6 +127,8 @@ export function useBudgetItems(initiativeId: string | undefined) {
   return {
     budgetItems: budgetItems || [],
     isLoading,
+    error,
+    isError,
     createBudgetItem: createBudgetItem.mutate,
     updateBudgetItem: updateBudgetItem.mutate,
     deleteBudgetItem: deleteBudgetItem.mutate,

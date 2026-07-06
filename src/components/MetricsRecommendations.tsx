@@ -115,6 +115,9 @@ export function MetricsRecommendations({ decisionBrief, onApplyRecommendations }
             </Button>
           )}
         </div>
+        {isLoading && (
+          <p className="text-xs text-muted-foreground mt-2">This usually takes 30 to 60 seconds.</p>
+        )}
       </CardHeader>
 
       {recommendations && (

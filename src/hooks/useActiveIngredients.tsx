@@ -18,7 +18,7 @@ export function useActiveIngredients(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: activeIngredients, isLoading } = useQuery({
+  const { data: activeIngredients, isLoading, error, isError } = useQuery({
     queryKey: ["active-ingredients", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -134,6 +134,8 @@ export function useActiveIngredients(initiativeId: string | undefined) {
   return {
     activeIngredients: activeIngredients || [],
     isLoading,
+    error,
+    isError,
     createIngredient: createIngredient.mutate,
     updateIngredient: updateIngredient.mutate,
     deleteIngredient: deleteIngredient.mutate,

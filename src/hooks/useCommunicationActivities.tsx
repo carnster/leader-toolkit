@@ -22,7 +22,7 @@ export function useCommunicationActivities(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading, error, isError } = useQuery({
     queryKey: ["communication-activities", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -141,6 +141,8 @@ export function useCommunicationActivities(initiativeId: string | undefined) {
   return {
     activities: activities || [],
     isLoading,
+    error,
+    isError,
     createActivity: createActivity.mutate,
     updateActivity: updateActivity.mutate,
     deleteActivity: deleteActivity.mutate,

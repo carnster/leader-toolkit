@@ -26,7 +26,7 @@ export function useIndicators(initiativeId: string | undefined, includeArchived 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: indicators, isLoading } = useQuery({
+  const { data: indicators, isLoading, error, isError } = useQuery({
     queryKey: ["indicators", initiativeId, includeArchived],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -226,6 +226,8 @@ export function useIndicators(initiativeId: string | undefined, includeArchived 
     indicators: indicators || [],
     indicatorValues: indicatorValues || [],
     isLoading,
+    error,
+    isError,
     createIndicator: createIndicator.mutate,
     updateIndicator: updateIndicator.mutate,
     archiveIndicator: archiveIndicator.mutate,

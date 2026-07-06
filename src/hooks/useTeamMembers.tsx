@@ -20,7 +20,7 @@ export function useTeamMembers(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: teamMembers, isLoading } = useQuery({
+  const { data: teamMembers, isLoading, error, isError } = useQuery({
     queryKey: ["team-members", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -140,6 +140,8 @@ export function useTeamMembers(initiativeId: string | undefined) {
   return {
     teamMembers: teamMembers || [],
     isLoading,
+    error,
+    isError,
     addTeamMember: addTeamMember.mutate,
     updateTeamMember: updateTeamMember.mutate,
     removeTeamMember: removeTeamMember.mutate,

@@ -26,7 +26,7 @@ export function useFidelityLogs(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: fidelityLogs, isLoading } = useQuery({
+  const { data: fidelityLogs, isLoading, error, isError } = useQuery({
     queryKey: ["fidelity-logs", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -92,6 +92,8 @@ export function useFidelityLogs(initiativeId: string | undefined) {
   return {
     fidelityLogs: fidelityLogs || [],
     isLoading,
+    error,
+    isError,
     createLog: createLog.mutate,
     isCreating: createLog.isPending,
   };

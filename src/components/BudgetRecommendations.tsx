@@ -173,6 +173,9 @@ export function BudgetRecommendations({ initiativeId, onClose }: BudgetRecommend
               Cancel
             </Button>
           </div>
+          {isGenerating && (
+            <p className="text-xs text-muted-foreground mt-3">This usually takes 30 to 60 seconds.</p>
+          )}
         </CardContent>
       </Card>
     );

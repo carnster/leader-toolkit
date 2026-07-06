@@ -71,7 +71,7 @@ export function useSustainabilityPlan(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: sustainabilityPlan, isLoading } = useQuery({
+  const { data: sustainabilityPlan, isLoading, error, isError } = useQuery({
     queryKey: ["sustainability-plan", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return null;
@@ -128,6 +128,8 @@ export function useSustainabilityPlan(initiativeId: string | undefined) {
   return {
     sustainabilityPlan,
     isLoading,
+    error,
+    isError,
     upsertPlan: upsertMutation.mutate,
     isSaving: upsertMutation.isPending,
   };

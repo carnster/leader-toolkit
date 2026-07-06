@@ -24,7 +24,7 @@ export function useObservationSchedules(initiativeId: string | undefined) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: schedules, isLoading } = useQuery({
+  const { data: schedules, isLoading, error, isError } = useQuery({
     queryKey: ["observation-schedules", initiativeId],
     queryFn: async () => {
       if (!initiativeId) return [];
@@ -132,6 +132,8 @@ export function useObservationSchedules(initiativeId: string | undefined) {
   return {
     schedules: schedules || [],
     isLoading,
+    error,
+    isError,
     createSchedule: createSchedule.mutate,
     updateSchedule: updateSchedule.mutate,
     deleteSchedule: deleteSchedule.mutate,

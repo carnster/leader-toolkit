@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, Calendar, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3, Plus, Pencil, Trash2 } from "lucide-react";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { SustainGate } from "@/components/SustainGate";
+import { QueryErrorState } from "@/components/QueryErrorState";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
@@ -81,7 +82,7 @@ export default function Sustain() {
   const { activeIngredients } = useActiveIngredients(effectiveInitiativeId);
   const { strategies } = useImplementationStrategies(effectiveInitiativeId);
   const { indicators } = useIndicators(effectiveInitiativeId);
-  const { sustainabilityPlan, isLoading, upsertPlan, isSaving } = useSustainabilityPlan(
+  const { sustainabilityPlan, isLoading, error, upsertPlan, isSaving } = useSustainabilityPlan(
     effectiveInitiativeId || undefined
   );
 
@@ -193,6 +194,16 @@ export default function Sustain() {
   const chooseNextStep = (value: string) => {
     upsertPlan({ next_steps: value });
   };
+
+  // A failed load of the sustainability plan must not read as a blank
+  // plan: that invites rebuilding routines and protections that already exist.
+  if (hasInitiative && error) {
+    return (
+      <div className="space-y-8 max-w-7xl">
+        <QueryErrorState title="We could not load your sustainability plan" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-7xl">

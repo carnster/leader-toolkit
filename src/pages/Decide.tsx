@@ -348,6 +348,18 @@ export default function Decide() {
   const handleInputBlur = useCallback(() => {
     triggerAutoSave();
   }, [triggerAutoSave]);
+
+  // Autosave while typing, not only on blur. This arms the debounced save (and
+  // therefore the beforeunload guard and the unmount flush, both keyed on the
+  // timer ref) so text typed and never blurred is not lost on tab close.
+  // Gated on isUserEditingRef so programmatic loads/template applies don't fire it.
+  useEffect(() => {
+    if (!isUserEditingRef.current) return;
+    triggerAutoSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problemStatement, targetGroup, baselineData, rootCauses, goals, equityNotes,
+      stakeholderInput, chosenApproach, evidenceBase, leadingIndicators,
+      laggingIndicators, measurementTimeline, feasibilityFactors]);
   
   // Keep a ref to the latest save function so the unmount flush below
   // saves current form state, not a stale closure
