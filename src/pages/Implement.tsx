@@ -21,6 +21,8 @@ import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
 import { useState } from "react";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
+import { WeeklyPulseForm } from "@/components/pulse/WeeklyPulseForm";
+import { PulseDashboard } from "@/components/pulse/PulseDashboard";
 import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function Implement() {
@@ -116,6 +118,10 @@ export default function Implement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Weekly Implementation Pulse: implementer check-in + leader view */}
+      <WeeklyPulseForm initiativeId={effectiveInitiativeId} />
+      <PulseDashboard initiativeId={effectiveInitiativeId} />
 
       {/* Active Ingredients from Plan Stage */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
