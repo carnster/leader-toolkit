@@ -23,6 +23,7 @@ import { useState } from "react";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
 import { WeeklyPulseForm } from "@/components/pulse/WeeklyPulseForm";
 import { PulseDashboard } from "@/components/pulse/PulseDashboard";
+import { PulseSharePanel } from "@/components/pulse/PulseSharePanel";
 import { QueryErrorState } from "@/components/QueryErrorState";
 
 export default function Implement() {
@@ -121,6 +122,7 @@ export default function Implement() {
 
       {/* Weekly Implementation Pulse: implementer check-in + leader view */}
       <WeeklyPulseForm initiativeId={effectiveInitiativeId} />
+      <PulseSharePanel initiativeId={effectiveInitiativeId} />
       <PulseDashboard initiativeId={effectiveInitiativeId} />
 
       {/* Active Ingredients from Plan Stage */}

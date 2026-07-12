@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.synthesize-learning-plan]
 verify_jwt = true
+
+[functions.submit-pulse-via-link]
+verify_jwt = false

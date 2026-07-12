@@ -28,8 +28,9 @@ export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
   const thisWeek = useMemo(() => checkins.filter((c) => c.week_of === weekOf), [checkins, weekOf]);
 
   const teamSize = teamMembers.length || 0;
-  const respondents = new Set(thisWeek.map((c) => c.respondent_id)).size;
-  const participation = teamSize > 0 ? Math.round((respondents / teamSize) * 100) : null;
+  // Each row is one response. Link pulses have a null respondent_id, so counting
+  // rows (deduped per browser upstream) is correct where distinct-id would collapse them.
+  const responses = thisWeek.length;
   const avgTraction =
     thisWeek.length > 0
       ? (thisWeek.reduce((s, c) => s + c.traction, 0) / thisWeek.length)
@@ -80,13 +81,11 @@ export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border p-3">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                  <Users className="h-3 w-3" aria-hidden="true" /> Participation
+                  <Users className="h-3 w-3" aria-hidden="true" /> Staff responding
                 </p>
-                <p className="text-2xl font-bold text-primary tabular-nums mt-1">
-                  {participation !== null ? `${participation}%` : respondents}
-                </p>
+                <p className="text-2xl font-bold text-primary tabular-nums mt-1">{responses}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {teamSize > 0 ? `${respondents} of ${teamSize} implementers` : `${respondents} responded`}
+                  pulses this week{teamSize > 0 ? ` \u00b7 team of ${teamSize}` : ""}
                 </p>
               </div>
 
@@ -141,7 +140,7 @@ export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
                   {needsSupport.map((c) => (
                     <div key={c.id} className="flex items-start gap-3 rounded-lg border border-l-[3px] border-l-destructive p-3">
                       <div className="min-w-[120px]">
-                        <p className="text-sm font-medium">{c.respondent_name || "Team member"}</p>
+                        <p className="text-sm font-medium">{c.respondent_name || "Anonymous"}</p>
                         <p className="text-xs text-muted-foreground">Marked {USED_LABEL[c.used_status]}</p>
                       </div>
                       <p className="text-sm text-muted-foreground flex-1">

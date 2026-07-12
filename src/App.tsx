@@ -18,6 +18,7 @@ import Team from "./pages/Team";
 import Learning from "./pages/Learning";
 import Settings from "./pages/Settings";
 import SharedView from "./pages/SharedView";
+import PublicPulse from "./pages/PublicPulse";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/share/:token" element={<SharedView />} />
+            <Route path="/p/:token" element={<PublicPulse />} />
             <Route
               path="/*"
               element={
