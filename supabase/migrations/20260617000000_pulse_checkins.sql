@@ -20,15 +20,24 @@ CREATE UNIQUE INDEX IF NOT EXISTS pulse_one_per_week
 
 ALTER TABLE public.pulse_checkins ENABLE ROW LEVEL SECURITY;
 
--- read: any team member of the initiative sees its pulses
-CREATE POLICY "team reads pulses" ON public.pulse_checkins
-  FOR SELECT USING (public.is_initiative_team_member(initiative_id, auth.uid()));
+-- A team member OR the initiative owner is "on" the initiative.
+-- (is_initiative_team_member checks the roster; the owner is separate.)
 
--- insert: you may only submit your own, and only for your initiative
+-- read: any team member or the owner sees the initiative's pulses
+CREATE POLICY "team reads pulses" ON public.pulse_checkins
+  FOR SELECT USING (
+    public.is_initiative_team_member(initiative_id, auth.uid())
+    OR EXISTS (SELECT 1 FROM public.initiatives i WHERE i.id = initiative_id AND i.owner_id = auth.uid())
+  );
+
+-- insert: you may only submit your own, and only for an initiative you are on
 CREATE POLICY "member inserts own pulse" ON public.pulse_checkins
   FOR INSERT WITH CHECK (
     respondent_id = auth.uid()
-    AND public.is_initiative_team_member(initiative_id, auth.uid())
+    AND (
+      public.is_initiative_team_member(initiative_id, auth.uid())
+      OR EXISTS (SELECT 1 FROM public.initiatives i WHERE i.id = initiative_id AND i.owner_id = auth.uid())
+    )
   );
 
 -- update: only your own row
