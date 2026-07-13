@@ -34,7 +34,9 @@ ALTER TABLE public.pulse_checkins
 
 ALTER TABLE public.pulse_checkins ALTER COLUMN respondent_id DROP NOT NULL;
 
--- one pulse per anonymous browser per link per week
+-- one pulse per anonymous browser per link per week.
+-- Full (non-partial) index so the edge function's ON CONFLICT arbiter matches.
+-- Account pulses have null via_link_id/client_key; nulls are distinct, so they
+-- never collide here (they are deduped by pulse_one_per_week instead).
 CREATE UNIQUE INDEX IF NOT EXISTS pulse_link_one_per_week
-  ON public.pulse_checkins (via_link_id, client_key, week_of)
-  WHERE via_link_id IS NOT NULL;
+  ON public.pulse_checkins (via_link_id, client_key, week_of);
