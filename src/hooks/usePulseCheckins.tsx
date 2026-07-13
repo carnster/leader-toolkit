@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { startOfWeek, format } from "date-fns";
+import { format } from "date-fns";
 
 export type UsedStatus = "yes" | "partly" | "not_yet";
 
@@ -19,9 +19,14 @@ export interface PulseCheckin {
   created_at: string;
 }
 
-/** Monday of the current week, as a yyyy-MM-dd date-only anchor. */
+/** Monday of the current week (UTC), as a yyyy-MM-dd date-only anchor.
+ *  UTC so it matches the submit-pulse-via-link edge function exactly; account
+ *  pulses and link pulses must land in the same week bucket. */
 export function currentWeekOf(): string {
-  return format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const d = new Date();
+  const day = (d.getUTCDay() + 6) % 7; // 0 = Monday
+  d.setUTCDate(d.getUTCDate() - day);
+  return d.toISOString().slice(0, 10);
 }
 
 export function usePulseCheckins(initiativeId: string | undefined) {
