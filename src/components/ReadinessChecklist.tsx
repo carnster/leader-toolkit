@@ -159,7 +159,7 @@ export function ReadinessChecklist({
       label: "Observation schedule and data collection methods defined",
       required: true,
       autoCheck: fidelityChecklistsCount > 0 || observationSchedulesCount > 0,
-      actionLink: `/plan?section=fidelity${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/monitor${initiativeId ? `?initiative=${initiativeId}` : ''}`,
       actionLabel: "Set Up Monitoring"
     },
     {
@@ -204,7 +204,7 @@ export function ReadinessChecklist({
       label: "Guidelines for acceptable adaptations documented",
       required: false,
       autoCheck: activeIngredients.some(ing => ing.adaptable_boundaries && ing.adaptable_boundaries.length > 0),
-      actionLink: `/plan?section=adaptation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=ingredients${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Define Adaptation Protocol"
     },
   ];
