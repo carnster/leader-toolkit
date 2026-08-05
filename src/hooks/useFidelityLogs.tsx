@@ -71,13 +71,37 @@ export function useFidelityLogs(initiativeId: string | undefined) {
         .single();
 
       if (error) throw error;
+
+      // Close the loop: each follow-up action becomes an open commitment
+      // instead of a field that is written once and never read again.
+      // Best-effort: a failure here (e.g. the commitments table not yet
+      // migrated) must never lose the observation itself.
+      const actions = (log.follow_up_actions || []).map((a) => a.trim()).filter(Boolean);
+      if (actions.length > 0 && data) {
+        try {
+          await supabase.from("commitments" as any).insert(
+            actions.map((title) => ({
+              initiative_id: initiativeId!,
+              title: title.slice(0, 200),
+              source: "observation",
+              source_id: (data as any).id,
+            }))
+          );
+        } catch {
+          /* observation saved; commitments can be added manually */
+        }
+      }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, log) => {
       queryClient.invalidateQueries({ queryKey: ["fidelity-logs", initiativeId] });
+      queryClient.invalidateQueries({ queryKey: ["commitments", initiativeId] });
+      const nActions = (log.follow_up_actions || []).filter((a) => a.trim()).length;
       toast({
         title: "Log saved",
-        description: "Fidelity log has been recorded.",
+        description: nActions > 0
+          ? `Fidelity log recorded. ${nActions} follow-up action${nActions === 1 ? "" : "s"} added to Commitments.`
+          : "Fidelity log has been recorded.",
       });
     },
     onError: (error: Error) => {

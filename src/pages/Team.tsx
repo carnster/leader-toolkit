@@ -9,6 +9,7 @@ import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { MeetingLog } from "@/components/MeetingLog";
+import { MeetingBrief } from "@/components/MeetingBrief";
 import { QueryErrorState } from "@/components/QueryErrorState";
 
 // Team composition guidance from Implement with IMPACT (Ch. 3): effective
@@ -234,6 +235,9 @@ export default function Team() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Meeting brief: walk into the team meeting already prepared */}
+      <MeetingBrief initiativeId={initiativeId || undefined} />
 
       {/* Meeting Log: the protocol made practical */}
       <MeetingLog

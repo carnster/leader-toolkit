@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GraduationCap, Sparkles, Loader2, CalendarDays, BookOpen, Users, Compass, Download } from "lucide-react";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useLearningPlans, type LearningPlan } from "@/hooks/useLearningPlans";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
+import { CoachingCyclesPanel } from "@/components/coaching/CoachingCyclesPanel";
 import { CombinedCalendar } from "@/components/learning/CombinedCalendar";
 import { exportLearningPlanPdf } from "@/components/learning/exportLearningPlanPdf";
 
@@ -17,6 +19,7 @@ const YEAR_OPTIONS = ["July 2026", "August 2026", "September 2026", "January 202
 export default function Learning() {
   const { initiatives, isLoading: loadingInitiatives } = useInitiatives();
   const { plans, generate, isGenerating } = useLearningPlans();
+  const { initiativeId: contextInitiativeId } = useInitiativeContext();
 
   const active = useMemo(
     () => initiatives.filter((i) => i.status === "active"),
@@ -155,6 +158,10 @@ export default function Learning() {
           )}
         </CardContent>
       </Card>
+
+      {/* Coaching cycles: the bridge from PD to changed classroom practice.
+          Scoped to the header's current initiative. */}
+      <CoachingCyclesPanel initiativeId={contextInitiativeId || undefined} />
 
       {/* Plan + Calendar */}
       <Tabs defaultValue="plan" className="w-full">

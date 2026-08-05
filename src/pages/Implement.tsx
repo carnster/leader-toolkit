@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { NoIngredientsNotice } from "@/components/NoIngredientsNotice";
+import { CommitmentsPanel } from "@/components/CommitmentsPanel";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
@@ -131,6 +132,10 @@ export default function Implement() {
       <WeeklyPulseForm initiativeId={effectiveInitiativeId} />
       <PulseSharePanel initiativeId={effectiveInitiativeId} />
       <PulseDashboard initiativeId={effectiveInitiativeId} />
+
+      {/* The loop-closer: support flags, observation follow-ups, and coaching
+          next steps all land here until someone closes them. */}
+      <CommitmentsPanel initiativeId={effectiveInitiativeId} />
 
       {/* Active Ingredients from Plan Stage */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">

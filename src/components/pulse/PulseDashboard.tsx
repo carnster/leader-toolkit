@@ -7,6 +7,9 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { usePulseCheckins, type PulseCheckin } from "@/hooks/usePulseCheckins";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
+import { useCommitments } from "@/hooks/useCommitments";
+import { Button } from "@/components/ui/button";
+import { ListChecks } from "lucide-react";
 
 const USED_LABEL: Record<string, string> = { yes: "Yes", partly: "Partly", not_yet: "Not yet" };
 
@@ -23,6 +26,7 @@ interface PulseDashboardProps {
 
 export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
   const { checkins, isError, weekOf } = usePulseCheckins(initiativeId);
+  const { commitments, missingTable: commitmentsMissing, create: createCommitment, isCreating } = useCommitments(initiativeId);
   const { teamMembers } = useTeamMembers(initiativeId);
 
   const thisWeek = useMemo(() => checkins.filter((c) => c.week_of === weekOf), [checkins, weekOf]);
@@ -137,20 +141,47 @@ export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
               <div>
                 <h4 className="text-sm font-semibold mb-2">Who needs support this week</h4>
                 <div className="space-y-2">
-                  {needsSupport.map((c) => (
-                    <div key={c.id} className="flex items-start gap-3 rounded-lg border border-l-[3px] border-l-destructive p-3">
-                      <div className="min-w-[120px]">
-                        <p className="text-sm font-medium">{c.respondent_name || "Anonymous"}</p>
-                        <p className="text-xs text-muted-foreground">Marked {USED_LABEL[c.used_status]}</p>
+                  {needsSupport.map((c) => {
+                    const logged = commitments.some((k) => k.source === "pulse" && k.source_id === c.id);
+                    return (
+                      <div key={c.id} className="flex items-start gap-3 rounded-lg border border-l-[3px] border-l-destructive p-3 flex-wrap">
+                        <div className="min-w-[120px]">
+                          <p className="text-sm font-medium">{c.respondent_name || "Anonymous"}</p>
+                          <p className="text-xs text-muted-foreground">Marked {USED_LABEL[c.used_status]}</p>
+                        </div>
+                        <p className="text-sm text-muted-foreground flex-1 min-w-[140px]">
+                          {c.needs_support?.trim() || "No note left; low traction reported."}
+                        </p>
+                        <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 self-center whitespace-nowrap">
+                          {reason(c)}
+                        </Badge>
+                        {/* The loop-closer: a flag is a request, not a statistic. */}
+                        {!commitmentsMissing && (
+                          logged ? (
+                            <Badge variant="secondary" className="self-center text-[10px] whitespace-nowrap">Commitment logged</Badge>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="self-center whitespace-nowrap"
+                              disabled={isCreating}
+                              onClick={() =>
+                                createCommitment({
+                                  title: `Support ${c.respondent_name || "an anonymous respondent"}: ${
+                                    (c.needs_support?.trim() || "low traction this week").slice(0, 80)
+                                  }`,
+                                  source: "pulse",
+                                  source_id: c.id,
+                                })
+                              }
+                            >
+                              <ListChecks className="mr-1 h-3.5 w-3.5" /> Log commitment
+                            </Button>
+                          )
+                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground flex-1">
-                        {c.needs_support?.trim() || "No note left; low traction reported."}
-                      </p>
-                      <Badge variant="outline" className="text-[10px] text-destructive border-destructive/40 self-center whitespace-nowrap">
-                        {reason(c)}
-                      </Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
