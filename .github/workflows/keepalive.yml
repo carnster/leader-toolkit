@@ -1,0 +1,32 @@
+name: Supabase Keep-Alive
+
+# Free-tier Supabase projects auto-pause after ~7 days with no activity.
+# This job makes a real request to the database on a schedule so the project
+# never goes idle long enough to pause. It runs daily (only needs to run
+# weekly) so a skipped/delayed GitHub run can't let the project slip past 7 days.
+# A failed ping shows as a red X on the Actions tab and emails the repo owner.
+
+on:
+  schedule:
+    - cron: "0 12 * * *"   # every day at 12:00 UTC
+  workflow_dispatch: {}      # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (real DB read)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/initiatives?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase responded: HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::error::Keep-alive ping failed (HTTP $code) - project may be paused or unreachable."
+            exit 1
+          fi
+          echo "Keep-alive ping succeeded."
