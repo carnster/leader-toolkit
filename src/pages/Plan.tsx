@@ -606,7 +606,13 @@ export default function Plan() {
 
       case "fidelity":
       case "adaptation":
-        return <QualityAssuranceSection activeIngredients={activeIngredients} initiativeId={effectiveInitiativeId} />;
+        return (
+          <QualityAssuranceSection
+            activeIngredients={activeIngredients}
+            initiativeId={effectiveInitiativeId}
+            section={currentSection}
+          />
+        );
 
       default:
         return (

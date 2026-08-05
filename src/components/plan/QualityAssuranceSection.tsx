@@ -1,47 +1,90 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Card, CardContent } from "@/components/ui/card";
+import { Eye, Settings, ArrowRight } from "lucide-react";
+import { FidelityMonitoringPlan } from "@/components/FidelityMonitoringPlan";
+import { AdaptationProtocol } from "@/components/AdaptationProtocol";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 
 interface QualityAssuranceSectionProps {
   activeIngredients: ActiveIngredient[];
   initiativeId: string;
+  /** "fidelity" or "adaptation", from the sidebar. Anything else shows both. */
+  section?: string;
 }
 
-export function QualityAssuranceSection({ activeIngredients, initiativeId }: QualityAssuranceSectionProps) {
-  return (
-    <div className="space-y-6">
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-primary" />
-            <CardTitle>Quality Assurance Guidelines</CardTitle>
-          </div>
-          <CardDescription>
-            Adaptation boundaries and monitoring plans have been moved to where they're actively used
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 rounded-lg border">
-            <h4 className="font-semibold mb-2">Adaptation Protocol</h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              Define core vs. adaptable elements when editing Active Ingredients in the Strategic Foundation section.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              💡 Each ingredient can be marked as CORE (non-negotiable) or ADAPTABLE with clear boundaries.
-            </p>
-          </div>
-          
-          <div className="p-4 rounded-lg border">
-            <h4 className="font-semibold mb-2">Fidelity Monitoring</h4>
-            <p className="text-sm text-muted-foreground mb-2">
-              Observation scheduling and fidelity tracking happen in the Monitoring Hub, which runs throughout implementation.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              💡 Visit the Monitoring Hub to conduct observations, view fidelity trends, and manage your monitoring calendar.
-            </p>
-          </div>
+/** Both halves of quality assurance, rendered in place.
+ *
+ *  This used to be a card explaining that fidelity monitoring "happens in the
+ *  Monitoring Hub" and adaptation boundaries are set "when editing Active
+ *  Ingredients". Both sidebar entries pointed here, so clicking either one
+ *  produced a page telling you to go somewhere else. Reading where the feature
+ *  went is not the same as using it, so the real components now render here. */
+export function QualityAssuranceSection({
+  activeIngredients,
+  initiativeId,
+  section,
+}: QualityAssuranceSectionProps) {
+  const showFidelity = section !== "adaptation";
+  const showAdaptation = section !== "fidelity";
+
+  if (activeIngredients.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6 text-center space-y-3">
+          <Eye className="h-10 w-10 text-muted-foreground mx-auto" aria-hidden="true" />
+          <p className="text-muted-foreground">
+            Quality assurance is built on your active ingredients: fidelity is measured against
+            them, and adaptation boundaries are defined on them.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Add active ingredients first in{" "}
+            <Link
+              to={`/plan?section=ingredients&initiative=${initiativeId}`}
+              className="text-primary underline underline-offset-2 font-medium"
+            >
+              Strategic Foundation
+            </Link>
+            .
+          </p>
         </CardContent>
       </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {showFidelity && (
+        <div id="fidelity-monitoring">
+          <FidelityMonitoringPlan
+            activeIngredients={activeIngredients}
+            initiativeId={initiativeId}
+          />
+        </div>
+      )}
+
+      {showAdaptation && (
+        <div id="adaptation-protocol" className="space-y-3">
+          <AdaptationProtocol activeIngredients={activeIngredients} />
+          <Card className="border-dashed">
+            <CardContent className="pt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <Settings className="h-5 w-5 text-muted-foreground mt-0.5" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">
+                  Core and adaptable status, and each ingredient's boundaries, are set on the
+                  ingredient itself.
+                </p>
+              </div>
+              <Link
+                to={`/plan?section=ingredients&initiative=${initiativeId}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary underline underline-offset-2"
+              >
+                Edit ingredients
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
