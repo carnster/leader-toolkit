@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.submit-pulse-via-link]
 verify_jwt = false
+
+[functions.get-pulse-context]
+verify_jwt = false

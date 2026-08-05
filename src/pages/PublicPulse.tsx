@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ const USED = [
 ];
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-pulse-via-link`;
+const CTX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-pulse-context`;
 
 /** A stable, anonymous per-browser key so a repeat tap updates one row. */
 function clientKeyFor(token: string): string {
@@ -33,6 +34,31 @@ export default function PublicPulse() {
   const [needs, setNeeds] = useState("");
   const [name, setName] = useState("");
   const [state, setState] = useState<"form" | "sending" | "done" | "closed">("form");
+
+  // Which initiative and practice this link is about. Names only; see the
+  // get-pulse-context function. Failure here is non-blocking: the form still
+  // works, it just falls back to generic wording.
+  const [ctx, setCtx] = useState<{ initiative: string | null; practice: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(CTX_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+          body: JSON.stringify({ token }),
+        });
+        if (cancelled) return;
+        if (res.ok) setCtx(await res.json());
+        else setState("closed");
+      } catch {
+        /* leave ctx null; the form degrades to generic copy */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
 
   const send = async () => {
     if (!used || !traction) return;
@@ -67,6 +93,9 @@ export default function PublicPulse() {
           <h1 className="text-xl font-semibold mt-3 flex items-center gap-2">
             <Activity className="h-5 w-5" aria-hidden="true" /> Weekly pulse
           </h1>
+          {ctx?.initiative && (
+            <p className="text-sm text-white/90 mt-1 font-medium">{ctx.initiative}</p>
+          )}
           <p className="text-sm text-white/80 mt-0.5">Ninety seconds on how the work is going this week.</p>
         </div>
 
@@ -90,8 +119,19 @@ export default function PublicPulse() {
             </div>
           ) : (
             <div className="space-y-5">
+              {ctx?.practice && (
+                <div className="rounded-lg border bg-muted/40 p-3">
+                  <p className="text-xs text-muted-foreground">This week&rsquo;s focus practice</p>
+                  <p className="text-sm font-medium mt-0.5">{ctx.practice}</p>
+                </div>
+              )}
+
               <fieldset className="space-y-2">
-                <legend className="text-sm font-medium">Did you use the practice this week?</legend>
+                <legend className="text-sm font-medium">
+                  {ctx?.practice
+                    ? `Did you use this practice this week?`
+                    : "Did you use the practice this week?"}
+                </legend>
                 <div className="flex rounded-lg border overflow-hidden">
                   {USED.map((o, i) => (
                     <button
