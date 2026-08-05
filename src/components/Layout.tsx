@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { InitiativeSwitcher } from "@/components/InitiativeSwitcher";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import impactLogo from "@/assets/impact-logo.png";
 import { stageColorFor } from "@/lib/stageColors";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
@@ -164,6 +165,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {/* User Menu & Notifications */}
           <div className="hidden lg:flex items-center gap-2">
             <InitiativeSwitcher />
+            <FeedbackButton />
             <Button
               variant="ghost"
               size="icon"
@@ -317,6 +319,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               ))}
               {/* Account actions (no avatar menu on mobile) */}
               <div className="my-2 border-t" aria-hidden="true" />
+              <div onClick={() => setMobileMenuOpen(false)}>
+                <FeedbackButton variant="mobile" />
+              </div>
               <Link
                 to="/settings"
                 onClick={() => setMobileMenuOpen(false)}

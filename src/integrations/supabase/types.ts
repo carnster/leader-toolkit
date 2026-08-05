@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -51,6 +51,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "active_ingredients_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adaptation_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decision: string
+          decision_rationale: string | null
+          description: string
+          id: string
+          ingredient_id: string | null
+          initiative_id: string
+          proposed_by: string
+          rationale: string | null
+          touches_core: boolean
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decision?: string
+          decision_rationale?: string | null
+          description: string
+          id?: string
+          ingredient_id?: string | null
+          initiative_id: string
+          proposed_by?: string
+          rationale?: string | null
+          touches_core?: boolean
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decision?: string
+          decision_rationale?: string | null
+          description?: string
+          id?: string
+          ingredient_id?: string | null
+          initiative_id?: string
+          proposed_by?: string
+          rationale?: string | null
+          touches_core?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adaptation_requests_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adaptation_requests_initiative_id_fkey"
             columns: ["initiative_id"]
             isOneToOne: false
             referencedRelation: "initiatives"
@@ -124,6 +181,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ai_usage_log: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       budget_items: {
         Row: {
@@ -241,6 +319,7 @@ export type Database = {
           checklist_completed: boolean | null
           chosen_approach: string | null
           created_at: string
+          equity_checklist: Json | null
           equity_notes: string | null
           evidence_base: string | null
           feasibility_factors: Json | null
@@ -263,6 +342,7 @@ export type Database = {
           checklist_completed?: boolean | null
           chosen_approach?: string | null
           created_at?: string
+          equity_checklist?: Json | null
           equity_notes?: string | null
           evidence_base?: string | null
           feasibility_factors?: Json | null
@@ -285,6 +365,7 @@ export type Database = {
           checklist_completed?: boolean | null
           chosen_approach?: string | null
           created_at?: string
+          equity_checklist?: Json | null
           equity_notes?: string | null
           evidence_base?: string | null
           feasibility_factors?: Json | null
@@ -525,6 +606,7 @@ export type Database = {
           description: string | null
           eric_category: string
           id: string
+          implementation_phase: string | null
           initiative_id: string
           resources_needed: string | null
           responsible_party: string | null
@@ -541,6 +623,7 @@ export type Database = {
           description?: string | null
           eric_category: string
           id?: string
+          implementation_phase?: string | null
           initiative_id: string
           resources_needed?: string | null
           responsible_party?: string | null
@@ -557,6 +640,7 @@ export type Database = {
           description?: string | null
           eric_category?: string
           id?: string
+          implementation_phase?: string | null
           initiative_id?: string
           resources_needed?: string | null
           responsible_party?: string | null
@@ -793,6 +877,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      learning_plans: {
+        Row: {
+          created_at: string
+          id: string
+          initiative_ids: string[]
+          owner_id: string
+          plan_data: Json
+          school_year_start: string | null
+          scope: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initiative_ids?: string[]
+          owner_id?: string
+          plan_data?: Json
+          school_year_start?: string | null
+          scope?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initiative_ids?: string[]
+          owner_id?: string
+          plan_data?: Json
+          school_year_start?: string | null
+          scope?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -1032,6 +1152,39 @@ export type Database = {
           },
         ]
       }
+      pilot_feedback: {
+        Row: {
+          category: string
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          page_path: string | null
+          screenshot_path: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          page_path?: string | null
+          screenshot_path?: string | null
+          user_id?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          page_path?: string | null
+          screenshot_path?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1061,6 +1214,165 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pulse_checkins: {
+        Row: {
+          client_key: string | null
+          created_at: string
+          focus_ingredient_id: string | null
+          id: string
+          initiative_id: string
+          needs_support: string | null
+          respondent_id: string | null
+          respondent_name: string | null
+          traction: number
+          updated_at: string
+          used_status: string
+          via_link_id: string | null
+          week_of: string
+        }
+        Insert: {
+          client_key?: string | null
+          created_at?: string
+          focus_ingredient_id?: string | null
+          id?: string
+          initiative_id: string
+          needs_support?: string | null
+          respondent_id?: string | null
+          respondent_name?: string | null
+          traction: number
+          updated_at?: string
+          used_status: string
+          via_link_id?: string | null
+          week_of: string
+        }
+        Update: {
+          client_key?: string | null
+          created_at?: string
+          focus_ingredient_id?: string | null
+          id?: string
+          initiative_id?: string
+          needs_support?: string | null
+          respondent_id?: string | null
+          respondent_name?: string | null
+          traction?: number
+          updated_at?: string
+          used_status?: string
+          via_link_id?: string | null
+          week_of?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pulse_checkins_focus_ingredient_id_fkey"
+            columns: ["focus_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pulse_checkins_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pulse_checkins_via_link_id_fkey"
+            columns: ["via_link_id"]
+            isOneToOne: false
+            referencedRelation: "pulse_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pulse_links: {
+        Row: {
+          active_ingredient_id: string | null
+          created_at: string
+          created_by: string
+          expected_staff_count: number | null
+          expires_at: string | null
+          id: string
+          initiative_id: string
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          active_ingredient_id?: string | null
+          created_at?: string
+          created_by?: string
+          expected_staff_count?: number | null
+          expires_at?: string | null
+          id?: string
+          initiative_id: string
+          revoked?: boolean
+          token?: string
+        }
+        Update: {
+          active_ingredient_id?: string | null
+          created_at?: string
+          created_by?: string
+          expected_staff_count?: number | null
+          expires_at?: string | null
+          id?: string
+          initiative_id?: string
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pulse_links_active_ingredient_id_fkey"
+            columns: ["active_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pulse_links_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      share_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          initiative_id: string
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          initiative_id: string
+          revoked?: boolean
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          initiative_id?: string
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "share_links_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sustainability_plans: {
         Row: {
@@ -1101,6 +1413,53 @@ export type Database = {
             foreignKeyName: "sustainability_plans_initiative_id_fkey"
             columns: ["initiative_id"]
             isOneToOne: true
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_meetings: {
+        Row: {
+          attendees: string[] | null
+          created_at: string
+          created_by: string
+          decisions: string | null
+          engage_notes: string | null
+          id: string
+          initiative_id: string
+          meeting_date: string
+          reflect_notes: string | null
+          unite_notes: string | null
+        }
+        Insert: {
+          attendees?: string[] | null
+          created_at?: string
+          created_by?: string
+          decisions?: string | null
+          engage_notes?: string | null
+          id?: string
+          initiative_id: string
+          meeting_date?: string
+          reflect_notes?: string | null
+          unite_notes?: string | null
+        }
+        Update: {
+          attendees?: string[] | null
+          created_at?: string
+          created_by?: string
+          decisions?: string | null
+          engage_notes?: string | null
+          id?: string
+          initiative_id?: string
+          meeting_date?: string
+          reflect_notes?: string | null
+          unite_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_meetings_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
             referencedRelation: "initiatives"
             referencedColumns: ["id"]
           },
