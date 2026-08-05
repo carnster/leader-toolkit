@@ -76,7 +76,17 @@ export function useCommitments(initiativeId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: key });
       toast({ title: "Commitment logged", description: "It stays on the list until someone closes it." });
     },
-    onError: (e: Error) => toast({ title: "Could not log the commitment", description: e.message, variant: "destructive" }),
+    onError: (e: Error & { code?: string }) => {
+      // The commitments_one_per_signal index backs the client-side dedupe:
+      // a race (two tabs, double-click) surfaces here as 23505 and simply
+      // means someone else logged it first. Not an error worth alarming over.
+      if (e.code === "23505") {
+        queryClient.invalidateQueries({ queryKey: key });
+        toast({ title: "Already logged", description: "This one is on the commitments list already." });
+        return;
+      }
+      toast({ title: "Could not log the commitment", description: e.message, variant: "destructive" });
+    },
   });
 
   const setStatus = useMutation({

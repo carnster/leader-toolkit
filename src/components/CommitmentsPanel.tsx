@@ -44,7 +44,10 @@ export function CommitmentsPanel({ initiativeId }: { initiativeId: string | unde
     );
   }
 
-  const recentDone = commitments.filter((c) => c.status !== "open").slice(0, 3);
+  const recentDone = commitments
+    .filter((c) => c.status !== "open")
+    .sort((a, b) => (b.resolved_at || b.created_at).localeCompare(a.resolved_at || a.created_at))
+    .slice(0, 3);
 
   const submit = () => {
     if (!title.trim()) return;

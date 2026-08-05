@@ -75,32 +75,39 @@ export function useFidelityLogs(initiativeId: string | undefined) {
       // Close the loop: each follow-up action becomes an open commitment
       // instead of a field that is written once and never read again.
       // Best-effort: a failure here (e.g. the commitments table not yet
-      // migrated) must never lose the observation itself.
-      const actions = (log.follow_up_actions || []).map((a) => a.trim()).filter(Boolean);
+      // migrated) must never lose the observation itself — but the toast must
+      // only claim what actually persisted, so count the returned rows.
+      // (Supabase resolves with {error} rather than throwing, so the result
+      // has to be inspected; a bare await-in-try silently "succeeds".)
+      const actions = Array.from(new Set((log.follow_up_actions || []).map((a) => a.trim()).filter(Boolean)));
+      let committed = 0;
       if (actions.length > 0 && data) {
         try {
-          await supabase.from("commitments" as any).insert(
-            actions.map((title) => ({
-              initiative_id: initiativeId!,
-              title: title.slice(0, 200),
-              source: "observation",
-              source_id: (data as any).id,
-            }))
-          );
+          const { data: rows, error: cErr } = await supabase
+            .from("commitments" as any)
+            .insert(
+              actions.map((title) => ({
+                initiative_id: initiativeId!,
+                title: title.slice(0, 200),
+                source: "observation",
+                source_id: (data as any).id,
+              }))
+            )
+            .select("id");
+          if (!cErr) committed = (rows as unknown[] | null)?.length ?? 0;
         } catch {
           /* observation saved; commitments can be added manually */
         }
       }
-      return data;
+      return { log: data, committed };
     },
-    onSuccess: (_data, log) => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["fidelity-logs", initiativeId] });
       queryClient.invalidateQueries({ queryKey: ["commitments", initiativeId] });
-      const nActions = (log.follow_up_actions || []).filter((a) => a.trim()).length;
       toast({
         title: "Log saved",
-        description: nActions > 0
-          ? `Fidelity log recorded. ${nActions} follow-up action${nActions === 1 ? "" : "s"} added to Commitments.`
+        description: result.committed > 0
+          ? `Fidelity log recorded. ${result.committed} follow-up action${result.committed === 1 ? "" : "s"} added to Commitments.`
           : "Fidelity log has been recorded.",
       });
     },

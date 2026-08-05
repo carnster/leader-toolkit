@@ -26,14 +26,24 @@ function useBriefData(initiativeId: string | undefined) {
         supabase.from("adaptation_requests").select("id, decision").eq("initiative_id", initiativeId!),
         supabase.from("pd_activities").select("id, completion_status").eq("initiative_id", initiativeId!),
       ]);
-      const ms = (milestones.data as any[]) || [];
+      // Supabase selects resolve (never reject) on Postgres errors, so an
+      // unchecked .data would render a failed query as a confident zero: a
+      // false all-clear in a brief that exists to surface problems. Track
+      // per-source validity and drop the stat rather than fake it.
+      const msOk = !milestones.error;
+      const adOk = !adaptations.error;
+      const pdOk = !pd.error;
+      const ms = msOk ? ((milestones.data as any[]) || []) : [];
       const overdueMilestones = ms.filter((m) => m.status !== "completed" && m.target_date && m.target_date < today);
-      const ad = (adaptations.data as any[]) || [];
-      const pdRows = (pd.data as any[]) || [];
+      const adRows = adOk ? ((adaptations.data as any[]) || []) : [];
+      const pdRows = pdOk ? ((pd.data as any[]) || []) : [];
       return {
+        msOk,
+        adOk,
+        pdOk,
         overdueMilestones,
         milestonesTotal: ms.length,
-        pendingAdaptations: ad.filter((a) => a.decision === "pending").length,
+        pendingAdaptations: adRows.filter((a) => a.decision === "pending").length,
         pdCompleted: pdRows.filter((p) => p.completion_status === "completed").length,
         pdTotal: pdRows.length,
       };
@@ -73,32 +83,36 @@ export function MeetingBrief({ initiativeId }: { initiativeId: string | undefine
     ...(coachingMissing ? [] : [
       { label: "Coaching follow-ups due", value: String(followUpsDue.length), warn: followUpsDue.length > 0 },
     ]),
-    ...(brief ? [
+    ...(brief?.msOk ? [
       { label: "Overdue milestones", value: String(brief.overdueMilestones.length), warn: brief.overdueMilestones.length > 0 },
+    ] : []),
+    ...(brief?.adOk ? [
       { label: "Adaptation requests pending", value: String(brief.pendingAdaptations), warn: brief.pendingAdaptations > 0 },
+    ] : []),
+    ...(brief?.pdOk ? [
       { label: "PD completed", value: brief.pdTotal ? `${brief.pdCompleted}/${brief.pdTotal}` : "–" },
     ] : []),
   ];
 
   const toMarkdown = () => {
     const lines: string[] = [
-      `# Implementation team brief — week of ${weekOf}`,
+      `# Implementation team brief: week of ${weekOf}`,
       "",
       `- Pulse: ${pulse.responses} responses, avg traction ${pulse.avg != null ? pulse.avg.toFixed(1) + "/4" : "n/a"}, ${pulse.flags} support flag(s)`,
     ];
     if (!commitmentsMissing) {
       lines.push(`- Commitments: ${openCommitments.length} open, ${overdueCommitments.length} overdue`);
-      overdueCommitments.slice(0, 5).forEach((c) => lines.push(`  - OVERDUE: ${c.title}${c.owner_name ? ` (${c.owner_name})` : ""} — due ${c.due_date}`));
+      overdueCommitments.slice(0, 5).forEach((c) => lines.push(`  - OVERDUE: ${c.title}${c.owner_name ? ` (${c.owner_name})` : ""}, due ${c.due_date}`));
     }
     if (!coachingMissing && followUpsDue.length) {
       lines.push(`- Coaching follow-ups due: ${followUpsDue.map((c) => c.member_name).join(", ")}`);
     }
-    if (brief) {
+    if (brief?.msOk) {
       lines.push(`- Milestones: ${brief.overdueMilestones.length} overdue of ${brief.milestonesTotal}`);
-      brief.overdueMilestones.slice(0, 5).forEach((m: any) => lines.push(`  - OVERDUE: ${m.milestone} — target ${m.target_date}`));
-      lines.push(`- Adaptation requests pending decision: ${brief.pendingAdaptations}`);
-      lines.push(`- PD: ${brief.pdCompleted}/${brief.pdTotal} completed`);
+      brief.overdueMilestones.slice(0, 5).forEach((m: any) => lines.push(`  - OVERDUE: ${m.milestone} (target ${m.target_date})`));
     }
+    if (brief?.adOk) lines.push(`- Adaptation requests pending decision: ${brief.pendingAdaptations}`);
+    if (brief?.pdOk) lines.push(`- PD: ${brief.pdCompleted}/${brief.pdTotal} completed`);
     lines.push("", "## Agenda", "1. Celebrate: what moved since last meeting", "2. Review flags and overdue items above; each leaves with an owner and a date", "3. Decide: pending adaptations", "4. Confirm next week's focus practice");
     return lines.join("\n");
   };

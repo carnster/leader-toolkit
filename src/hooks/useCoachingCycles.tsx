@@ -97,6 +97,7 @@ export function useCoachingCycles(initiativeId: string | undefined) {
     start: start.mutate,
     isStarting: start.isPending,
     update: update.mutate,
+    updateAsync: update.mutateAsync,
     isUpdating: update.isPending,
   };
 }

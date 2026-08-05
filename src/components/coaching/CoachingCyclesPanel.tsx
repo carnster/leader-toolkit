@@ -28,7 +28,7 @@ const OUTCOME_LABEL = { moved: "Practice moved", partly: "Partly moved", not_yet
  *  Training alone rarely changes classroom practice; this loop is what does.
  *  The agreed next step is logged as a commitment so nothing evaporates. */
 export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | undefined }) {
-  const { cycles, openCycles, isLoading, missingTable, start, isStarting, update, isUpdating } =
+  const { cycles, openCycles, isLoading, missingTable, start, isStarting, updateAsync, isUpdating } =
     useCoachingCycles(initiativeId);
   const { createAsync: createCommitment } = useCommitments(initiativeId);
   const { teamMembers } = useTeamMembers(initiativeId);
@@ -79,12 +79,16 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
     setAdvancing(c); setNotes(""); setNextStep(""); setFollowUpDate("");
   };
 
+  // Await every stage write and close the dialog ONLY on success. Closing
+  // optimistically made a failed save look successful, and a resubmit after a
+  // feedback-stage failure would create a second commitment for the same
+  // cycle (the first one had already persisted before the update failed).
   const submitAdvance = async (outcome?: CoachingCycle["outcome"]) => {
     if (!advancing) return;
     setSaving(true);
     try {
       if (advancing.stage === "observation") {
-        update({ id: advancing.id, stage: "feedback", observation_notes: notes.trim() || null, observed_at: new Date().toISOString().slice(0, 10) });
+        await updateAsync({ id: advancing.id, stage: "feedback", observation_notes: notes.trim() || null, observed_at: new Date().toISOString().slice(0, 10) });
       } else if (advancing.stage === "feedback") {
         let commitmentId: string | null = null;
         if (nextStep.trim()) {
@@ -101,14 +105,16 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
             /* commitment creation failing should not lose the coaching notes */
           }
         }
-        update({
+        await updateAsync({
           id: advancing.id, stage: "follow_up", feedback_notes: notes.trim() || null,
           next_step: nextStep.trim() || null, follow_up_date: followUpDate || null, commitment_id: commitmentId,
         });
       } else if (advancing.stage === "follow_up" && outcome) {
-        update({ id: advancing.id, stage: "closed", outcome, closed_at: new Date().toISOString() });
+        await updateAsync({ id: advancing.id, stage: "closed", outcome, closed_at: new Date().toISOString() });
       }
       setAdvancing(null);
+    } catch {
+      /* the hook's onError toast explains; keep the dialog open so nothing is lost */
     } finally {
       setSaving(false);
     }
