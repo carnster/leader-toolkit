@@ -105,7 +105,7 @@ export function ReadinessChecklist({
       label: "All core and adaptable ingredients identified with clear look-fors",
       required: true,
       autoCheck: ingredientsComplete,
-      actionLink: `/plan?section=strategic-foundation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=ingredients${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Define Active Ingredients"
     },
     {
@@ -114,7 +114,7 @@ export function ReadinessChecklist({
       label: "ERIC strategies defined for addressing barriers",
       required: true,
       autoCheck: strategiesCount > 0,
-      actionLink: `/plan?section=execution${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=strategies${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Add Strategies"
     },
     {
@@ -141,7 +141,7 @@ export function ReadinessChecklist({
       label: "Potential risks identified with mitigation strategies",
       required: true,
       autoCheck: risksCount > 0,
-      actionLink: `/plan?section=execution${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=risks${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Identify Risks"
     },
     {
@@ -150,7 +150,7 @@ export function ReadinessChecklist({
       label: "PD plan includes initial training and ongoing coaching",
       required: true,
       autoCheck: pdActivitiesCount > 0,
-      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=pd${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Plan PD Activities"
     },
     {
@@ -159,7 +159,7 @@ export function ReadinessChecklist({
       label: "Observation schedule and data collection methods defined",
       required: true,
       autoCheck: fidelityChecklistsCount > 0 || observationSchedulesCount > 0,
-      actionLink: `/plan?section=quality-assurance${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=fidelity${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Set Up Monitoring"
     },
     {
@@ -177,7 +177,7 @@ export function ReadinessChecklist({
       label: "Budget allocated and materials/supplies secured",
       required: true,
       autoCheck: budgetItemsCount > 0,
-      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=resources${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Manage Budget"
     },
     {
@@ -186,7 +186,7 @@ export function ReadinessChecklist({
       label: "Initial training for all implementers completed",
       required: true,
       autoCheck: pdActivitiesCount > 0,
-      actionLink: `/plan?section=team${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=pd${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Schedule Training"
     },
     {
@@ -204,7 +204,7 @@ export function ReadinessChecklist({
       label: "Guidelines for acceptable adaptations documented",
       required: false,
       autoCheck: activeIngredients.some(ing => ing.adaptable_boundaries && ing.adaptable_boundaries.length > 0),
-      actionLink: `/plan?section=strategic-foundation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
+      actionLink: `/plan?section=adaptation${initiativeId ? `&initiative=${initiativeId}` : ''}`,
       actionLabel: "Define Adaptation Protocol"
     },
   ];
