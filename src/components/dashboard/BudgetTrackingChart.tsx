@@ -42,9 +42,13 @@ export function BudgetTrackingChart({ initiativeId }: BudgetTrackingChartProps) 
     );
   }
 
+  // Angled labels only earn their keep once names would collide side by side.
+  const angled = budgets.length > 3;
+  const maxLabel = angled ? 20 : 32;
+
   const chartData = budgets.map(budget => ({
-    name: budget.initiativeTitle.length > 20 
-      ? budget.initiativeTitle.substring(0, 20) + "..." 
+    name: budget.initiativeTitle.length > maxLabel
+      ? budget.initiativeTitle.substring(0, maxLabel) + "..."
       : budget.initiativeTitle,
     estimated: budget.totalEstimated,
     actual: budget.totalActual,
@@ -63,15 +67,16 @@ export function BudgetTrackingChart({ initiativeId }: BudgetTrackingChartProps) 
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
+          <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: angled ? 24 : 0 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis 
-              dataKey="name" 
+            <XAxis
+              dataKey="name"
               className="text-xs"
               stroke="hsl(var(--muted-foreground))"
-              angle={-45}
-              textAnchor="end"
-              height={80}
+              angle={angled ? -45 : 0}
+              textAnchor={angled ? "end" : "middle"}
+              height={angled ? 90 : 32}
+              interval={0}
             />
             <YAxis 
               className="text-xs"
@@ -87,18 +92,21 @@ export function BudgetTrackingChart({ initiativeId }: BudgetTrackingChartProps) 
               labelStyle={{ color: "hsl(var(--foreground))" }}
               formatter={(value: number) => `$${value.toLocaleString()}`}
             />
-            <Legend />
-            <Bar 
-              dataKey="estimated" 
+            {/* Above the plot so angled axis labels can never collide with it. */}
+            <Legend verticalAlign="top" align="right" height={28} />
+            <Bar
+              dataKey="estimated"
               name="Estimated"
-              fill="hsl(var(--primary))" 
+              fill="hsl(var(--primary))"
               radius={[4, 4, 0, 0]}
+              maxBarSize={72}
             />
-            <Bar 
-              dataKey="actual" 
+            <Bar
+              dataKey="actual"
               name="Actual"
-              fill="hsl(var(--secondary))" 
+              fill="hsl(var(--success))"
               radius={[4, 4, 0, 0]}
+              maxBarSize={72}
             />
           </BarChart>
         </ResponsiveContainer>
