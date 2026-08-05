@@ -40,7 +40,8 @@ serve(async (req) => {
 
     const { data: link, error } = await admin
       .from("pulse_links")
-      .select("revoked, expires_at, initiatives(name), active_ingredients(name)")
+      // NB: initiatives uses `title`; active_ingredients uses `name`.
+      .select("revoked, expires_at, initiatives(title), active_ingredients(name)")
       .eq("token", token)
       .maybeSingle();
 
@@ -49,7 +50,7 @@ serve(async (req) => {
     if (link.expires_at && new Date(link.expires_at) < new Date()) return deny(400, "This link has expired.");
 
     // Names only. Nothing else leaves this function.
-    const initiative = (link as any).initiatives?.name ?? null;
+    const initiative = (link as any).initiatives?.title ?? null;
     const practice = (link as any).active_ingredients?.name ?? null;
 
     return new Response(JSON.stringify({ initiative, practice }), {
