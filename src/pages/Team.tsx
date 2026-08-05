@@ -10,6 +10,7 @@ import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { MeetingLog } from "@/components/MeetingLog";
 import { MeetingBrief } from "@/components/MeetingBrief";
+import { CalendarTaskExport } from "@/components/CalendarTaskExport";
 import { QueryErrorState } from "@/components/QueryErrorState";
 
 // Team composition guidance from Implement with IMPACT (Ch. 3): effective
@@ -147,10 +148,17 @@ export default function Team() {
             perspectives are present, and how it behaves when it meets.
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Member
-        </Button>
+        <div className="flex items-center gap-2">
+          <CalendarTaskExport
+            initiativeId={initiativeId}
+            initiativeTitle="Initiative"
+            variant="compact"
+          />
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Member
+          </Button>
+        </div>
       </div>
 
       {/* Roster */}

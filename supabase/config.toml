@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.get-pulse-context]
 verify_jwt = false
+
+[functions.calendar-feed]
+verify_jwt = false

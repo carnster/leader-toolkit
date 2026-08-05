@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
+import { CalendarTaskExport } from "@/components/CalendarTaskExport";
+import { CalendarSubscribePanel } from "@/components/CalendarSubscribePanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, TrendingUp, TrendingDown, Activity, Target, Lightbulb, CheckCircle2, Pencil, Archive, ArchiveRestore } from "lucide-react";
@@ -195,6 +197,17 @@ export default function Monitor() {
         <p className="text-muted-foreground mt-2">
           Continuous monitoring that runs throughout implementation, not a separate stage. Track progress, assess fidelity, and use data to drive improvement at any point in your journey.
         </p>
+        <div className="mt-4">
+          <CalendarTaskExport
+            initiativeId={effectiveInitiativeId}
+            initiativeTitle={currentInitiative?.title || "Initiative"}
+            variant="compact"
+          />
+        </div>
+
+        <div className="mt-4">
+          <CalendarSubscribePanel initiativeId={effectiveInitiativeId} />
+        </div>
         
         {/* Indicator Import Banner */}
         <div className="mt-4">
