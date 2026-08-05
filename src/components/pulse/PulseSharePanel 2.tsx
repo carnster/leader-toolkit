@@ -17,11 +17,10 @@ export function PulseSharePanel({ initiativeId }: PulseSharePanelProps) {
   const { activeIngredients } = useActiveIngredients(initiativeId);
   const [copied, setCopied] = useState(false);
 
-  const focusIngredient = useMemo(
-    () => activeIngredients.find((i: any) => i.is_core ?? i.isCore) ?? activeIngredients[0] ?? null,
+  const focusId = useMemo(
+    () => (activeIngredients.find((i: any) => i.is_core ?? i.isCore) ?? activeIngredients[0])?.id ?? null,
     [activeIngredients]
   );
-  const focusId = focusIngredient?.id ?? null;
 
   const url = link ? `${window.location.origin}/p/${link.token}` : "";
 
@@ -48,20 +47,6 @@ export function PulseSharePanel({ initiativeId }: PulseSharePanelProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {focusIngredient ? (
-          <div className="mb-4 rounded-lg border bg-muted/40 p-3">
-            <p className="text-xs text-muted-foreground">Staff will be asked about</p>
-            <p className="text-sm font-medium mt-0.5">{focusIngredient.name}</p>
-          </div>
-        ) : (
-          <div className="mb-4 rounded-lg border border-dashed p-3">
-            <p className="text-xs text-muted-foreground">No focus practice set</p>
-            <p className="text-sm mt-0.5">
-              Staff will be asked about the practice in general terms. Add active ingredients in Plan
-              &amp; Prepare, then rotate this link to name one.
-            </p>
-          </div>
-        )}
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading link...</p>
         ) : !link ? (

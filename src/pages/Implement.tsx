@@ -7,6 +7,7 @@ import { PlayCircle, Clock, CheckCircle2, MessageSquare, TrendingUp, Lightbulb }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImplementationBehaviors } from "@/components/ImplementationBehaviors";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { NoIngredientsNotice } from "@/components/NoIngredientsNotice";
 import { useImplementationStrategies } from "@/hooks/useImplementationStrategies";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useFidelityLogs } from "@/hooks/useFidelityLogs";
@@ -119,6 +120,12 @@ export default function Implement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* An initiative can reach Implement with no ingredients if Plan was skipped.
+          Say so rather than letting the stage render as a set of empty features. */}
+      {!isLoadingIngredients && !ingredientsError && activeIngredients.length === 0 && (
+        <NoIngredientsNotice stage="the Implement stage" />
+      )}
 
       {/* Weekly Implementation Pulse: implementer check-in + leader view */}
       <WeeklyPulseForm initiativeId={effectiveInitiativeId} />
