@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import type { LearningPlan } from "@/hooks/useLearningPlans";
+import { brandMarks, brandedFooter } from "@/lib/pdfBrand";
 
 const NAVY: [number, number, number] = [12, 36, 84];
 const CRIMSON: [number, number, number] = [168, 0, 0];
@@ -40,6 +41,7 @@ export function exportLearningPlanPdf(plan: LearningPlan) {
   // Header
   doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
   doc.rect(0, 0, pageW, 6, "F");
+  y = brandMarks(doc, margin) + 14;
   text(plan.title, { size: 18, color: NAVY, bold: true, gap: 2 });
   if (plan.school_year_start) text(`Year beginning ${plan.school_year_start}`, { size: 10, color: SLATE, gap: 10 });
 
@@ -83,5 +85,6 @@ export function exportLearningPlanPdf(plan: LearningPlan) {
     doc.text(`Page ${i} of ${pages}`, pageW - margin, pageH - 24, { align: "right" });
   }
 
+  brandedFooter(doc, plan.title);
   doc.save(`${plan.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.pdf`);
 }

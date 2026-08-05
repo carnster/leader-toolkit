@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
+import { brandedHeader, brandedFooter } from "@/lib/pdfBrand";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { parseDateOnly } from "@/lib/dates";
@@ -35,22 +36,10 @@ export function ImplementationPlanExport({
   const generatePDF = () => {
     try {
       const doc = new jsPDF();
-      let yPos = 20;
-
-      // Title
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.text("Implementation Plan", 105, yPos, { align: "center" });
-      yPos += 10;
-
-      doc.setFontSize(16);
-      doc.text(initiativeTitle, 105, yPos, { align: "center" });
-      yPos += 10;
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Generated: ${format(new Date(), "PPP")}`, 105, yPos, { align: "center" });
-      yPos += 15;
+      let yPos = brandedHeader(doc, {
+        title: "Implementation Plan",
+        subtitle: initiativeTitle,
+      });
 
       // Section 1: Strategic Foundation
       doc.setFontSize(14);
@@ -320,6 +309,7 @@ export function ImplementationPlanExport({
       }
 
       // Save PDF
+      brandedFooter(doc, initiativeTitle);
       doc.save(`${initiativeTitle.replace(/[^a-z0-9]/gi, "_")}_Implementation_Plan.pdf`);
 
       toast({

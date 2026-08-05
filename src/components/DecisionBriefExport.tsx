@@ -3,6 +3,7 @@ import { FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DecisionBrief } from "@/hooks/useDecisionBrief";
 import jsPDF from "jspdf";
+import { brandedHeader, brandedFooter } from "@/lib/pdfBrand";
 
 interface DecisionBriefExportProps {
   decisionBrief: DecisionBrief | null;
@@ -24,24 +25,13 @@ export function DecisionBriefExport({ decisionBrief, initiativeTitle }: Decision
 
     try {
       const doc = new jsPDF();
-      let yPos = 20;
       const lineHeight = 7;
       const pageHeight = doc.internal.pageSize.height;
       const margin = 20;
-
-      // Title
-      doc.setFontSize(18);
-      doc.setFont(undefined, 'bold');
-      doc.text("Decision Brief Summary", margin, yPos);
-      yPos += lineHeight * 2;
-
-      // Initiative Title
-      if (initiativeTitle) {
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'normal');
-        doc.text(initiativeTitle, margin, yPos);
-        yPos += lineHeight * 2;
-      }
+      let yPos = brandedHeader(doc, {
+        title: "Decision Brief Summary",
+        subtitle: initiativeTitle,
+      });
 
       // Helper to add section
       const addSection = (title: string, content: string | null) => {
@@ -91,11 +81,7 @@ export function DecisionBriefExport({ decisionBrief, initiativeTitle }: Decision
       addSection("Lagging Indicators", decisionBrief.lagging_indicators?.join(", ") || null);
       addSection("Measurement Timeline", decisionBrief.measurement_timeline?.join(", ") || null);
 
-      // Add footer with date
-      const dateStr = new Date().toLocaleDateString();
-      doc.setFontSize(8);
-      doc.setTextColor(128);
-      doc.text(`Generated on ${dateStr}`, margin, pageHeight - 10);
+      brandedFooter(doc, initiativeTitle);
 
       // Save the PDF
       const fileName = initiativeTitle 

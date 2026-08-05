@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { FileStack } from "lucide-react";
 import jsPDF from "jspdf";
+import { brandMarks, brandedFooter } from "@/lib/pdfBrand";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { parseDateOnly } from "@/lib/dates";
@@ -114,7 +115,9 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
       doc.text(initiativeTitle, pageW / 2, 44, { align: "center" });
       doc.setFontSize(9);
       doc.text(`Generated ${format(new Date(), "PPP")} · IMPACT Implementation Companion`, pageW / 2, 56, { align: "center" });
-      y = 84;
+      // Mark sits on white below the navy band: it is dark on transparent and
+      // would vanish on the band itself.
+      y = brandMarks(doc, 78) + 8;
       doc.setTextColor(40, 40, 40);
       doc.setFontSize(10);
       const intro = doc.splitTextToSize(
@@ -232,6 +235,7 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
         "No onboarding resources recorded yet."
       );
 
+      brandedFooter(doc, initiativeTitle);
       doc.save(`${initiativeTitle.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-evidence-pack.pdf`);
       toast({
         title: "Evidence Pack exported",

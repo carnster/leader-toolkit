@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { brandedHeader, brandedFooter } from "@/lib/pdfBrand";
 import autoTable from "jspdf-autotable";
 import { parseDateOnly } from "@/lib/dates";
 import { DashboardStats } from "@/hooks/useDashboardAnalytics";
@@ -38,26 +39,14 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId, 
     setExporting(true);
 
     try {
-      const doc = new jsPDF();
-      let yPos = 20;
-
-      // Header
-      doc.setFontSize(22);
-      doc.setFont("helvetica", "bold");
-      doc.text("Implementation Dashboard Report", 20, yPos);
-      yPos += 10;
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(120, 120, 120);
-      doc.text(`Generated: ${new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`, 20, yPos);
-      yPos += 5;
-
       const selectedInitiative = selectedInitiativeId
         ? initiatives.find(i => i.id === selectedInitiativeId)
         : null;
-      doc.text(selectedInitiative ? `Initiative: ${selectedInitiative.title}` : "Scope: All Initiatives", 20, yPos);
-      yPos += 10;
+      const doc = new jsPDF();
+      let yPos = brandedHeader(doc, {
+        title: "Implementation Dashboard Report",
+        subtitle: selectedInitiative ? selectedInitiative.title : "All initiatives",
+      });
 
       // Divider
       doc.setDrawColor(200, 200, 200);
@@ -239,6 +228,7 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId, 
         ? `dashboard-report-${selectedInitiative.title.replace(/\s+/g, "-")}.pdf`
         : `dashboard-report-${new Date().toISOString().slice(0, 10)}.pdf`;
 
+      brandedFooter(doc);
       doc.save(fileName);
       toast.success("Dashboard report exported successfully");
     } catch (error) {
