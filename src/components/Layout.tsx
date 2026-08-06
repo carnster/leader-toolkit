@@ -89,7 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1 min-w-0 lg:min-w-[41rem] overflow-x-auto [&::-webkit-scrollbar]:hidden">
+            <nav className="hidden lg:flex shrink-0 items-center space-x-1">
               {navigation.filter((item) => item.href !== "/").map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);
