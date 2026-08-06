@@ -78,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex min-h-16 flex-wrap items-center justify-between gap-y-1 py-1">
-          <div className="flex min-w-0 flex-1 items-center gap-4 xl:gap-8">
+          <div className="flex shrink-0 items-center gap-4 xl:gap-8">
             <Link to="/" className="flex items-center space-x-3">
               <img
                 src={impactLogo}
