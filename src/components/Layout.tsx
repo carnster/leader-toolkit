@@ -157,9 +157,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                   title={hub.name}
+                  aria-label={hub.name}
                 >
                   <hub.icon className="h-4 w-4 shrink-0" />
-                  <span className="hidden 2xl:inline">{hub.name}</span>
                 </Link>
               ))}
             </nav>
