@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "react-router-dom";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
 import { CalendarTaskExport } from "@/components/CalendarTaskExport";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import { CalendarSubscribePanel } from "@/components/CalendarSubscribePanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,9 @@ export default function Monitor() {
   const initiativeId = searchParams.get("initiative");
   const storedInitiativeId = typeof window !== "undefined" ? sessionStorage.getItem("initiativeId") : null;
   const effectiveInitiativeId = initiativeId || storedInitiativeId || "";
+  const { initiatives } = useInitiatives();
+  const currentInitiativeTitle =
+    initiatives?.find((i) => i.id === effectiveInitiativeId)?.title || "Initiative";
   
   const [editingIndicator, setEditingIndicator] = useState<Indicator | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -200,7 +204,7 @@ export default function Monitor() {
         <div className="mt-4">
           <CalendarTaskExport
             initiativeId={effectiveInitiativeId}
-            initiativeTitle={currentInitiative?.title || "Initiative"}
+            initiativeTitle={currentInitiativeTitle}
             variant="compact"
           />
         </div>

@@ -96,7 +96,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
           updateSchedule({
             id: schedule.id,
             status: "completed",
-            completed_observation_id: newLog.id,
+            completed_observation_id: newLog.log.id,
           });
         }
         onOpenChange(false);
