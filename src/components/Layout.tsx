@@ -33,6 +33,7 @@ import impactLogo from "@/assets/impact-logo.png";
 import { stageColorFor } from "@/lib/stageColors";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useStageCompletion, type StageStatus } from "@/hooks/useStageCompletion";
+import { useVersionCheck } from "@/hooks/useVersionCheck";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -55,6 +56,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const { initiativeId } = useInitiativeContext();
   const completion = useStageCompletion(initiativeId || undefined);
+  useVersionCheck();
 
   const STAGE_KEYS: Record<string, "decide" | "plan" | "implement" | "sustain"> = {
     "/decide": "decide",
