@@ -255,10 +255,10 @@ export default function Auth() {
                     <SelectContent>
                       <SelectItem value="teacher">Teacher</SelectItem>
                       <SelectItem value="implementation_lead">Implementation Lead</SelectItem>
-                      <SelectItem value="principal">Principal/Headteacher</SelectItem>
-                      <SelectItem value="district_leader">District/Trust Leader</SelectItem>
+                      <SelectItem value="principal">Principal</SelectItem>
+                      <SelectItem value="district_leader">District/CMO Leader</SelectItem>
                       <SelectItem value="data_manager">Data Manager</SelectItem>
-                      <SelectItem value="governor">Governor/Board Member</SelectItem>
+                      <SelectItem value="governor">Board Member</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { useNotificationPrefs, NOTIFICATION_TYPES } from "@/hooks/useNotificationPrefs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,7 @@ const ROLES = [
 ];
 
 export default function Settings() {
+  const { prefs, missingTable: prefsMissingTable, setPref } = useNotificationPrefs();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -113,6 +116,38 @@ export default function Settings() {
                 {saving ? "Saving..." : "Save Profile"}
               </Button>
             </>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>
+            Choose which alerts land in your bell. Everything is on by default; turning one off
+            stops future alerts of that type without deleting anything already there.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {prefsMissingTable ? (
+            <p className="text-sm text-muted-foreground">
+              Notification preferences arrive with the next database update for this workspace.
+            </p>
+          ) : (
+            NOTIFICATION_TYPES.map((t) => (
+              <div key={t.type} className="flex items-center justify-between gap-4 rounded-lg border p-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.detail}</p>
+                </div>
+                <Switch
+                  checked={prefs[t.type] !== false}
+                  onCheckedChange={(v) => setPref({ type: t.type, enabled: v })}
+                  aria-label={t.label}
+                />
+              </div>
+            ))
           )}
         </CardContent>
       </Card>

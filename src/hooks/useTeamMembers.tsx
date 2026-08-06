@@ -50,6 +50,7 @@ export function useTeamMembers(initiativeId: string | undefined) {
           initiative_id: initiativeId!,
           user_id: member.user_id || null,
           name: member.name || null,
+          invited_email: (member as any).invited_email || null,
           role_in_initiative: member.role_in_initiative!,
           responsibilities: member.responsibilities,
         })

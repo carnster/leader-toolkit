@@ -199,7 +199,7 @@ export default function Monitor() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Monitoring Hub</h1>
         <p className="text-muted-foreground mt-2">
-          Continuous monitoring that runs throughout implementation, not a separate stage. Track progress, assess fidelity, and use data to drive improvement at any point in your journey.
+          Continuous monitoring that runs throughout implementation, not a separate stage. Track progress, assess fidelity, and use data to drive improvement at any point in implementation.
         </p>
         <div className="mt-4">
           <CalendarTaskExport
@@ -225,9 +225,9 @@ export default function Monitor() {
               What to do in the Monitoring Hub
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• <strong>Track leading indicators:</strong> Monitor fidelity, adoption, and implementation quality</li>
-              <li>• <strong>Track lagging indicators:</strong> Measure student outcomes and intended results</li>
-              <li>• <strong>Run PDSA cycles:</strong> Test small changes to improve implementation effectiveness</li>
+              <li>• <strong>Track early signals (leading indicators):</strong> fidelity, adoption, and implementation quality</li>
+              <li>• <strong>Track outcomes (lagging indicators):</strong> student results against the goals you set</li>
+              <li>• <strong>Run PDSA cycles (Plan-Do-Study-Act):</strong> test small changes to improve implementation</li>
               <li>• <strong>Ask the right questions:</strong> "What are we trying to accomplish?" "How will we know it's working?"</li>
               <li>• <strong>Learn from data:</strong> Turn failure into growth; refine strategies based on evidence</li>
             </ul>

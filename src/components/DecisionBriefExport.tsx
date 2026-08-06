@@ -23,6 +23,35 @@ export function DecisionBriefExport({ decisionBrief, initiativeTitle }: Decision
       return;
     }
 
+    const placeholderPattern = /\[[^\]\n]{1,60}\]/;
+    const fieldsToScan: (string | null | undefined)[] = [
+      decisionBrief.problem_statement,
+      decisionBrief.target_group,
+      decisionBrief.goals,
+      decisionBrief.chosen_approach,
+      decisionBrief.evidence_base,
+      ...(decisionBrief.leading_indicators || []),
+      ...(decisionBrief.lagging_indicators || []),
+      ...(decisionBrief.measurement_timeline || []),
+    ];
+    let firstMatch: string | null = null;
+    for (const field of fieldsToScan) {
+      if (!field) continue;
+      const match = field.match(placeholderPattern);
+      if (match) {
+        firstMatch = match[0];
+        break;
+      }
+    }
+    if (firstMatch) {
+      toast({
+        title: "Replace the placeholders first",
+        description: `This brief still contains template placeholders like ${firstMatch}. Fill them in before exporting, since this document is written for boards and authorizers.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const doc = new jsPDF();
       const lineHeight = 7;
@@ -77,8 +106,8 @@ export function DecisionBriefExport({ decisionBrief, initiativeTitle }: Decision
         addSection("Feasibility Score", `${decisionBrief.feasibility_score}/10`);
       }
       
-      addSection("Leading Indicators", decisionBrief.leading_indicators?.join(", ") || null);
-      addSection("Lagging Indicators", decisionBrief.lagging_indicators?.join(", ") || null);
+      addSection("Early Signs of Progress", decisionBrief.leading_indicators?.join(", ") || null);
+      addSection("Longer-Term Outcome Measures", decisionBrief.lagging_indicators?.join(", ") || null);
       addSection("Measurement Timeline", decisionBrief.measurement_timeline?.join(", ") || null);
 
       brandedFooter(doc, initiativeTitle);

@@ -63,6 +63,9 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
     return "text-destructive";
   };
 
+  const scoreDescriptor = (s: number) =>
+    s >= 4 ? "Strong" : s >= 3 ? "Developing" : "Focus area: pair with coaching";
+
   return (
     <div className="space-y-6">
       {/* Overall Fidelity Score */}
@@ -89,7 +92,10 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
               <span className="text-sm text-muted-foreground capitalize">{overallTrend}</span>
             </div>
           </div>
-          
+          {fidelityLogs.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-1">{scoreDescriptor(avgFidelity)}</p>
+          )}
+
           {recentLogs.length > 0 && (
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-muted-foreground">
@@ -113,9 +119,9 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
             <p className="text-sm text-muted-foreground text-center py-8">Loading fidelity data...</p>
           ) : fidelityByIngredient.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-sm text-muted-foreground">No fidelity data yet</p>
+              <p className="text-sm text-muted-foreground">No observations logged yet</p>
               <p className="text-xs text-muted-foreground mt-2">
-                Complete observations to see fidelity scores
+                Log your first observation to start seeing trends here.
               </p>
             </div>
           ) : (
@@ -134,11 +140,16 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
                         <p className="text-xs text-muted-foreground">{ingredient.description}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      {getTrendIcon(trend)}
-                      <span className={`text-2xl font-bold ${getScoreColor(avgScore)}`}>
-                        {avgScore > 0 ? avgScore.toFixed(1) : "—"}
-                      </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-3">
+                        {getTrendIcon(trend)}
+                        <span className={`text-2xl font-bold ${getScoreColor(avgScore)}`}>
+                          {avgScore > 0 ? avgScore.toFixed(1) : "—"}
+                        </span>
+                      </div>
+                      {avgScore > 0 && (
+                        <span className="text-xs text-muted-foreground">{scoreDescriptor(avgScore)}</span>
+                      )}
                     </div>
                   </div>
 

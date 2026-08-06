@@ -218,7 +218,7 @@ export default function Plan() {
         toast({ title: "Active ingredients generated!", description: `${data.active_ingredients.length} components added from your chosen approach.` });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to generate active ingredients.", variant: "destructive" });
+      toast({ title: "Couldn't save", description: error.message || "Failed to generate active ingredients.", variant: "destructive" });
     } finally {
       setIsGeneratingIngredients(false);
     }
@@ -251,10 +251,10 @@ export default function Plan() {
             status: 'planned',
           });
         }
-        toast({ title: "Implementation strategies generated!", description: `${data.strategies.length} ERIC strategies added based on your feasibility assessment.` });
+        toast({ title: "Implementation strategies generated!", description: `${data.strategies.length} implementation strategies added based on your feasibility assessment.` });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to generate implementation strategies.", variant: "destructive" });
+      toast({ title: "Couldn't save", description: error.message || "Failed to generate implementation strategies.", variant: "destructive" });
     } finally {
       setIsGeneratingStrategies(false);
     }
@@ -285,7 +285,7 @@ export default function Plan() {
         toast({ title: "Risks generated!", description: `${data.risks.length} risks identified from your feasibility data.` });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Couldn't save", description: error.message, variant: "destructive" });
     } finally {
       setIsGeneratingRisks(false);
     }
@@ -322,7 +322,7 @@ export default function Plan() {
         toast({ title: "Timeline generated!", description: `${data.milestones.length} milestones created.` });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Couldn't save", description: error.message, variant: "destructive" });
     } finally {
       setIsGeneratingTimeline(false);
     }
@@ -437,7 +437,7 @@ export default function Plan() {
         });
       }
     } catch (error: any) {
-      toast({ title: "Error", description: "Some components failed to generate. Please try individual sections.", variant: "destructive" });
+      toast({ title: "Couldn't save", description: "Some components failed to generate. Please try individual sections.", variant: "destructive" });
     } finally {
       setIsGeneratingFullPlan(false);
       setGenStep(null);

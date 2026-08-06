@@ -37,7 +37,7 @@ export function CommunicationSection({ initiativeId }: CommunicationSectionProps
             <div className="rounded-lg border p-4">
               <h4 className="font-semibold mb-2">Implementation Science</h4>
               <p className="text-sm text-muted-foreground">
-                Communication is a critical ERIC strategy that supports stakeholder relationships and engagement.
+                Communication is a core implementation strategy (from the ERIC framework) that supports stakeholder relationships and engagement.
               </p>
             </div>
           </div>

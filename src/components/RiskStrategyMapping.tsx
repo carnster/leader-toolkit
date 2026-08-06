@@ -128,7 +128,7 @@ export function RiskStrategyMapping({ initiativeId }: RiskStrategyMappingProps) 
             <div className="space-y-3">
               {Object.entries(strategiesByCategory).map(([category, categoryStrategies]) => (
                 <div key={category} className="p-4 rounded-lg border bg-muted/30">
-                  <h5 className="font-semibold text-sm mb-2">{category}</h5>
+                  <h5 className="font-semibold text-sm mb-2">{ericLabel(category)}</h5>
                   <div className="space-y-2">
                     {categoryStrategies.map((strategy) => {
                       const addressedRisks = risks.filter(

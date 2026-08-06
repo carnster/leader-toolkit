@@ -120,7 +120,7 @@ export function AICopilot({ initiativeId, context }: AICopilotProps) {
       {/* Slide-out panel */}
       <div
         className={cn(
-          "fixed bottom-0 right-0 h-[600px] w-[400px] bg-background border-l border-t shadow-2xl transition-transform duration-300 z-50 rounded-tl-lg",
+          "fixed bottom-0 right-0 h-[600px] w-[400px] max-w-[calc(100vw-1rem)] max-h-[85vh] bg-background border-l border-t shadow-2xl transition-transform duration-300 z-50 rounded-tl-lg",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >

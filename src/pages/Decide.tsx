@@ -44,6 +44,44 @@ const exploreChecklist = [
   { id: "feasibility", text: "Feasibility assessed", required: true },
 ];
 
+
+// Payload-shape normalization for the decision brief. The autosave used to send
+// every field on every save, so a stale tab overwrote newer server data with
+// whatever it loaded at mount. Saves now send only fields that differ from the
+// last-known server row, and unedited fields self-heal from refetches.
+const BRIEF_FIELDS = [
+  "problem_statement","target_group","baseline_data","root_causes","goals",
+  "equity_notes","stakeholder_input","chosen_approach","evidence_base",
+  "feasibility_factors","leading_indicators","lagging_indicators",
+  "measurement_timeline","equity_checklist",
+] as const;
+
+function snapshotFromRow(row: any): Record<string, any> {
+  return {
+    problem_statement: row.problem_statement || "",
+    target_group: row.target_group || "",
+    baseline_data: row.baseline_data || "",
+    root_causes: row.root_causes && row.root_causes.length > 0 ? row.root_causes : null,
+    goals: row.goals || "",
+    equity_notes: row.equity_notes || "",
+    stakeholder_input: row.stakeholder_input || "",
+    chosen_approach: row.chosen_approach || "",
+    evidence_base: row.evidence_base || "",
+    feasibility_factors: row.feasibility_factors || {
+      time_scheduling: 0, staff_capacity: 0, resources_budget: 0,
+      leadership_support: 0, school_culture: 0,
+    },
+    leading_indicators: row.leading_indicators && row.leading_indicators.length > 0 ? row.leading_indicators : null,
+    lagging_indicators: row.lagging_indicators && row.lagging_indicators.length > 0 ? row.lagging_indicators : null,
+    measurement_timeline: row.measurement_timeline && row.measurement_timeline.length > 0 ? row.measurement_timeline : null,
+    equity_checklist: row.equity_checklist || { checked: {}, notes: {} },
+  };
+}
+
+function fieldsDiffer(a: any, b: any): boolean {
+  return JSON.stringify(a ?? null) !== JSON.stringify(b ?? null);
+}
+
 export default function Decide() {
   const [step, setStep] = useState(1);
   const [searchParams] = useSearchParams();
@@ -109,6 +147,7 @@ export default function Decide() {
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isUserEditingRef = useRef(false);
   const hasLoadedInitialDataRef = useRef(false);
+  const serverSnapshotRef = useRef<Record<string, any> | null>(null);
   
   // Current initiative title for export
   const [initiativeTitle, setInitiativeTitle] = useState<string>("");
@@ -184,8 +223,62 @@ export default function Decide() {
           school_culture: decisionBrief.feasibility_factors.school_culture || 0,
         });
       }
+      serverSnapshotRef.current = snapshotFromRow(decisionBrief);
     }
   }, [decisionBrief]);
+
+  // Stale-tab self-heal: when a refetch brings newer server data, adopt it for
+  // any field the user has not edited in this tab. Edited fields keep local
+  // values; the diffed save writes only those, so two devices no longer
+  // overwrite each other's work wholesale.
+  useEffect(() => {
+    if (!decisionBrief || !hasLoadedInitialDataRef.current || isUserEditingRef.current) return;
+    const snap = serverSnapshotRef.current;
+    if (!snap) return;
+    const server = snapshotFromRow(decisionBrief);
+    const cur: Record<string, any> = {
+      problem_statement: problemStatement,
+      target_group: targetGroup,
+      baseline_data: baselineData,
+      root_causes: rootCauses ? rootCauses.split(",").map((x) => x.trim()) : null,
+      goals,
+      equity_notes: equityNotes,
+      stakeholder_input: stakeholderInput,
+      chosen_approach: chosenApproach,
+      evidence_base: evidenceBase,
+      feasibility_factors: feasibilityFactors,
+      leading_indicators: leadingIndicators.length > 0 ? leadingIndicators : null,
+      lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
+      measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
+      equity_checklist: { checked: equityChecked, notes: equityChecklistNotes },
+    };
+    for (const k of BRIEF_FIELDS) {
+      if (!fieldsDiffer(cur[k], snap[k]) && fieldsDiffer(server[k], snap[k])) {
+        const v: any = server[k];
+        switch (k) {
+          case "problem_statement": setProblemStatement(v || ""); break;
+          case "target_group": setTargetGroup(v || ""); break;
+          case "baseline_data": setBaselineData(v || ""); break;
+          case "root_causes": setRootCauses(v ? v.join(", ") : ""); break;
+          case "goals": setGoals(v || ""); break;
+          case "equity_notes": setEquityNotes(v || ""); break;
+          case "stakeholder_input": setStakeholderInput(v || ""); break;
+          case "chosen_approach": setChosenApproach(v || ""); break;
+          case "evidence_base": setEvidenceBase(v || ""); break;
+          case "feasibility_factors": setFeasibilityFactors(v); break;
+          case "leading_indicators": setLeadingIndicators(v || []); break;
+          case "lagging_indicators": setLaggingIndicators(v || []); break;
+          case "measurement_timeline": setMeasurementTimeline(v || []); break;
+          case "equity_checklist":
+            setEquityChecked(v?.checked || {});
+            setEquityChecklistNotes(v?.notes || {});
+            break;
+        }
+        snap[k] = server[k];
+      }
+    }
+  }, [decisionBrief]);
+
   
   // Auto-calculate checklist completion based on form data
   const isStep1Complete = problemStatement && targetGroup && baselineData && rootCauses; // Problem Definition
@@ -294,25 +387,45 @@ export default function Decide() {
     // Await the actual write: the save indicator must only turn green when
     // the row really persisted, not when the request was merely fired.
     try {
-      await upsertDecisionBriefAsync({
-      initiative_id: idToUse,
-      problem_statement: problemStatement,
-      target_group: targetGroup,
-      baseline_data: baselineData,
-      root_causes: rootCauses ? rootCauses.split(",").map(s => s.trim()) : null,
-      goals: goals,
-      equity_notes: equityNotes,
-      stakeholder_input: stakeholderInput,
-      chosen_approach: chosenApproach,
-      evidence_base: evidenceBase,
-      feasibility_score: calculatedFeasibilityScore,
-      feasibility_factors: feasibilityFactors,
-      leading_indicators: leadingIndicators.length > 0 ? leadingIndicators : null,
-      lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
-      measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
-      checklist_completed: completionRate === 100,
-      equity_checklist: { checked: equityChecked, notes: equityChecklistNotes },
-      });
+      const full: Record<string, any> = {
+        problem_statement: problemStatement,
+        target_group: targetGroup,
+        baseline_data: baselineData,
+        root_causes: rootCauses ? rootCauses.split(",").map(s => s.trim()) : null,
+        goals: goals,
+        equity_notes: equityNotes,
+        stakeholder_input: stakeholderInput,
+        chosen_approach: chosenApproach,
+        evidence_base: evidenceBase,
+        feasibility_factors: feasibilityFactors,
+        leading_indicators: leadingIndicators.length > 0 ? leadingIndicators : null,
+        lagging_indicators: laggingIndicators.length > 0 ? laggingIndicators : null,
+        measurement_timeline: measurementTimeline.length > 0 ? measurementTimeline : null,
+        equity_checklist: { checked: equityChecked, notes: equityChecklistNotes },
+      };
+      const snap = serverSnapshotRef.current;
+      let payload: Record<string, any>;
+      if (!snap) {
+        // First save for this initiative: the row does not exist, send everything.
+        payload = { ...full, feasibility_score: calculatedFeasibilityScore, checklist_completed: completionRate === 100 };
+      } else {
+        payload = {};
+        for (const k of BRIEF_FIELDS) {
+          if (fieldsDiffer(full[k], snap[k])) payload[k] = full[k];
+        }
+        // Derived fields ride along only when their inputs changed, so a tab
+        // with untouched sliders can never null out a saved score.
+        if ("feasibility_factors" in payload) payload.feasibility_score = calculatedFeasibilityScore;
+        if (Object.keys(payload).length === 0) return true; // nothing changed in this tab
+        payload.checklist_completed = completionRate === 100;
+      }
+      await upsertDecisionBriefAsync({ initiative_id: idToUse, ...payload } as any);
+      const base = snap || snapshotFromRow({});
+      for (const k of BRIEF_FIELDS) {
+        if (k in payload) base[k] = full[k];
+        else if (!snap) base[k] = full[k];
+      }
+      serverSnapshotRef.current = base;
     } catch {
       // The mutation's onError toast already explains the failure
       return false;
@@ -515,7 +628,7 @@ export default function Decide() {
     
     if (error) {
       toast({
-        title: "Error",
+        title: "Couldn’t save",
         description: "Failed to update initiative stage.",
         variant: "destructive",
       });
@@ -523,7 +636,7 @@ export default function Decide() {
     }
     
     toast({
-      title: "Initiative adopted! 🎉",
+      title: "Initiative adopted",
       description: "Decision brief complete. Moving to Plan & Prepare stage.",
     });
     
@@ -852,7 +965,7 @@ export default function Decide() {
               <Label htmlFor="problem">Problem Statement</Label>
               <Textarea
                 id="problem"
-                placeholder="Example: Grade 8 students are not meeting expected growth in mathematics. Only 45% scored proficient on the fall benchmark, compared to 62% for the same cohort last year. The gap is most pronounced for economically disadvantaged students (32% vs 48%)."
+                placeholder="Example: Grade 8 students are not meeting expected growth in mathematics. Only 45% scored proficient on the fall benchmark, compared to 62% for the same cohort last year. The gap is most pronounced for students from low-income households (32% vs 48%)."
                 rows={5}
                 value={problemStatement}
                 onChange={(e) => setProblemStatement(e.target.value)}
@@ -868,7 +981,7 @@ export default function Decide() {
               <Label htmlFor="target">Target Student Group</Label>
               <Input
                 id="target"
-                placeholder="Example: Grade 8 students, with a priority focus on economically disadvantaged students in sections 8-2 and 8-3 (approximately 65 students)"
+                placeholder="Example: Grade 8 students, with a priority focus on students from low-income households in sections 8-2 and 8-3 (approximately 65 students)"
                 value={targetGroup}
                 onChange={(e) => setTargetGroup(e.target.value)}
                 onFocus={handleInputFocus}
@@ -1434,7 +1547,7 @@ export default function Decide() {
               <Label htmlFor="equity">Additional Equity & Access Notes</Label>
               <Textarea
                 id="equity"
-                placeholder="Example: Disadvantaged students are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for multilingual families. Consider timing to avoid clash with Ramadan..."
+                placeholder="Example: Students from low-income households are disproportionately affected by this problem (32% vs 48% at expected). We need to ensure intervention doesn't create additional barriers. Translation of materials needed for multilingual families. Consider timing to avoid clash with Ramadan..."
                 rows={4}
                 value={equityNotes}
                 onChange={(e) => setEquityNotes(e.target.value)}
@@ -1784,7 +1897,7 @@ export default function Decide() {
                     Outcome measures that show the ultimate impact of your initiative. These confirm whether you're achieving your goals but take longer to see results.
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                    Examples: End of half-term assessments, Student confidence surveys, Behavior incident rates
+                    Examples: End of quarter assessments, Student confidence surveys, Behavior incident rates
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -1796,7 +1909,7 @@ export default function Decide() {
                       isUserEditingRef.current = false;
                       triggerAutoSave();
                     }}
-                    placeholder="e.g., End of half-term assessments (Termly)"
+                    placeholder="e.g., End of quarter assessments (Quarterly)"
                     itemClassName="bg-green-50 text-green-900 border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-800"
                     itemTypeName="lagging indicator"
                   />
@@ -1812,7 +1925,7 @@ export default function Decide() {
                     The specific methods and schedules for gathering your indicator data. These are the practical steps for how you'll track progress.
                   </p>
                   <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
-                    Examples: Weekly fidelity walkthroughs, Monthly student surveys, Termly standardized assessments
+                    Examples: Weekly fidelity walkthroughs, Monthly student surveys, Quarterly standardized assessments
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -1877,7 +1990,7 @@ export default function Decide() {
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
-              <span>Select ERIC implementation strategies to address identified barriers</span>
+              <span>Select proven implementation strategies to address identified barriers</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="h-4 w-4 text-secondary mt-0.5 flex-shrink-0" />
@@ -1895,14 +2008,14 @@ export default function Decide() {
       <AlertDialog open={skipWarningOpen} onOpenChange={setSkipWarningOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Step Incomplete</AlertDialogTitle>
+            <AlertDialogTitle>This step isn’t finished yet</AlertDialogTitle>
             <AlertDialogDescription>
               You haven't completed <strong>{getStepName(step)}</strong>. Skipping this step may impact your implementation plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 px-6">
             <div className="rounded-lg bg-destructive/10 p-3 space-y-2">
-              <p className="font-semibold text-destructive">Potential Impact:</p>
+              <p className="font-semibold text-destructive">If you continue now:</p>
               <ul className="text-sm space-y-1 ml-4 list-disc">
                 <li>Missing critical information for decision-making</li>
                 <li>Incomplete decision brief documentation</li>
@@ -1915,9 +2028,9 @@ export default function Decide() {
             </p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Go Back & Complete</AlertDialogCancel>
+            <AlertDialogCancel>Keep working on this</AlertDialogCancel>
             <AlertDialogAction onClick={confirmSkipStep} className="bg-destructive hover:bg-destructive/90">
-              Skip Anyway
+              Continue anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

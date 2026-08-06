@@ -58,7 +58,7 @@ export function ImplementationPlanExport({
           head: [["Name", "Type", "Description"]],
           body: activeIngredients.map((ing) => [
             ing.name,
-            ing.is_core ? "CORE" : "ADAPTABLE",
+            ing.is_core ? "CORE" : "Adaptable",
             ing.description || "-",
           ]),
           theme: "grid",
@@ -80,7 +80,7 @@ export function ImplementationPlanExport({
       }
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("Implementation Strategies (ERIC)", 14, yPos);
+      doc.text("Implementation Strategies", 14, yPos);
       yPos += 5;
 
       if (strategies.length > 0) {

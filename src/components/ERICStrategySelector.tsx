@@ -76,7 +76,7 @@ export function ERICStrategySelector({ currentStage = "plan", onSelect }: ERICSt
             <CardTitle>ERIC Implementation Strategies Library</CardTitle>
             <CardDescription>
               Expert Recommendations for Implementing Change (Powell et al., 2015), adapted for schools and tagged
-              to the implementation phase when each strategy matters most (ISST).
+              to the implementation phase when each strategy matters most.
             </CardDescription>
           </div>
         </div>

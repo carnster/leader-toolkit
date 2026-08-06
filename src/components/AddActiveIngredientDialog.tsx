@@ -69,7 +69,7 @@ export function AddActiveIngredientDialog({ initiativeId }: AddActiveIngredientD
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Component Name *</Label>
+            <Label htmlFor="name">Ingredient Name *</Label>
             <Input
               id="name"
               value={formData.name}

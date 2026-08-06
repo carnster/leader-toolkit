@@ -38,7 +38,7 @@ export function CommitmentsPanel({ initiativeId }: { initiativeId: string | unde
     return (
       <Card className="border-dashed">
         <CardContent className="pt-6 text-sm text-muted-foreground">
-          Commitments needs a database update before it can turn support flags and follow-ups into a tracked list.
+          Commitment tracking is not switched on for this workspace yet. It arrives with the next database update.
         </CardContent>
       </Card>
     );
@@ -86,7 +86,7 @@ export function CommitmentsPanel({ initiativeId }: { initiativeId: string | unde
           <p className="text-sm text-muted-foreground">Loading commitments...</p>
         ) : open.length === 0 && recentDone.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing open. Log commitments from pulse flags below, from observations, or add one here.
+            Nothing open yet. Commitments arrive here from pulse flags, observations, and coaching next steps, or add one directly.
           </p>
         ) : (
           <>

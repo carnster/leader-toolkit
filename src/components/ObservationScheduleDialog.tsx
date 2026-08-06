@@ -27,7 +27,7 @@ const OBSERVATION_TYPES = [
   { value: "direct_observation", label: "Direct Observation" },
   { value: "self_report", label: "Self-Report" },
   { value: "artifact_review", label: "Artifact Review" },
-  { value: "coaching_note", label: "Coaching Note" },
+  { value: "coaching_note", label: "Coaching Notes" },
 ];
 
 export function ObservationScheduleDialog({ schedule, open, onOpenChange, initiativeId }: ObservationScheduleDialogProps) {
@@ -128,7 +128,7 @@ export function ObservationScheduleDialog({ schedule, open, onOpenChange, initia
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="active_ingredient">Active Ingredient</Label>
+              <Label htmlFor="active_ingredient">Ingredient Being Observed</Label>
               <Select value={formData.active_ingredient_id} onValueChange={(value) => setFormData({ ...formData, active_ingredient_id: value })}>
                 <SelectTrigger id="active_ingredient">
                   <SelectValue placeholder="Select ingredient to observe" />

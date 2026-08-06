@@ -77,7 +77,7 @@ export function EditActiveIngredientDialog({ ingredient, open, onOpenChange, ini
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Component Name *</Label>
+              <Label htmlFor="name">Ingredient Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -118,7 +118,7 @@ export function EditActiveIngredientDialog({ ingredient, open, onOpenChange, ini
                 <div className="flex gap-4">
                   <Button
                     type="button"
-                    variant={formData.is_core ? "destructive" : "outline"}
+                    variant={formData.is_core ? "default" : "outline"}
                     onClick={() => setFormData({ ...formData, is_core: true })}
                     className="flex-1"
                   >

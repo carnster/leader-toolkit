@@ -139,9 +139,9 @@ export function MilestoneDialog({ milestone, open, onOpenChange, initiativeId, t
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Decide">Decide</SelectItem>
-                  <SelectItem value="Plan and Prepare">Plan and Prepare</SelectItem>
+                  <SelectItem value="Plan and Prepare">Plan & Prepare</SelectItem>
                   <SelectItem value="Implement">Implement</SelectItem>
-                  <SelectItem value="Spread and Sustain">Spread and Sustain</SelectItem>
+                  <SelectItem value="Spread and Sustain">Spread & Sustain</SelectItem>
                 </SelectContent>
               </Select>
               

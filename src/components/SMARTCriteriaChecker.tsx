@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -92,6 +92,9 @@ export function SMARTCriteriaChecker({ goals }: SMARTCriteriaCheckerProps) {
             {metCount}/{checks.length}
           </Badge>
         </div>
+        <CardDescription>
+          Specific, Measurable, Achievable, Relevant, Time-bound, Inclusive, Equitable
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         {checks.map((check, index) => (

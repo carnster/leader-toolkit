@@ -70,7 +70,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="min-h-screen flex items-center justify-center p-6">
           <div className="max-w-md text-center space-y-4">
             <AlertTriangle className="h-10 w-10 text-destructive mx-auto" aria-hidden="true" />
-            <h1 className="text-xl font-semibold">Something went wrong</h1>
+            <h1 className="text-xl font-semibold">This page hit a display error. Refresh to continue.</h1>
             <p className="text-sm text-muted-foreground">
               Your data is safe. This is a display error, not data loss. Try again, or return to the
               dashboard. If it keeps happening, note what you were doing and report it.

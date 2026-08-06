@@ -213,7 +213,7 @@ export default function Sustain() {
           <Shield className="h-4 w-4" />
           <span>Stage 4 of 4: Spread & Sustain</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Spread & Sustain Stage</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Spread & Sustain</h1>
         <p className="text-muted-foreground mt-2">
           Navigate to sustainment, embed practices into standard operations, and prepare for spread
         </p>
@@ -250,7 +250,7 @@ export default function Sustain() {
 
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
         <CardHeader>
-          <CardTitle>Implementation Journey Summary</CardTitle>
+          <CardTitle>Implementation Summary</CardTitle>
           <CardDescription>
             What you've built through the Decide, Plan & Prepare, and Implement stages, including continuous monitoring
           </CardDescription>
@@ -272,7 +272,7 @@ export default function Sustain() {
                 <h4 className="font-semibold">Successful Strategies</h4>
               </div>
               <p className="text-2xl font-bold mb-1">{successfulStrategies.length}</p>
-              <p className="text-xs text-muted-foreground">ERIC strategies completed</p>
+              <p className="text-xs text-muted-foreground">Strategies completed</p>
             </div>
 
             <div className="rounded-lg border bg-background/50 p-4">
@@ -546,7 +546,7 @@ export default function Sustain() {
       {coreIngredients.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Core Practices to Embed in Standard Operations</CardTitle>
+            <CardTitle>Core Ingredients to Embed in Standard Operations</CardTitle>
             <CardDescription>
               These active ingredients from your plan should become routine practice
             </CardDescription>

@@ -30,10 +30,10 @@ const COMMON_ROLES = [
 ];
 
 const ROLE_RESPONSIBILITIES: Record<string, string[]> = {
-  "Implementation Lead": ["Oversee implementation timeline", "Coordinate team meetings", "Monitor fidelity", "Report to stakeholders"],
+  "Implementation Lead": ["Oversee implementation timeline", "Coordinate team meetings", "Check that the plan is being followed as intended", "Report to stakeholders"],
   "School Leader/Principal": ["Provide administrative support", "Allocate resources", "Remove barriers", "Champion the initiative"],
   "Instructional Coach": ["Provide ongoing coaching", "Model practices", "Observe and give feedback", "Facilitate professional learning"],
-  "Teacher/Practitioner": ["Implement core components", "Collect student data", "Participate in PD", "Share feedback"],
+  "Teacher/Practitioner": ["Put the core ingredients into practice", "Collect student data", "Participate in PD", "Share feedback"],
   "District Administrator": ["Secure funding", "Align with district goals", "Provide policy support", "Facilitate communication"],
   "Data Analyst": ["Track indicators", "Analyze results", "Create dashboards", "Present findings"],
   "Family/Community Liaison": ["Engage families", "Gather community input", "Communicate progress", "Build partnerships"],
@@ -50,6 +50,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
   const [formData, setFormData] = useState({
     user_id: member?.user_id || "",
     name: "",
+    invited_email: "",
     role_in_initiative: member?.role_in_initiative || "",
     responsibilities: member?.responsibilities || [""],
   });
@@ -60,6 +61,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
       setFormData({
         user_id: member.user_id,
         name: "",
+        invited_email: "",
         role_in_initiative: member.role_in_initiative,
         responsibilities: member.responsibilities && member.responsibilities.length > 0 ? member.responsibilities : [""],
       });
@@ -68,6 +70,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
       setFormData({
         user_id: "",
         name: "",
+        invited_email: "",
         role_in_initiative: "",
         responsibilities: [""],
       });
@@ -118,6 +121,7 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
     const data = {
       user_id: useExistingUser ? formData.user_id : null,
       name: useExistingUser ? null : formData.name,
+      invited_email: useExistingUser ? null : formData.invited_email.trim() || null,
       role_in_initiative: formData.role_in_initiative,
       responsibilities: formData.responsibilities.filter(r => r.trim() !== ""),
     };
@@ -206,6 +210,23 @@ export function TeamMemberDialog({ member, open, onOpenChange, initiativeId }: T
                 />
               )}
             </div>
+
+            {!useExistingUser && !member && (
+              <div className="space-y-2">
+                <Label htmlFor="invited_email">Email (optional, gives them access)</Label>
+                <Input
+                  id="invited_email"
+                  type="email"
+                  value={formData.invited_email}
+                  onChange={(e) => setFormData({ ...formData, invited_email: e.target.value })}
+                  placeholder="name@school.org"
+                />
+                <p className="text-xs text-muted-foreground">
+                  When they create an account with this email, this initiative appears on
+                  their dashboard automatically. Without an email, this is a roster entry only.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="role">Role in Initiative *</Label>

@@ -101,7 +101,7 @@ export default function Dashboard() {
           {initiatives.length > 0 && (
             <>
               <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
-                <SelectTrigger className="w-[280px]">
+                <SelectTrigger className="w-full sm:w-[280px]">
                   <SelectValue placeholder="Select initiative" />
                 </SelectTrigger>
                 <SelectContent>
@@ -222,7 +222,7 @@ export default function Dashboard() {
             <BudgetTrackingChart initiativeId={selectedInitiativeId} />
           </div>
 
-          <TestNotifications />
+          {import.meta.env.DEV && <TestNotifications />}
         </TabsContent>
 
         <TabsContent value="initiatives" className="space-y-4">

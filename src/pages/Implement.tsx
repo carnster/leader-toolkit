@@ -97,9 +97,9 @@ export default function Implement() {
           <PlayCircle className="h-4 w-4" />
           <span>Stage 3 of 4: Implement</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Implement Stage</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Implement</h1>
         <p className="text-muted-foreground mt-2">
-          Put the plan into action while building supportive structures and cultivating a learning culture. Monitoring runs continuously during this stage: track progress in the{" "}
+          Put the plan into action while building the structures and habits that support it. Monitoring runs continuously during this stage: track progress in the{" "}
           <Link to="/monitor" className="font-medium text-primary underline underline-offset-4">
             Monitoring Hub
           </Link>
@@ -115,8 +115,8 @@ export default function Implement() {
               <li>• <strong>Grow the implementers:</strong> Provide ongoing training, coaching, and support</li>
               <li>• <strong>Build supportive structures:</strong> Establish systems, policies, and resources needed for success</li>
               <li>• <strong>Use improvement cycles:</strong> Apply PDSA (Plan-Do-Study-Act) to continuously refine implementation</li>
-              <li>• <strong>Gather implementation data:</strong> Monitor fidelity, adoption, and early outcomes</li>
-              <li>• <strong>Harness data for action:</strong> Make data-informed adjustments to improve effectiveness</li>
+              <li>• <strong>Gather implementation data:</strong> Monitor fidelity (how closely practice matches the plan), adoption, and early outcomes</li>
+              <li>• <strong>Act on the data:</strong> make adjustments based on what you are seeing</li>
             </ul>
           </CardContent>
         </Card>
@@ -251,7 +251,7 @@ export default function Implement() {
                     const ingredient = activeIngredients.find(ing => ing.id === log.component_id);
                     const logTypeLabels = {
                       quick: '60s Quick',
-                      detailed: 'Coach Obs',
+                      detailed: 'Coach Observation',
                       team: 'Team Check',
                       standard: 'Standard'
                     };
@@ -260,7 +260,7 @@ export default function Implement() {
                       <div key={log.id} className="flex items-center justify-between rounded-lg border p-4">
                         <div className="space-y-1 flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{ingredient?.name || 'Unknown Component'}</p>
+                            <p className="font-medium">{ingredient?.name || 'Unknown ingredient'}</p>
                             <Badge variant="outline" className="text-xs">
                               {logTypeLabels[log.log_type]}
                             </Badge>
@@ -273,7 +273,7 @@ export default function Implement() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "destructive"}>
+                          <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "outline"}>
                             {log.rating}/5
                           </Badge>
                         </div>
@@ -303,7 +303,7 @@ export default function Implement() {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Component Being Observed</Label>
+                  <Label>Ingredient being observed</Label>
                   <select className="w-full rounded-md border px-3 py-2">
                     {coreIngredients.length > 0 ? (
                       coreIngredients.map((ingredient: any) => (

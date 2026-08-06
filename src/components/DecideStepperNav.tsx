@@ -24,16 +24,16 @@ export function DecideStepperNav({ currentStep, steps, onStepClick }: DecideStep
       </div>
       
       <div className="overflow-x-auto pb-2">
-      <div className="relative min-w-[34rem]">
+      <div className="relative min-w-0 md:min-w-[34rem]">
         {/* Progress Line */}
-        <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted" />
-        <div 
-          className="absolute top-5 left-0 h-0.5 bg-[hsl(var(--stage-decide))] transition-all duration-300"
+        <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted hidden md:block" />
+        <div
+          className="absolute top-5 left-0 h-0.5 bg-[hsl(var(--stage-decide))] transition-all duration-300 hidden md:block"
           style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
         />
-        
+
         {/* Steps */}
-        <div className="relative flex justify-between">
+        <div className="relative flex flex-wrap gap-y-4 justify-between md:flex-nowrap">
           {steps.map((step) => (
             <button
               key={step.number}

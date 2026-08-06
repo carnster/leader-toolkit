@@ -126,10 +126,10 @@ export function FeasibilityRedFlags({ factors }: FeasibilityRedFlagsProps) {
         
         {severity === "high" && (
           <div className="rounded-lg bg-destructive/10 p-3 text-sm">
-            <p className="font-medium text-destructive mb-1">Critical Warning:</p>
+            <p className="font-medium text-destructive mb-1">Before you proceed:</p>
             <p className="text-xs text-muted-foreground">
-              Multiple low scores suggest this initiative may face serious implementation challenges. 
-              Consider addressing these concerns before proceeding or significantly reducing scope.
+              Multiple low scores suggest this initiative may face serious implementation challenges.
+              Consider addressing these concerns before proceeding, or consider narrowing scope before committing.
             </p>
           </div>
         )}

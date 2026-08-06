@@ -11,7 +11,7 @@ export function ObservationModeSelector({ onSelectMode }: ObservationModeSelecto
     {
       id: 'quick' as const,
       title: '60-Second Fidelity Log',
-      description: 'Quick check: Are core components happening as planned?',
+      description: 'Quick check: are core components happening as planned?',
       icon: Clock,
       buttonText: 'Start Quick Log',
       color: 'text-green-600',

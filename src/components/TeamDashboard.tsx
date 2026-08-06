@@ -169,10 +169,10 @@ export function TeamDashboard({
 
           {/* Capacity Warnings */}
           {overloadedMembers.length > 0 && (
-            <Alert variant="destructive">
+            <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                <span className="font-semibold">{overloadedMembers.length} team member{overloadedMembers.length > 1 ? 's are' : ' is'} overloaded:</span>
+                <span className="font-semibold">{overloadedMembers.length} team member{overloadedMembers.length > 1 ? 's' : ''} may be at capacity. Worth a check-in:</span>
                 {' '}
                 {overloadedMembers.map(w => w.member.name || w.member.profiles?.full_name).join(", ")}
               </AlertDescription>
@@ -206,10 +206,10 @@ export function TeamDashboard({
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Capacity</span>
                         <span className={getCapacityColor(workload.capacityLevel)}>
-                          {workload.capacityLevel === "low" && "Available"}
+                          {workload.capacityLevel === "low" && "Open capacity"}
                           {workload.capacityLevel === "moderate" && "Moderate"}
                           {workload.capacityLevel === "high" && "High"}
-                          {workload.capacityLevel === "overloaded" && "Overloaded"}
+                          {workload.capacityLevel === "overloaded" && "Needs support"}
                         </span>
                       </div>
                       <Progress 
@@ -247,7 +247,7 @@ export function TeamDashboard({
                           className="flex items-center gap-1.5 text-sm hover:bg-accent/50 p-1.5 rounded transition-colors text-left"
                         >
                           <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-muted-foreground">{workload.communications} {workload.communications === 1 ? 'Activity' : 'Activities'}</span>
+                          <span className="text-muted-foreground">{workload.communications} {workload.communications === 1 ? 'Communication' : 'Communications'}</span>
                         </button>
                       </div>
                     )}

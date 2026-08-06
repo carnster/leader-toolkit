@@ -122,7 +122,7 @@ export function StrategicFoundationSection({
             </div>
           </div>
           <CardDescription>
-            Define core practices (non-negotiable) and adaptable elements with clear look-fors for fidelity monitoring.
+            Define which ingredients are non-negotiable and which can flex, with look-fors that describe what each should look like in practice.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -141,7 +141,7 @@ export function StrategicFoundationSection({
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
                     <Badge variant="destructive">CORE</Badge>
-                    Non-Negotiable Components
+                    Core Ingredients
                   </h4>
                   {coreIngredients.map((ingredient) => (
                     <div key={ingredient.id} className="rounded-lg border p-4 space-y-2">
@@ -179,7 +179,7 @@ export function StrategicFoundationSection({
                 <div className="space-y-3 mt-6">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
                     <Badge variant="secondary">ADAPTABLE</Badge>
-                    Flexible Components
+                    Adaptable Ingredients
                   </h4>
                   {adaptableIngredients.map((ingredient) => (
                     <div key={ingredient.id} className="rounded-lg border p-4 space-y-2">
@@ -232,7 +232,7 @@ export function StrategicFoundationSection({
             </Button>
           </div>
           <CardDescription>
-            Select implementation strategies that address your feasibility barriers using the ERIC framework.
+            Select implementation strategies that address your feasibility barriers. Not sure where to start? Open the strategy reference library below.
           </CardDescription>
         </CardHeader>
         <CardContent>

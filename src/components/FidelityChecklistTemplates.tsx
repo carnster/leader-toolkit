@@ -38,7 +38,7 @@ const templates: Template[] = [
     ratingScale: {
       min: 1,
       max: 5,
-      labels: ["Not Observed", "Minimal", "Developing", "Proficient", "Exemplary"]
+      labels: ["Not Observed", "Emerging", "Developing", "Proficient", "Exemplary"]
     }
   },
   {
@@ -78,7 +78,7 @@ const templates: Template[] = [
     ratingScale: {
       min: 1,
       max: 4,
-      labels: ["No", "Partially", "Mostly", "Yes"]
+      labels: ["Not Present", "Partially Present", "Mostly Present", "Fully Present"]
     }
   },
   {
@@ -213,7 +213,7 @@ export function FidelityChecklistTemplates({
                           {/* Select Active Ingredient */}
                           <div className="space-y-2">
                             <Label htmlFor="ingredient-select">
-                              Active Ingredient to Monitor <span className="text-destructive">*</span>
+                              Ingredient to Monitor <span className="text-destructive">*</span>
                             </Label>
                             <Select value={selectedIngredient} onValueChange={setSelectedIngredient}>
                               <SelectTrigger id="ingredient-select">

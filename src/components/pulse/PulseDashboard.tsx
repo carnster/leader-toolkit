@@ -77,7 +77,7 @@ export function PulseDashboard({ initiativeId }: PulseDashboardProps) {
       <CardContent className="space-y-5">
         {thisWeek.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6">
-            No pulses yet this week. As your team sends their weekly check-ins, participation, traction, and support
+            No pulses yet this week. As your team sends their weekly pulse, participation, traction, and support
             requests appear here.
           </p>
         ) : (

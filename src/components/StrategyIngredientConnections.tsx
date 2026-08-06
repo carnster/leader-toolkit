@@ -165,29 +165,6 @@ export function StrategyIngredientConnections({
             </p>
           )}
         </div>
-
-        {/* Legend */}
-        <div className="pt-4 border-t">
-          <p className="text-xs font-medium mb-2">ERIC Strategy Categories:</p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-blue-500"></div>
-              <span className="text-muted-foreground">Enable - Build capacity</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-purple-500"></div>
-              <span className="text-muted-foreground">Redesign - Adjust context</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-green-500"></div>
-              <span className="text-muted-foreground">Integrate - Embed routine</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-orange-500"></div>
-              <span className="text-muted-foreground">Create - Build supports</span>
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

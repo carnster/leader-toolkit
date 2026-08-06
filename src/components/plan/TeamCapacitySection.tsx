@@ -68,7 +68,7 @@ export function TeamCapacitySection({
     if (successCount > 0) {
       toast({
         title: "PD activities created",
-        description: `Successfully added ${successCount} professional development ${successCount === 1 ? 'activity' : 'activities'}.`,
+        description: `Added ${successCount} professional development ${successCount === 1 ? 'activity' : 'activities'}.`,
       });
     }
 
@@ -163,7 +163,7 @@ export function TeamCapacitySection({
             </Button>
           </div>
           <CardDescription>
-            Comprehensive training, coaching, and ongoing support aligned to fidelity
+            Training, coaching, and ongoing support that keeps practice aligned with the plan
           </CardDescription>
         </CardHeader>
         <CardContent>

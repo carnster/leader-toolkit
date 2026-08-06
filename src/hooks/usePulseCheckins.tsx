@@ -42,7 +42,7 @@ export function usePulseCheckins(initiativeId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pulse_checkins" as any)
-        .select("*")
+        .select("id, initiative_id, respondent_id, respondent_name, week_of, focus_ingredient_id, used_status, traction, needs_support, created_at, updated_at, via_link_id")
         .eq("initiative_id", initiativeId!)
         .order("week_of", { ascending: false });
       if (error) throw error;
@@ -57,7 +57,7 @@ export function usePulseCheckins(initiativeId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pulse_checkins" as any)
-        .select("*")
+        .select("id, initiative_id, respondent_id, respondent_name, week_of, focus_ingredient_id, used_status, traction, needs_support, created_at, updated_at, via_link_id")
         .eq("initiative_id", initiativeId!)
         .eq("respondent_id", user!.id)
         .eq("week_of", weekOf)
@@ -89,7 +89,7 @@ export function usePulseCheckins(initiativeId: string | undefined) {
       const { data, error } = await supabase
         .from("pulse_checkins" as any)
         .upsert(row, { onConflict: "initiative_id,respondent_id,week_of" })
-        .select();
+        .select("id, initiative_id, respondent_id, respondent_name, week_of, focus_ingredient_id, used_status, traction, needs_support, created_at, updated_at, via_link_id");
       if (error) throw error;
       if (!data || (data as unknown[]).length === 0) {
         throw new Error("Could not save your pulse. You may not be on this initiative's team.");

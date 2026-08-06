@@ -118,7 +118,7 @@ export function FlexibleObservationDialog({
       case 'quick':
         return {
           title: "60-Second Fidelity Log",
-          description: "Quick check on core component implementation",
+          description: "Quick check: are core components happening as planned?",
           showIngredient: true,
           showLookFors: true,
           showTeamFields: false,
@@ -142,7 +142,7 @@ export function FlexibleObservationDialog({
       case 'team':
         return {
           title: "Team Check-In",
-          description: "Team reflection and adjustment decisions",
+          description: "Log team reflections and adjustments",
           showIngredient: false,
           showLookFors: false,
           showTeamFields: true,
@@ -182,7 +182,7 @@ export function FlexibleObservationDialog({
           {/* Active Ingredient Selection */}
           <div className="space-y-2">
             <Label htmlFor="ingredient">
-              Active Ingredient <span className="text-destructive">*</span>
+              Ingredient Being Observed <span className="text-destructive">*</span>
             </Label>
             <Select value={selectedIngredient} onValueChange={setSelectedIngredient}>
               <SelectTrigger id="ingredient">

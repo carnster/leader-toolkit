@@ -147,7 +147,7 @@ export function OverviewSection({
             </div>
             <div className="p-4 rounded-lg border text-center">
               <div className="text-2xl font-bold text-primary">{strategiesCount}</div>
-              <div className="text-xs text-muted-foreground mt-1">ERIC Strategies</div>
+              <div className="text-xs text-muted-foreground mt-1">Strategies</div>
             </div>
             <div className="p-4 rounded-lg border text-center">
               <div className="text-2xl font-bold text-primary">{teamMembersCount}</div>

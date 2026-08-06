@@ -33,8 +33,9 @@ export function QualityAssuranceSection({
         <CardContent className="pt-6 text-center space-y-3">
           <Eye className="h-10 w-10 text-muted-foreground mx-auto" aria-hidden="true" />
           <p className="text-muted-foreground">
-            Quality assurance is built on your active ingredients: fidelity is measured against
-            them, and adaptation boundaries are defined on them.
+            Quality assurance starts with your active ingredients. Fidelity monitoring tracks
+            whether the core practices are showing up; adaptation boundaries define how much room
+            there is to adjust the rest.
           </p>
           <p className="text-sm text-muted-foreground">
             Add active ingredients first in{" "}

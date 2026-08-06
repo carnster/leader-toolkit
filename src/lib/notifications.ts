@@ -43,7 +43,7 @@ export async function notifyMilestoneCompleted(
     initiativeId,
     type: "milestone_completed",
     title: "Milestone Completed",
-    message: `Great work! "${milestoneName}" has been marked as complete.`,
+    message: `"${milestoneName}" is marked complete.`,
     actionUrl: `/plan?initiative=${initiativeId}&section=execution`,
   });
 }
@@ -99,7 +99,7 @@ export async function notifyPDSACycleCompleted(
     initiativeId,
     type: "pdsa_completed",
     title: "PDSA Cycle Complete",
-    message: `PDSA Cycle ${cycleNumber} has been completed. Time to plan the next iteration!`,
+    message: `PDSA Cycle ${cycleNumber} is complete.`,
     actionUrl: `/implement?initiative=${initiativeId}`,
   });
 }

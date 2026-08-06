@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Users, Plus, CheckCircle2, AlertCircle, MessageCircle, Handshake, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { TeamMemberDialog } from "@/components/TeamMemberDialog";
 import { MeetingLog } from "@/components/MeetingLog";
@@ -90,8 +91,11 @@ const BEHAVIORS = [
 
 export default function Team() {
   const { initiativeId } = useInitiativeContext();
+  const { initiatives } = useInitiatives();
   const { teamMembers, isLoading, error } = useTeamMembers(initiativeId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const initiativeTitle = initiatives?.find((i) => i.id === initiativeId)?.title || "Initiative";
 
   const roleText = teamMembers
     .map((m: any) => `${m.role_in_initiative || ""}`.toLowerCase())
@@ -151,7 +155,7 @@ export default function Team() {
         <div className="flex items-center gap-2">
           <CalendarTaskExport
             initiativeId={initiativeId}
-            initiativeTitle="Initiative"
+            initiativeTitle={initiativeTitle}
             variant="compact"
           />
           <Button onClick={() => setDialogOpen(true)}>

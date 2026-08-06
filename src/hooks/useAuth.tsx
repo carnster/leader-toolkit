@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  // Run the invite link-up once per app load, not on every auth event.
+  const linkedRef = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -16,6 +19,7 @@ export function useAuth() {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) linkInvites();
       }
     );
 
@@ -24,7 +28,31 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) linkInvites();
     });
+
+    // Claim any roster rows that were invited by this user's email address.
+    // A teammate added by email has no account yet; the moment they sign in,
+    // this binds the invite to their real user id and their shared
+    // initiatives appear. Failure is silent: the next sign-in retries.
+    function linkInvites() {
+      if (linkedRef.current) return;
+      linkedRef.current = true;
+      supabase
+        .rpc("link_team_invites" as any)
+        .then(({ data }) => {
+          const n = typeof data === "number" ? data : 0;
+          if (n > 0) {
+            toast({
+              title: "You have been added to a team",
+              description:
+                n === 1
+                  ? "An initiative you were invited to is now on your dashboard."
+                  : `${n} initiatives you were invited to are now on your dashboard.`,
+            });
+          }
+        });
+    }
 
     return () => subscription.unsubscribe();
   }, []);

@@ -22,7 +22,7 @@ export function CalendarSubscribePanel({ initiativeId }: { initiativeId: string 
             <CalendarClock className="h-5 w-5" aria-hidden="true" />
             Subscribe to this calendar
           </CardTitle>
-          <CardDescription>Awaiting a database update on this deployment.</CardDescription>
+          <CardDescription>Calendar subscriptions arrive with the next database update for this workspace.</CardDescription>
         </CardHeader>
       </Card>
     );

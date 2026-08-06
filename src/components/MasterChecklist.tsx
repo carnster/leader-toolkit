@@ -94,7 +94,7 @@ const CHECKLIST_ITEMS = {
     },
     {
       id: "empowered-people",
-      text: "Have we identified and empowered a range of people across the school who can support the changes?",
+      text: "Have we identified a range of people across the school and given them real authority to support the changes?",
       category: "Team"
     },
     {

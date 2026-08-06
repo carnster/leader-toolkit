@@ -153,12 +153,12 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
       sectionTitle("2. Implementation Plan");
       para("Active Ingredients", undefined);
       table(
-        ["Component", "Type", "Description"],
+        ["Ingredient", "Type", "Description"],
         activeIngredients.map((i) => [i.name, i.is_core ? "CORE" : "Adaptable", i.description || ""]),
         "No active ingredients defined."
       );
       table(
-        ["Strategy", "ERIC Cluster", "Target Barrier", "Status"],
+        ["Strategy", "Approach", "Target Barrier", "Status"],
         strategies.map((s) => [s.strategy_name, ericLabel(s.eric_category), s.target_barrier || "", s.status.replace("_", " ")]),
         "No implementation strategies defined."
       );
@@ -215,7 +215,7 @@ export function EvidencePackExport({ initiativeId, initiativeTitle }: EvidencePa
         ? `${fidelityLogs.length} observations recorded. Average rating ${avgFidelity} of 5.`
         : "No fidelity observations recorded yet.");
       table(
-        ["PDSA Cycle", "Aim", "Status", "Decision"],
+        ["Improvement Cycle", "Aim", "Status", "Decision"],
         (pdsaCycles as any[]).map((c) => [`Cycle ${c.cycle_number}`, c.aim || "", c.status || "", c.decision || ""]),
         "No improvement cycles run yet."
       );

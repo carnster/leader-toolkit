@@ -132,7 +132,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
               Coaching cycles
             </CardTitle>
             <CardDescription className="mt-1">
-              Observe, give feedback, agree one next step, follow up. This is what turns PD into practice.
+              Observe, give feedback, agree one next step, follow up. This is what turns professional development into practice.
             </CardDescription>
           </div>
           <Button size="sm" onClick={beginStart}>
@@ -145,7 +145,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
           <p className="text-sm text-muted-foreground">Loading cycles...</p>
         ) : openCycles.length === 0 && recentClosed.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No cycles yet. Start one after a PD session or when the pulse flags someone who needs support.
+            No cycles yet. Start one after a PD session or when a pulse check flags someone who needs support.
           </p>
         ) : (
           <>
@@ -209,7 +209,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
               )}
             </div>
             <div className="space-y-2">
-              <Label>Focus practice</Label>
+              <Label>Focus ingredient</Label>
               <Select value={ingredientId} onValueChange={setIngredientId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -237,7 +237,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
             <>
               <DialogHeader>
                 <DialogTitle>Log the observation</DialogTitle>
-                <DialogDescription>{advancing.member_name} — what did you actually see?</DialogDescription>
+                <DialogDescription>{advancing.member_name}: what did you actually see?</DialogDescription>
               </DialogHeader>
               <div className="space-y-2 py-2">
                 <Label htmlFor="cc-obs">Observation notes</Label>
@@ -255,7 +255,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
               <DialogHeader>
                 <DialogTitle>Feedback + one next step</DialogTitle>
                 <DialogDescription>
-                  {advancing.member_name} — one agreed next step beats five suggested ones. It becomes a commitment.
+                  {advancing.member_name}: one agreed next step beats five suggested ones. It becomes a commitment.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
@@ -287,7 +287,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
                 <DialogTitle>Close the cycle</DialogTitle>
                 <DialogDescription>
                   {advancing.member_name}
-                  {advancing.next_step ? ` — did "${advancing.next_step}" move the practice?` : " — did the practice move?"}
+                  {advancing.next_step ? `: did "${advancing.next_step}" move the practice?` : ": did the practice move?"}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-3 gap-2 py-3">
