@@ -156,8 +156,15 @@ Deno.serve(async (req) => {
     }
     lines.push("END:VCALENDAR");
 
-    // Best effort: a failed stamp must not fail the feed.
-    void admin.from("calendar_feeds").update({ last_fetched: new Date().toISOString() }).eq("id", feed.id);
+    // Best effort: a failed stamp must not fail the feed. Awaited on purpose:
+    // a PostgREST builder is a lazy thenable that only issues its request when
+    // something calls .then(), so `void`-ing it sent nothing at all and
+    // last_fetched stayed null forever. The catch keeps it best-effort.
+    try {
+      await admin.from("calendar_feeds").update({ last_fetched: new Date().toISOString() }).eq("id", feed.id);
+    } catch {
+      // Stamping is telemetry. The feed is still correct without it.
+    }
 
     return new Response(lines.join("\r\n"), {
       headers: {
