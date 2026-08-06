@@ -44,9 +44,9 @@ const navigation = [
 ];
 
 const hubs = [
-  { name: "Team", href: "/team", icon: Users },
-  { name: "Monitoring", href: "/monitor", icon: BarChart3 },
-  { name: "Professional Learning", href: "/learning", icon: GraduationCap },
+  { name: "Team", href: "/team", icon: Users, color: "text-emerald-600 dark:text-emerald-400" },
+  { name: "Monitoring", href: "/monitor", icon: BarChart3, color: "text-amber-600 dark:text-amber-400" },
+  { name: "Professional Learning", href: "/learning", icon: GraduationCap, color: "text-violet-600 dark:text-violet-400" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -159,7 +159,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   title={hub.name}
                   aria-label={hub.name}
                 >
-                  <hub.icon className="h-4 w-4 shrink-0" />
+                  <hub.icon className={cn("h-4 w-4 shrink-0", location.pathname !== hub.href && hub.color)} />
                 </Link>
               ))}
             </nav>
@@ -316,7 +316,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <hub.icon className="h-4 w-4" />
+                  <hub.icon className={cn("h-4 w-4", location.pathname !== hub.href && hub.color)} />
                   <span>{hub.name}</span>
                 </Link>
               ))}
