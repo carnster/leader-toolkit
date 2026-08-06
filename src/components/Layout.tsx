@@ -75,21 +75,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
+        <div className="container flex min-h-16 flex-wrap items-center justify-between gap-y-1 py-1">
+          <div className="flex min-w-0 flex-1 items-center gap-4 xl:gap-8">
             <Link to="/" className="flex items-center space-x-3">
               <img
                 src={impactLogo}
                 alt="IMPACT"
                 className="h-10 w-auto object-contain"
               />
-              <span className="hidden font-bold text-lg sm:inline-block">
+              <span className="hidden font-bold text-lg 2xl:inline-block">
                 Companion
               </span>
             </Link>
             
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
+            <nav className="hidden lg:flex items-center space-x-1 min-w-0 lg:min-w-[41rem] overflow-x-auto [&::-webkit-scrollbar]:hidden">
               {navigation.filter((item) => item.href !== "/").map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);
@@ -154,16 +154,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
+                  title={hub.name}
                 >
-                  <hub.icon className="h-4 w-4" />
-                  <span>{hub.name}</span>
+                  <hub.icon className="h-4 w-4 shrink-0" />
+                  <span className="hidden 2xl:inline">{hub.name}</span>
                 </Link>
               ))}
             </nav>
           </div>
 
           {/* User Menu & Notifications */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex shrink-0 items-center gap-2 ml-auto">
             <InitiativeSwitcher />
             <FeedbackButton />
             <Button
