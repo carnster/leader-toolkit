@@ -10,6 +10,7 @@ import { Shield, Calendar, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3,
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { SustainGate } from "@/components/SustainGate";
 import { PsatSustainabilityChecklist } from "@/components/PsatSustainabilityChecklist";
+import { StageEquityCard } from "@/components/StageEquityCard";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -319,6 +320,7 @@ export default function Sustain() {
 
       {/* PSAT sustainability self-assessment across eight domains */}
       {effectiveInitiativeId && <PsatSustainabilityChecklist initiativeId={effectiveInitiativeId} />}
+      {effectiveInitiativeId && <StageEquityCard stage="sustain" initiativeId={effectiveInitiativeId} />}
 
       {/* Embedding Routines */}
       <Card>

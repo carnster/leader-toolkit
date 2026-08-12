@@ -18,6 +18,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { addDays, format, isBefore, parseISO, startOfDay } from "date-fns";
 import { ObservationModeSelector } from "@/components/ObservationModeSelector";
 import { AdaptationLog } from "@/components/AdaptationLog";
+import { StageEquityCard } from "@/components/StageEquityCard";
 import { FlexibleObservationDialog } from "@/components/FlexibleObservationDialog";
 import { PDSACycleAssistant } from "@/components/PDSACycleAssistant";
 import { PDCompletionTracker } from "@/components/PDCompletionTracker";
@@ -359,6 +360,12 @@ export default function Implement() {
           <ImplementationBehaviors />
         </TabsContent>
       </Tabs>
+
+      {effectiveInitiativeId && (
+        <div className="mt-6">
+          <StageEquityCard stage="implement" initiativeId={effectiveInitiativeId} />
+        </div>
+      )}
 
       {/* Flexible Observation Dialog */}
       <FlexibleObservationDialog

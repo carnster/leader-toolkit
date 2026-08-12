@@ -31,6 +31,7 @@ import { PDActivityDialog } from "@/components/PDActivityDialog";
 import { ImplementationStrategyDialog } from "@/components/ImplementationStrategyDialog";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { PlanSidebar } from "@/components/PlanSidebar";
+import { StageEquityCard } from "@/components/StageEquityCard";
 import { OverviewSection } from "@/components/plan/OverviewSection";
 import { StrategicFoundationSection } from "@/components/plan/StrategicFoundationSection";
 import { TeamCapacitySection } from "@/components/plan/TeamCapacitySection";
@@ -473,6 +474,7 @@ export default function Plan() {
     switch (currentSection) {
       case "overview":
         return (
+          <>
           <OverviewSection
             activeIngredientsCount={activeIngredients.length}
             strategiesCount={strategies.length}
@@ -498,8 +500,14 @@ export default function Plan() {
             observationSchedules={observationSchedules || []}
             decisionBrief={decisionBrief}
           />
+          {effectiveInitiativeId && (
+            <div className="mt-6">
+              <StageEquityCard stage="plan" initiativeId={effectiveInitiativeId} />
+            </div>
+          )}
+          </>
         );
-      
+
       case "ingredients":
       case "strategies":
         return (
