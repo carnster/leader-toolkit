@@ -22,7 +22,7 @@ const ROLES = [
 ];
 
 export default function Settings() {
-  const { prefs, missingTable: prefsMissingTable, setPref } = useNotificationPrefs();
+  const { isEnabled, missingTable: prefsMissingTable, setEnabled, isSaving, pendingType } = useNotificationPrefs();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -123,6 +123,26 @@ export default function Settings() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Theme for this device</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-2">
+            <Button variant={theme === "light" ? "default" : "outline"} onClick={() => setTheme("light")}>
+              <Sun className="mr-2 h-4 w-4" /> Light
+            </Button>
+            <Button variant={theme === "dark" ? "default" : "outline"} onClick={() => setTheme("dark")}>
+              <Moon className="mr-2 h-4 w-4" /> Dark
+            </Button>
+            <Button variant={theme === "system" ? "default" : "outline"} onClick={() => setTheme("system")}>
+              <Monitor className="mr-2 h-4 w-4" /> System
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Notifications</CardTitle>
           <CardDescription>
             Choose which alerts land in your bell. Everything is on by default; turning one off
@@ -142,33 +162,14 @@ export default function Settings() {
                   <p className="text-xs text-muted-foreground">{t.detail}</p>
                 </div>
                 <Switch
-                  checked={prefs[t.type] !== false}
-                  onCheckedChange={(v) => setPref({ type: t.type, enabled: v })}
+                  checked={isEnabled(t.type)}
+                  disabled={isSaving && pendingType === t.type}
+                  onCheckedChange={(v) => setEnabled({ type: t.type, enabled: v })}
                   aria-label={t.label}
                 />
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Theme for this device</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Button variant={theme === "light" ? "default" : "outline"} onClick={() => setTheme("light")}>
-              <Sun className="mr-2 h-4 w-4" /> Light
-            </Button>
-            <Button variant={theme === "dark" ? "default" : "outline"} onClick={() => setTheme("dark")}>
-              <Moon className="mr-2 h-4 w-4" /> Dark
-            </Button>
-            <Button variant={theme === "system" ? "default" : "outline"} onClick={() => setTheme("system")}>
-              <Monitor className="mr-2 h-4 w-4" /> System
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
