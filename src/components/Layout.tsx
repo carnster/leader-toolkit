@@ -167,7 +167,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* User Menu & Notifications */}
           <div className="hidden lg:flex shrink-0 items-center gap-2 ml-auto">
-            <InitiativeSwitcher />
             <FeedbackButton />
             <Button
               variant="ghost"
@@ -230,6 +229,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Menu className="h-5 w-5" />
             )}
           </Button>
+          </div>
+        </div>
+
+        {/* Initiative context strip (desktop): the switcher lives on its own
+            row so the top bar never has to compete with a long initiative
+            name for horizontal space, which is what forced it to wrap. */}
+        <div className="hidden lg:block border-t bg-muted/20">
+          <div className="container flex h-11 items-center justify-end gap-2">
+            <span className="text-xs text-muted-foreground">Working on</span>
+            <InitiativeSwitcher />
           </div>
         </div>
 

@@ -49,22 +49,40 @@ export function useDecisionBrief(initiativeId: string | undefined) {
   const upsertDecisionBrief = useMutation({
     mutationFn: async (brief: Partial<DecisionBrief>) => {
       const { id, created_at, updated_at, ...briefData } = brief as any;
-      
+
+      // A save often carries only the fields that changed on one tab, so the
+      // problem statement and target group are usually absent even though they
+      // are already saved. Backfill both from the stored brief before
+      // validating, so a partial update never fails for fields the user
+      // already filled in. Only a genuinely new, still-empty brief is rejected.
+      let existing: { problem_statement?: string | null; target_group?: string | null } | null = null;
+      if (initiativeId) {
+        const { data: current } = await supabase
+          .from("decision_briefs")
+          .select("problem_statement, target_group")
+          .eq("initiative_id", initiativeId)
+          .maybeSingle();
+        existing = current as typeof existing;
+      }
+
+      const problem_statement = String(briefData.problem_statement ?? existing?.problem_statement ?? "").trim();
+      const target_group = String(briefData.target_group ?? existing?.target_group ?? "").trim();
+
       // Validate required fields
-      if (!briefData.problem_statement || briefData.problem_statement.trim() === "") {
+      if (!problem_statement) {
         throw new Error("Problem statement is required");
       }
-      if (!briefData.target_group || briefData.target_group.trim() === "") {
+      if (!target_group) {
         throw new Error("Target group is required");
       }
-      
+
       const { data, error } = await supabase
         .from("decision_briefs")
         .upsert({
           initiative_id: initiativeId!,
-          problem_statement: briefData.problem_statement.trim(),
-          target_group: briefData.target_group.trim(),
           ...briefData,
+          problem_statement,
+          target_group,
         }, {
           onConflict: 'initiative_id'
         })
