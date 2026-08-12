@@ -53,14 +53,14 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
 
   const getTrendIcon = (trend: string) => {
     if (trend === "up") return <TrendingUp className="h-4 w-4 text-success" />;
-    if (trend === "down") return <TrendingDown className="h-4 w-4 text-destructive" />;
+    if (trend === "down") return <TrendingDown className="h-4 w-4 text-orange-600 dark:text-orange-400" />;
     return <Minus className="h-4 w-4 text-muted-foreground" />;
   };
 
   const getScoreColor = (score: number) => {
     if (score >= 4) return "text-success";
     if (score >= 3) return "text-warning";
-    return "text-destructive";
+    return "text-orange-700 dark:text-orange-400";
   };
 
   const scoreDescriptor = (s: number) =>
@@ -165,7 +165,7 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
                           className={`h-full transition-all ${
                             avgScore >= 4 ? "bg-success" : 
                             avgScore >= 3 ? "bg-warning" : 
-                            "bg-destructive"
+                            "bg-orange-600"
                           }`}
                           style={{ width: `${(avgScore / 5) * 100}%` }}
                         />
