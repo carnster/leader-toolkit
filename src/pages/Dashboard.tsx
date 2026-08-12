@@ -20,6 +20,7 @@ import { TeamDashboard } from "@/components/TeamDashboard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardExport } from "@/components/DashboardExport";
 import { EvidencePackExport } from "@/components/EvidencePackExport";
+import { BoardReportExport } from "@/components/BoardReportExport";
 import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
@@ -123,6 +124,10 @@ export default function Dashboard() {
               {selectedInitiativeId && (
                 <>
                   <EvidencePackExport
+                    initiativeId={selectedInitiativeId}
+                    initiativeTitle={initiatives.find((i) => i.id === selectedInitiativeId)?.title || "Initiative"}
+                  />
+                  <BoardReportExport
                     initiativeId={selectedInitiativeId}
                     initiativeTitle={initiatives.find((i) => i.id === selectedInitiativeId)?.title || "Initiative"}
                   />

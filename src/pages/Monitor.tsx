@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Link } from "react-router-dom";
 import { NoInitiativeGate } from "@/components/NoInitiativeGate";
 import { CalendarTaskExport } from "@/components/CalendarTaskExport";
+import { BoardReportExport } from "@/components/BoardReportExport";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { CalendarSubscribePanel } from "@/components/CalendarSubscribePanel";
 import { Button } from "@/components/ui/button";
@@ -201,11 +202,15 @@ export default function Monitor() {
         <p className="text-muted-foreground mt-2">
           Continuous monitoring that runs throughout implementation, not a separate stage. Track progress, assess fidelity, and use data to drive improvement at any point in implementation.
         </p>
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <CalendarTaskExport
             initiativeId={effectiveInitiativeId}
             initiativeTitle={currentInitiativeTitle}
             variant="compact"
+          />
+          <BoardReportExport
+            initiativeId={effectiveInitiativeId}
+            initiativeTitle={currentInitiativeTitle}
           />
         </div>
 
