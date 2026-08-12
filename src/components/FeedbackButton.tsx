@@ -48,17 +48,24 @@ export function FeedbackButton({ variant = "desktop" }: { variant?: "desktop" | 
   };
 
   // Close the dialog so it isn't in the shot, capture the page, then reopen.
+  // html2canvas can hang or throw on some pages; a timeout race guarantees this
+  // always settles, so a failed capture can never leave the dialog stuck closed.
   const capturePage = async () => {
     setCapturing(true);
     setOpen(false);
     await new Promise((r) => setTimeout(r, 400));
     try {
-      const canvas = await html2canvas(document.body, {
-        useCORS: true,
-        backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
-        scale: Math.min(window.devicePixelRatio || 1, 2),
-        logging: false,
-      });
+      const canvas = await Promise.race([
+        html2canvas(document.body, {
+          useCORS: true,
+          backgroundColor: getComputedStyle(document.body).backgroundColor || "#ffffff",
+          scale: Math.min(window.devicePixelRatio || 1, 2),
+          logging: false,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("capture timed out")), 8000)
+        ),
+      ]);
       await new Promise<void>((resolve) =>
         canvas.toBlob((b) => { if (b) setImage(b); resolve(); }, "image/png", 0.92)
       );
@@ -79,31 +86,46 @@ export function FeedbackButton({ variant = "desktop" }: { variant?: "desktop" | 
   const submit = async () => {
     if (!message.trim()) return;
     setSubmitting(true);
-    let screenshot_path: string | null = null;
-    if (shot && user) {
-      const path = `${user.id}/${crypto.randomUUID()}.png`;
-      const { error: upErr } = await supabase.storage
-        .from("feedback-screenshots")
-        .upload(path, shot, { contentType: "image/png", upsert: false });
-      if (!upErr) screenshot_path = path;
+    try {
+      // The screenshot is a nicety; an upload that fails or throws must never
+      // stop the note itself from reaching the team.
+      let screenshot_path: string | null = null;
+      if (shot && user) {
+        try {
+          const rid = (globalThis.crypto as Crypto | undefined)?.randomUUID?.()
+            ?? `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          const path = `${user.id}/${rid}.png`;
+          const { error: upErr } = await supabase.storage
+            .from("feedback-screenshots")
+            .upload(path, shot, { contentType: "image/png", upsert: false });
+          if (!upErr) screenshot_path = path;
+        } catch { /* keep going without the screenshot */ }
+      }
+      const { error } = await supabase.from("pilot_feedback").insert({
+        email: user?.email ?? null,
+        category,
+        message: message.trim(),
+        page_path: location.pathname,
+        screenshot_path,
+      });
+      if (error) {
+        toast({ title: "Could not send feedback", description: error.message, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Thank you", description: "Your feedback was sent to the team." });
+      setMessage("");
+      setCategory("idea");
+      clearImage();
+      setOpen(false);
+    } catch (e) {
+      toast({
+        title: "Could not send feedback",
+        description: e instanceof Error ? e.message : "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
     }
-    const { error } = await supabase.from("pilot_feedback").insert({
-      email: user?.email ?? null,
-      category,
-      message: message.trim(),
-      page_path: location.pathname,
-      screenshot_path,
-    });
-    setSubmitting(false);
-    if (error) {
-      toast({ title: "Could not send feedback", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: "Thank you", description: "Your feedback was sent to the team." });
-    setMessage("");
-    setCategory("idea");
-    clearImage();
-    setOpen(false);
   };
 
   return (
