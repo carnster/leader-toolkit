@@ -2,6 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { parseDateOnly } from "@/lib/dates";
 
+export interface InitiativeHealthRow {
+  id: string;
+  title: string;
+  atRisk: boolean;
+}
+
 export interface DashboardStats {
   totalInitiatives: number;
   activeInitiatives: number;
@@ -12,6 +18,7 @@ export interface DashboardStats {
   totalMilestones: number;
   onTrackInitiatives: number;
   atRiskInitiatives: number;
+  initiativeHealth: InitiativeHealthRow[];
 }
 
 export function useDashboardAnalytics(initiativeId?: string) {
@@ -24,7 +31,7 @@ export function useDashboardAnalytics(initiativeId?: string) {
       // Build query
       let query = supabase
         .from("initiatives")
-        .select("id, status, stage")
+        .select("id, title, status, stage")
         .eq("owner_id", user.id);
 
       if (initiativeId) {
@@ -92,9 +99,17 @@ export function useDashboardAnalytics(initiativeId?: string) {
       // on a 1 to 5 scale, so the old < 60 threshold flagged every initiative
       // that had a score at all, and an unfinished Decide checklist is normal
       // in-progress work, not risk.
-      const atRiskCount = decisionBriefs?.filter(db =>
-        db.feasibility_score !== null && db.feasibility_score < 3
-      ).length || 0;
+      const atRiskIds = new Set(
+        (decisionBriefs || [])
+          .filter(db => db.feasibility_score !== null && db.feasibility_score < 3)
+          .map(db => db.initiative_id)
+      );
+      const atRiskCount = atRiskIds.size;
+      const initiativeHealth = (initiatives || []).map(i => ({
+        id: i.id,
+        title: (i as { title?: string }).title || "Untitled initiative",
+        atRisk: atRiskIds.has(i.id),
+      }));
 
       return {
         totalInitiatives: initiatives?.length || 0,
@@ -106,6 +121,7 @@ export function useDashboardAnalytics(initiativeId?: string) {
         totalMilestones,
         onTrackInitiatives: (initiatives?.length || 0) - atRiskCount,
         atRiskInitiatives: atRiskCount,
+        initiativeHealth,
       };
     },
   });

@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardAnalytics } from "@/hooks/useDashboardAnalytics";
-import { AlertTriangle, CheckCircle, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle, TrendingUp, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface InitiativeHealthWidgetProps {
   initiativeId?: string;
@@ -110,6 +111,29 @@ export function InitiativeHealthWidget({ initiativeId }: InitiativeHealthWidgetP
             </div>
           </div>
         </div>
+
+        {stats.initiativeHealth.length > 0 && (
+          <div className="space-y-1 pt-2 border-t">
+            {stats.initiativeHealth.map((row) => (
+              <Link
+                key={row.id}
+                to={`/plan?section=overview&initiative=${row.id}`}
+                className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {row.atRisk ? (
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                )}
+                <span className="truncate">{row.title}</span>
+                <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                  {row.atRisk ? "At risk" : "On track"}
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         <div className="space-y-2 pt-2 border-t">
           <div className="flex justify-between items-center text-sm">
