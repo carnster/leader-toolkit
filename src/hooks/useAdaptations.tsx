@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isMissingColumn } from "@/lib/missingTable";
+
+/** How far an adaptation reaches into the practice. Escoffery et al. adaptation
+ *  taxonomy, via NCI's Implementation Science at a Glance p.12: cosmetic tweaks
+ *  are low-review; component and core changes warrant a closer look. */
+export type AdaptationScope = "cosmetic" | "component" | "core";
 
 export interface AdaptationRequest {
   id: string;
@@ -10,6 +16,7 @@ export interface AdaptationRequest {
   description: string;
   rationale: string | null;
   touches_core: boolean;
+  adaptation_scope: AdaptationScope | null;
   decision: "pending" | "approved" | "approved_with_conditions" | "rejected";
   decision_rationale: string | null;
   decided_at: string | null;
@@ -36,11 +43,23 @@ export function useAdaptations(initiativeId: string | undefined) {
   });
 
   const propose = useMutation({
-    mutationFn: async (req: { ingredient_id: string | null; description: string; rationale: string; touches_core: boolean }) => {
+    mutationFn: async (req: { ingredient_id: string | null; description: string; rationale: string; touches_core: boolean; adaptation_scope: AdaptationScope }) => {
+      const row = { ...req, initiative_id: initiativeId! };
       const { error } = await supabase
         .from("adaptation_requests" as any)
-        .insert({ ...req, initiative_id: initiativeId! });
-      if (error) throw error;
+        .insert(row);
+      if (error) {
+        // adaptation_scope may ship before its migration reaches this database.
+        // Log the adaptation without the tier rather than losing the whole
+        // proposal; touches_core still records the core-vs-not distinction.
+        if (isMissingColumn(error)) {
+          const { adaptation_scope, ...rest } = row;
+          const { error: retryErr } = await supabase.from("adaptation_requests" as any).insert(rest);
+          if (retryErr) throw retryErr;
+          return;
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });

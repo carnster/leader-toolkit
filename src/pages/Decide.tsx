@@ -30,6 +30,7 @@ import { DecideQuickNav } from "@/components/DecideQuickNav";
 import { SMARTCriteriaChecker } from "@/components/SMARTCriteriaChecker";
 import { FeasibilityRedFlags } from "@/components/FeasibilityRedFlags";
 import { EquityChecklist } from "@/components/EquityChecklist";
+import { ReadinessSignalsPanel } from "@/components/ReadinessSignalsPanel";
 import { DecisionBriefExport } from "@/components/DecisionBriefExport";
 import { TimelineVisualization } from "@/components/TimelineVisualization";
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
@@ -1529,6 +1530,7 @@ export default function Decide() {
             </div>
 
             <EquityChecklist
+              stage="decide"
               checked={equityChecked}
               onCheckedChange={(id, checked) => {
                 setEquityChecked(prev => ({ ...prev, [id]: checked }));
@@ -1542,6 +1544,9 @@ export default function Decide() {
                 triggerAutoSave();
               }}
             />
+
+            {/* Readiness signals: five launch-readiness checks for the Decide stage */}
+            {effectiveInitiativeId && <ReadinessSignalsPanel initiativeId={effectiveInitiativeId} />}
 
             <div className="space-y-2">
               <Label htmlFor="equity">Additional Equity & Access Notes</Label>

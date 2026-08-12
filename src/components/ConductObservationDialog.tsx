@@ -11,6 +11,11 @@ import { useFidelityChecklists, type ChecklistItem } from "@/hooks/useFidelityCh
 import { useObservationSchedules, type ObservationSchedule } from "@/hooks/useObservationSchedules";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { BARRIER_DOMAINS } from "@/lib/barrierDomains";
+
+// Sentinel for "no barrier picked": a Radix Select item cannot hold an empty
+// string value, so this maps back to null on save.
+const NO_BARRIER = "none";
 
 interface ConductObservationDialogProps {
   schedule?: ObservationSchedule;
@@ -34,6 +39,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
   const [rating, setRating] = useState(3);
   const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse>({});
   const [notes, setNotes] = useState("");
+  const [barrierDomain, setBarrierDomain] = useState<string>(NO_BARRIER);
 
   const selectedChecklist = checklists.find(c => c.id === selectedChecklistId);
   const coreIngredients = activeIngredients.filter(ing => ing.is_core);
@@ -45,6 +51,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       setRating(3);
       setChecklistResponses({});
       setNotes("");
+      setBarrierDomain(NO_BARRIER);
     }
   }, [open, schedule]);
 
@@ -87,6 +94,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       log_type: 'standard' as const,
       participants: [],
       follow_up_actions: null,
+      barrier_domain: barrierDomain === NO_BARRIER ? null : barrierDomain,
     };
 
     createLog(logData, {
@@ -234,6 +242,26 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
               rows={4}
               placeholder="Record specific observations, evidence, strengths, areas for improvement..."
             />
+          </div>
+
+          {/* Barrier domain: optional, blameless read on what is in the way */}
+          <div className="space-y-2">
+            <Label htmlFor="barrier">What is getting in the way? (optional)</Label>
+            <Select value={barrierDomain} onValueChange={setBarrierDomain}>
+              <SelectTrigger id="barrier">
+                <SelectValue placeholder="Skip, or name the likeliest reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_BARRIER}>Not sure yet</SelectItem>
+                {BARRIER_DOMAINS.map((domain) => (
+                  <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              If the practice is not showing up yet, what is the likeliest reason? This is a coaching
+              prompt, not a judgment, and it is always optional.
+            </p>
           </div>
 
           {/* Schedule Info */}

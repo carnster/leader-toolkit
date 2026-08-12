@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { isMissingColumn } from "@/lib/missingTable";
 
 export interface FidelityLog {
   id: string;
@@ -20,6 +21,9 @@ export interface FidelityLog {
   log_type: 'quick' | 'detailed' | 'team' | 'standard';
   participants: string[];
   follow_up_actions: string[] | null;
+  // Optional, blameless diagnostic: which domain is most getting in the way of
+  // the practice showing up. Adapted Theoretical Domains Framework. Nullable.
+  barrier_domain?: string | null;
 }
 
 export function useFidelityLogs(initiativeId: string | undefined) {
@@ -48,34 +52,43 @@ export function useFidelityLogs(initiativeId: string | undefined) {
       const observerId = log.observer_id || userData.user?.id;
       if (!observerId) throw new Error("Not authenticated");
 
-      const { data, error} = await supabase
-        .from("fidelity_logs")
-        .insert({
-          initiative_id: initiativeId!,
-          component_id: log.component_id,
-          rating: log.rating,
-          notes: log.notes,
-          observer_id: observerId,
-          observed_at: new Date().toISOString(),
-          schedule_id: log.schedule_id || null,
-          checklist_id: log.checklist_id || null,
-          checklist_responses: log.checklist_responses || {},
-          evidence_photos: log.evidence_photos || [],
-          duration_minutes: log.duration_minutes || null,
-          location: log.location || null,
-          log_type: log.log_type || 'standard',
-          participants: log.participants || [],
-          follow_up_actions: log.follow_up_actions || null,
-        })
-        .select()
-        .single();
+      const baseRow: Record<string, any> = {
+        initiative_id: initiativeId!,
+        component_id: log.component_id,
+        rating: log.rating,
+        notes: log.notes,
+        observer_id: observerId,
+        observed_at: new Date().toISOString(),
+        schedule_id: log.schedule_id || null,
+        checklist_id: log.checklist_id || null,
+        checklist_responses: log.checklist_responses || {},
+        evidence_photos: log.evidence_photos || [],
+        duration_minutes: log.duration_minutes || null,
+        location: log.location || null,
+        log_type: log.log_type || 'standard',
+        participants: log.participants || [],
+        follow_up_actions: log.follow_up_actions || null,
+        barrier_domain: log.barrier_domain || null,
+      };
+
+      // barrier_domain may not be migrated on this database yet. Never let a
+      // not-yet-live column cost someone their observation: retry the insert
+      // without it. The tag is an optional diagnostic, the observation is not.
+      const insertLog = (row: Record<string, any>): PromiseLike<{ data: any; error: any }> =>
+        supabase.from("fidelity_logs" as any).insert(row).select().single();
+      let res = await insertLog(baseRow);
+      if (res.error && isMissingColumn(res.error)) {
+        const { barrier_domain, ...withoutBarrier } = baseRow;
+        res = await insertLog(withoutBarrier);
+      }
+      const { data, error } = res;
 
       if (error) throw error;
 
       // Close the loop: each follow-up action becomes an open commitment
       // instead of a field that is written once and never read again.
       // Best-effort: a failure here (e.g. the commitments table not yet
-      // migrated) must never lose the observation itself — but the toast must
+      // migrated) must never lose the observation itself, but the toast must
       // only claim what actually persisted, so count the returned rows.
       // (Supabase resolves with {error} rather than throwing, so the result
       // has to be inspected; a bare await-in-try silently "succeeds".)

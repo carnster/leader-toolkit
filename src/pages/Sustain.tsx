@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, Calendar, BookOpen, Scale, CheckCircle2, TrendingUp, BarChart3, Plus, Pencil, Trash2 } from "lucide-react";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { SustainGate } from "@/components/SustainGate";
+import { PsatSustainabilityChecklist } from "@/components/PsatSustainabilityChecklist";
 import { QueryErrorState } from "@/components/QueryErrorState";
 import { useSearchParams } from "react-router-dom";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -315,6 +316,9 @@ export default function Sustain() {
           ))}
         </CardContent>
       </Card>
+
+      {/* PSAT sustainability self-assessment across eight domains */}
+      {effectiveInitiativeId && <PsatSustainabilityChecklist initiativeId={effectiveInitiativeId} />}
 
       {/* Embedding Routines */}
       <Card>

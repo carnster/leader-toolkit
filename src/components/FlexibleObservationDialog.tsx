@@ -11,6 +11,11 @@ import { X, Plus } from "lucide-react";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
 import type { TeamMember } from "@/hooks/useTeamMembers";
 import { Checkbox } from "@/components/ui/checkbox";
+import { BARRIER_DOMAINS } from "@/lib/barrierDomains";
+
+// Sentinel for "no barrier picked": a Radix Select item cannot hold an empty
+// string value, so this maps back to null on save.
+const NO_BARRIER = "none";
 
 type ObservationMode = 'quick' | 'detailed' | 'team';
 
@@ -39,6 +44,7 @@ export function FlexibleObservationDialog({
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [followUpActions, setFollowUpActions] = useState<string[]>([]);
   const [newAction, setNewAction] = useState<string>("");
+  const [barrierDomain, setBarrierDomain] = useState<string>(NO_BARRIER);
   
   // Team check-in specific fields
   const [teamProgress, setTeamProgress] = useState<string>("");
@@ -74,6 +80,7 @@ export function FlexibleObservationDialog({
       evidence_photos: [],
       duration_minutes: null,
       location: null,
+      barrier_domain: barrierDomain === NO_BARRIER ? null : barrierDomain,
     };
 
     onSubmit(logData);
@@ -87,6 +94,7 @@ export function FlexibleObservationDialog({
     setSelectedParticipants([]);
     setFollowUpActions([]);
     setNewAction("");
+    setBarrierDomain(NO_BARRIER);
     setTeamProgress("");
     setTeamWorking("");
     setTeamBarriers("");
@@ -279,6 +287,26 @@ export function FlexibleObservationDialog({
             />
             <p className="text-xs text-muted-foreground">
               {notes.length}/{config.notesMax} characters
+            </p>
+          </div>
+
+          {/* Barrier domain: optional, blameless read on what is in the way */}
+          <div className="space-y-2">
+            <Label htmlFor="barrier-domain">What is getting in the way? (optional)</Label>
+            <Select value={barrierDomain} onValueChange={setBarrierDomain}>
+              <SelectTrigger id="barrier-domain">
+                <SelectValue placeholder="Skip, or name the likeliest reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_BARRIER}>Not sure yet</SelectItem>
+                {BARRIER_DOMAINS.map((domain) => (
+                  <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              If the practice is not showing up yet, what is the likeliest reason? A coaching prompt,
+              not a judgment, and always optional.
             </p>
           </div>
 
