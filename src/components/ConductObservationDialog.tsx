@@ -122,7 +122,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Conduct Fidelity Observation</DialogTitle>
           <DialogDescription>
@@ -278,12 +278,13 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 justify-end pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleSubmit} 
+            <Button
+              className="w-full sm:w-auto"
+              onClick={handleSubmit}
               disabled={!selectedIngredientId || isCreating}
             >
               {isCreating ? "Saving..." : "Complete Observation"}

@@ -180,7 +180,7 @@ export function FlexibleObservationDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{config.title}</DialogTitle>
           <DialogDescription>{config.description}</DialogDescription>
@@ -363,20 +363,21 @@ export function FlexibleObservationDialog({
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              onClick={handleSubmit}
-              disabled={!canSubmit || isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting ? "Saving..." : "Save Observation"}
-            </Button>
+          <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row">
             <Button
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={handleClose}
               disabled={isSubmitting}
             >
               Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit || isSubmitting}
+              className="w-full sm:flex-1"
+            >
+              {isSubmitting ? "Saving..." : "Save Observation"}
             </Button>
           </div>
         </div>
