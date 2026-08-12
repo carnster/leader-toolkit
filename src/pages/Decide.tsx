@@ -427,6 +427,10 @@ export default function Decide() {
         else if (!snap) base[k] = full[k];
       }
       serverSnapshotRef.current = base;
+      // Reflect the save everywhere the indicator is read from. Every manual
+      // "Save Progress" button calls this directly, so setting it only in the
+      // auto-save wrapper left the saved-time stuck after a manual save.
+      setLastSaved(new Date());
     } catch {
       // The mutation's onError toast already explains the failure
       return false;
