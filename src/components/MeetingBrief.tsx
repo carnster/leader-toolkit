@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Copy, Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { usePulseCheckins, currentWeekOf } from "@/hooks/usePulseCheckins";
 import { useCommitments } from "@/hooks/useCommitments";
@@ -14,6 +15,17 @@ import { useToast } from "@/hooks/use-toast";
  *  have to open five pages to prep it. Read-only aggregation, no new tables. */
 
 interface Stat { label: string; value: string; warn?: boolean }
+
+function statLink(label: string, initiativeId?: string): string | undefined {
+  if (!initiativeId) return undefined;
+  const q = `?initiative=${initiativeId}`;
+  if (label.startsWith("Pulse") || label.startsWith("Avg traction") || label.startsWith("Support") || label.includes("commitment")) return `/implement${q}`;
+  if (label.startsWith("Coaching")) return `/learning${q}`;
+  if (label.includes("milestone")) return `/plan?section=timeline&initiative=${initiativeId}`;
+  if (label.startsWith("Adaptation")) return `/plan?section=adaptation&initiative=${initiativeId}`;
+  if (label.startsWith("PD")) return `/plan?section=pd&initiative=${initiativeId}`;
+  return undefined;
+}
 
 function useBriefData(initiativeId: string | undefined) {
   return useQuery({
@@ -150,12 +162,24 @@ export function MeetingBrief({ initiativeId }: { initiativeId: string | undefine
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className={`rounded-lg border p-3 ${s.warn ? "border-destructive/40 bg-destructive/5" : ""}`}>
-              <p className={`text-2xl font-bold ${s.warn ? "text-destructive" : ""}`}>{s.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
-            </div>
-          ))}
+          {stats.map((s) => {
+            const to = statLink(s.label, initiativeId);
+            const warnCls = s.warn ? "border-amber-500/50 bg-amber-500/10" : "";
+            const inner = (
+              <>
+                <p className={`text-2xl font-bold ${s.warn ? "text-amber-700 dark:text-amber-400" : ""}`}>{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              </>
+            );
+            return to ? (
+              <Link key={s.label} to={to} title={`Open ${s.label.toLowerCase()}`}
+                className={`rounded-lg border p-3 transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${warnCls}`}>
+                {inner}
+              </Link>
+            ) : (
+              <div key={s.label} className={`rounded-lg border p-3 ${warnCls}`}>{inner}</div>
+            );
+          })}
         </div>
         {brief && brief.overdueMilestones.length > 0 && (
           <div className="mt-3 text-xs text-muted-foreground">

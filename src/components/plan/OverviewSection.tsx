@@ -141,11 +141,11 @@ export function OverviewSection({
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="p-4 rounded-lg border text-center">
+            <div className="p-4 rounded-lg border text-center" title="The specific practices that make this initiative work, each defined with look-fors you can verify in a visit.">
               <div className="text-2xl font-bold text-primary">{activeIngredientsCount}</div>
               <div className="text-xs text-muted-foreground mt-1">Active Ingredients</div>
             </div>
-            <div className="p-4 rounded-lg border text-center">
+            <div className="p-4 rounded-lg border text-center" title="Implementation strategies: how you get people actually doing the practices, drawn from the ERIC research framework.">
               <div className="text-2xl font-bold text-primary">{strategiesCount}</div>
               <div className="text-xs text-muted-foreground mt-1">Strategies</div>
             </div>

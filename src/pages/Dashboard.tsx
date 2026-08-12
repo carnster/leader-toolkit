@@ -143,7 +143,8 @@ export default function Dashboard() {
       ) : (
         <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <a href="#initiative-list" title="Every initiative you own. Click to jump to the list below." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Initiatives</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -157,7 +158,9 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        </a>
+        <Link to={selectedInitiativeId ? "/monitor?initiative=" + selectedInitiativeId : "/monitor"} title="Average observation rating. Click to open the Monitoring Hub." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Fidelity</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +174,9 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        </Link>
+        <Link to={selectedInitiativeId ? "/team?initiative=" + selectedInitiativeId : "/team"} title="People across your initiative teams. Click to open the Team Hub." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Team Members</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -185,7 +190,9 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        </Link>
+        <Link to={selectedInitiativeId ? "/plan?section=timeline&initiative=" + selectedInitiativeId : "/plan?section=timeline"} title="Milestones due in the next 7 days. Click to open the timeline." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -199,6 +206,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
+        </Link>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
@@ -227,7 +235,7 @@ export default function Dashboard() {
 
         <TabsContent value="initiatives" className="space-y-4">
           {initiatives.length > 0 ? (
-            <Card>
+            <Card id="initiative-list" className="scroll-mt-20">
               <CardHeader>
                 <CardTitle>Active Initiatives</CardTitle>
                 <CardDescription>
