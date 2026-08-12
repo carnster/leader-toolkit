@@ -47,13 +47,22 @@ export function useDashboardAnalytics(initiativeId?: string) {
         ? fidelityLogs.reduce((sum, log) => sum + log.rating, 0) / fidelityLogs.length
         : 0;
 
-      // Fetch team members count (unique across all initiatives)
+      // Fetch team members count (unique across all initiatives).
+      // Most members are name-only roster entries with no login, so user_id is
+      // null. Dedupe only the login-linked ones; a Set of nulls collapses every
+      // unlinked person into a count of 1, which is the bug this replaces.
       const { data: teamMembers } = await supabase
         .from("initiative_team_members")
         .select("user_id")
         .in("initiative_id", initiativeIds);
 
-      const uniqueTeamMembers = new Set(teamMembers?.map(tm => tm.user_id) || []);
+      const linkedMembers = new Set<string>();
+      let unlinkedMembers = 0;
+      for (const tm of teamMembers || []) {
+        if (tm.user_id) linkedMembers.add(tm.user_id);
+        else unlinkedMembers++;
+      }
+      const totalTeamMemberCount = linkedMembers.size + unlinkedMembers;
 
       // Fetch milestones
       const { data: milestones } = await supabase
@@ -79,16 +88,19 @@ export function useDashboardAnalytics(initiativeId?: string) {
         .select("feasibility_score, checklist_completed, initiative_id")
         .in("initiative_id", initiativeIds);
 
-      // Calculate at-risk initiatives (low feasibility or incomplete checklist)
-      const atRiskCount = decisionBriefs?.filter(db => 
-        (db.feasibility_score && db.feasibility_score < 60) || !db.checklist_completed
+      // At risk means the brief itself says feasibility is weak. The score is
+      // on a 1 to 5 scale, so the old < 60 threshold flagged every initiative
+      // that had a score at all, and an unfinished Decide checklist is normal
+      // in-progress work, not risk.
+      const atRiskCount = decisionBriefs?.filter(db =>
+        db.feasibility_score !== null && db.feasibility_score < 3
       ).length || 0;
 
       return {
         totalInitiatives: initiatives?.length || 0,
         activeInitiatives: initiatives?.filter(i => i.status === "active").length || 0,
         avgFidelityScore: Math.round(avgFidelity * 10) / 10,
-        totalTeamMembers: uniqueTeamMembers.size,
+        totalTeamMembers: totalTeamMemberCount,
         upcomingDeadlines,
         completedMilestones,
         totalMilestones,
