@@ -195,7 +195,24 @@ export default function Team() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <p className="font-medium truncate">{member.profiles?.full_name || member.name || "Unknown"}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="font-medium truncate">{member.profiles?.full_name || member.name || "Unknown"}</p>
+                      {/* Access state, so an invite that never converted is visible instead of
+                          silently identical to a linked member. user_id means they see this
+                          initiative when they sign in; invited_email means it links on their
+                          first sign-in with that email; neither means roster entry only. */}
+                      {member.user_id ? (
+                        <Badge variant="secondary" className="shrink-0 text-xs">Joined</Badge>
+                      ) : member.invited_email ? (
+                        <Badge variant="outline" className="shrink-0 text-xs border-amber-500/50 text-amber-700 dark:text-amber-400" title={`Invite waiting for ${member.invited_email} to sign in`}>
+                          Invited
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground" title="Name-only entry. Add their email so this initiative appears when they sign in.">
+                          No access
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground">{member.role_in_initiative}</p>
                     {member.responsibilities?.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
