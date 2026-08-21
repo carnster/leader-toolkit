@@ -1,10 +1,11 @@
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { Briefcase } from "lucide-react";
 
-const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain", "/team"];
+const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain", "/team", "/learning"];
 
 interface InitiativeSwitcherProps {
   /** "desktop" (header, hidden on mobile) or "mobile" (full-width, always available). */
@@ -22,6 +23,15 @@ export function InitiativeSwitcher({ variant = "desktop" }: InitiativeSwitcherPr
   const { initiatives } = useInitiatives();
   const { initiativeId, setInitiativeId } = useInitiativeContext();
   const isMobile = variant === "mobile";
+
+  // If the selected initiative is no longer in the visible list (for example
+  // after switching which school is being acted on), fall to the first one
+  // that is, so every page states which initiative it is showing.
+  useEffect(() => {
+    if (initiatives.length > 0 && initiativeId && !initiatives.some((i) => i.id === initiativeId)) {
+      setInitiativeId(initiatives[0].id);
+    }
+  }, [initiatives, initiativeId]);
 
   if (initiatives.length === 0) return null;
   // Desktop switcher only appears on the stage/hub pages; the mobile menu shows

@@ -15,6 +15,15 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+/** True when the error is a stale tab failing to load a code chunk that a
+ *  newer deployment replaced. The cure is a reload, not a bug report. */
+function isStaleChunkError(error: Error): boolean {
+  const msg = `${error?.message || ""} ${error?.name || ""}`;
+  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk|error loading dynamically imported/i.test(msg);
+}
+
+const RELOADED_ONCE_KEY = "chunk-error-reloaded";
+
 function keysChanged(a?: unknown[], b?: unknown[]): boolean {
   if (!a || !b || a.length !== b.length) return true;
   return a.some((v, i) => v !== b[i]);
@@ -24,6 +33,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   state: ErrorBoundaryState = { error: null };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // A stale tab that failed to load a chunk from a newer deployment heals
+    // itself with one reload. Guarded to a single attempt per session so a
+    // genuinely broken deployment cannot cause a reload loop.
+    if (isStaleChunkError(error) && !sessionStorage.getItem(RELOADED_ONCE_KEY)) {
+      sessionStorage.setItem(RELOADED_ONCE_KEY, "1");
+      window.location.reload();
+    }
     return { error };
   }
 
@@ -48,6 +64,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.error) {
+      if (isStaleChunkError(this.state.error)) {
+        return (
+          <div className="container py-12">
+            <div className="max-w-md mx-auto text-center space-y-4 rounded-lg border p-8">
+              <AlertTriangle className="h-9 w-9 text-muted-foreground mx-auto" aria-hidden="true" />
+              <h2 className="text-lg font-semibold">A new version of the app is ready</h2>
+              <p className="text-sm text-muted-foreground">
+                This tab was still running the previous version. Refresh to load the new one. Your
+                saved work is untouched.
+              </p>
+              <Button onClick={() => window.location.reload()}>Refresh now</Button>
+            </div>
+          </div>
+        );
+      }
       if (this.props.variant === "page") {
         return (
           <div className="container py-12">
