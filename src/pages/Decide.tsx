@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { getPendingTemplate, setPendingTemplate } from "@/lib/templateHandoff";
 import { useInitiatives } from "@/hooks/useInitiatives";
+import { getMyOrgId } from "@/hooks/useOrganization";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
@@ -339,6 +340,10 @@ export default function Decide() {
       const fallbackTitle = newInitiative.title?.trim() ||
         (problemStatement ? `${problemStatement.slice(0, 40)}...` : `Initiative - ${new Date().toLocaleDateString()}`);
 
+      // Personal (no-org) users keep working exactly as today: the key is
+      // only sent when there is an org to attach.
+      const organizationId = await getMyOrgId(supabase);
+
       const { data: created, error: createErr } = await supabase
         .from("initiatives")
         .insert({
@@ -347,6 +352,7 @@ export default function Decide() {
           stage: "decide",
           status: "active",
           owner_id: authInfo.user.id,
+          ...(organizationId ? { organization_id: organizationId } : {}),
         })
         .select()
         .single();

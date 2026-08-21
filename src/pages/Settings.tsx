@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { OrganizationPanel } from "@/components/OrganizationPanel";
 
 const ROLES = [
   { value: "teacher", label: "Teacher" },
@@ -84,6 +85,8 @@ export default function Settings() {
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground mt-1">Your profile, appearance, and account</p>
       </div>
+
+      <OrganizationPanel />
 
       <Card>
         <CardHeader>

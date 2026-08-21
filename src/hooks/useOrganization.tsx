@@ -1,0 +1,324 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isMissingTable } from "@/lib/missingTable";
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  brand: Record<string, unknown> | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type OrgRole = "admin" | "member";
+export type OrgMemberStatus = "pending" | "approved";
+
+export interface OrganizationMembership {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  invited_email: string | null;
+  role: OrgRole;
+  status: OrgMemberStatus;
+  created_at: string;
+  updated_at: string;
+  organizations: Organization;
+}
+
+/** Turns a school's name into its join code: lowercase, hyphenated, capped
+ *  at a length someone can still read off a whiteboard or type from memory. */
+export function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/g, "");
+}
+
+/** Looks up the current user's first approved organization membership.
+ *  For call sites that only need the id (stamping a new initiative) and
+ *  would otherwise have to thread the whole hook through their component.
+ *  A missing table, a signed-out user, or no membership all resolve to
+ *  null here: none of those is an error worth surfacing at a creation
+ *  call site, they just mean the initiative stays personal. */
+export async function getMyOrgId(client: SupabaseClient): Promise<string | null> {
+  const { data: userData } = await client.auth.getUser();
+  if (!userData.user) return null;
+  const { data, error } = await (client.from("organization_members") as any)
+    .select("organization_id")
+    .eq("user_id", userData.user.id)
+    .eq("status", "approved")
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.organization_id as string;
+}
+
+const JOIN_MESSAGES: Record<string, { title: string; description: string }> = {
+  requested: { title: "Request sent", description: "A school admin approves new members." },
+  "not found": { title: "School not found", description: "No school uses that join code. Double check it with your admin." },
+  "already requested or member": { title: "Already connected", description: "You already belong to this school, or a request is already waiting." },
+  "not signed in": { title: "Not signed in", description: "Please sign in before requesting to join a school." },
+};
+
+/** The current user's school workspace: their organization (if any), their
+ *  membership, and the actions to create, join, or leave one. Single-org
+ *  assumption for v1: if a user somehow holds more than one approved
+ *  membership, the first one (by join date) wins. */
+export function useOrganization() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const key = ["organization", user?.id];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: key,
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organization_members" as any)
+        .select("*, organizations(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data as unknown as OrganizationMembership[]) || [];
+    },
+    retry: (failureCount, err) => !isMissingTable(err) && failureCount < 2,
+  });
+
+  const memberships = data || [];
+  const membership = memberships.find((m) => m.status === "approved") || null;
+  const pendingMembership = memberships.find((m) => m.status === "pending") || null;
+
+  const createOrg = useMutation({
+    mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
+      if (!user) throw new Error("Not signed in.");
+      const { data, error } = await supabase
+        .from("organizations" as any)
+        .insert({ name: name.trim(), slug: slug.trim(), created_by: user.id })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      toast({
+        title: "School created",
+        description: "You are set as the admin. Share the join code with your staff.",
+      });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not create the school", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const requestToJoin = useMutation({
+    mutationFn: async (slug: string) => {
+      const { data, error } = await supabase.rpc("request_to_join_org" as any, { _slug: slug.trim() });
+      if (error) throw error;
+      return data as string;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: key });
+      const msg = JOIN_MESSAGES[result] || { title: "Join request", description: result };
+      toast({ title: msg.title, description: msg.description });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not send the request", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const leaveOrg = useMutation({
+    mutationFn: async () => {
+      if (!membership) throw new Error("No membership to leave.");
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .delete()
+        .eq("id", membership.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      toast({
+        title: "Left the school",
+        description: "This account is no longer connected to that workspace.",
+      });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not leave the school", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return {
+    org: membership?.organizations || null,
+    membership,
+    isAdmin: membership?.role === "admin",
+    isPending: !!pendingMembership,
+    pendingMembership,
+    missingTable: isMissingTable(error),
+    isLoading,
+    createOrg: createOrg.mutate,
+    isCreatingOrg: createOrg.isPending,
+    requestToJoin: requestToJoin.mutate,
+    isRequestingToJoin: requestToJoin.isPending,
+    joinRequestResult: requestToJoin.data as string | undefined,
+    leaveOrg: leaveOrg.mutate,
+    isLeavingOrg: leaveOrg.isPending,
+  };
+}
+
+export interface OrgRosterMember {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  invited_email: string | null;
+  role: OrgRole;
+  status: OrgMemberStatus;
+  created_at: string;
+  updated_at: string;
+  profiles?: { full_name: string | null } | null;
+}
+
+/** Admin-facing roster for one organization: who is on it, who is waiting
+ *  to be let in, and the actions to invite, approve, deny, remove, or
+ *  re-role a member. RLS enforces admin-only writes; this hook just calls
+ *  through and lets a denied write surface as a normal error toast. */
+export function useOrgRoster(orgId: string | undefined) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const key = ["organization-roster", orgId];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: key,
+    enabled: !!orgId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organization_members" as any)
+        .select("*, profiles(full_name)")
+        .eq("organization_id", orgId!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data as unknown as OrgRosterMember[]) || [];
+    },
+    retry: (failureCount, err) => !isMissingTable(err) && failureCount < 2,
+  });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: key });
+    queryClient.invalidateQueries({ queryKey: ["organization"] });
+  };
+
+  const inviteByEmail = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: OrgRole }) => {
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .insert({
+          organization_id: orgId,
+          invited_email: email.trim().toLowerCase(),
+          role,
+          status: "approved",
+          user_id: null,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({
+        title: "Invite sent",
+        description: "They get access the first time they sign in with that email.",
+      });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not send the invite", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const approve = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .update({ status: "approved" })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Member approved" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not approve the request", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const deny = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .delete()
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Request declined" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not decline the request", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .delete()
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Member removed" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not remove the member", description: e.message, variant: "destructive" });
+    },
+  });
+
+  const setRole = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: OrgRole }) => {
+      const { error } = await supabase
+        .from("organization_members" as any)
+        .update({ role })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Role updated" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not update the role", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return {
+    members: data || [],
+    isLoading,
+    missingTable: isMissingTable(error),
+    inviteByEmail: inviteByEmail.mutate,
+    isInviting: inviteByEmail.isPending,
+    approve: approve.mutate,
+    deny: deny.mutate,
+    remove: remove.mutate,
+    setRole: setRole.mutate,
+  };
+}

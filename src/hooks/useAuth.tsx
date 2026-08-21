@@ -52,6 +52,23 @@ export function useAuth() {
             });
           }
         });
+
+      // Same idea, one layer up: claim any organization invite left for this
+      // user's email. On a deployment where the organizations schema has not
+      // landed yet, the function itself does not exist, so the call is
+      // wrapped and any error (including "function does not exist") is
+      // silently ignored rather than surfaced.
+      // Errors (including "function does not exist" on a deployment without
+      // the organizations schema yet) surface on the resolved value rather
+      // than as a rejection, but wrap in try/catch anyway in case a network
+      // failure throws instead; either way, nothing to do.
+      (async () => {
+        try {
+          await supabase.rpc("link_org_invites" as any);
+        } catch {
+          // ignored
+        }
+      })();
     }
 
     return () => subscription.unsubscribe();

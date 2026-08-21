@@ -25,9 +25,11 @@ import { ShareLinkButton } from "@/components/ShareLinkButton";
 import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export default function Dashboard() {
   const { initiatives, isLoading, error: initiativesError, deleteInitiative, isDeleting } = useInitiatives();
+  const { org } = useOrganization();
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
   const { data: fidelityTrends } = useFidelityTrends(30, selectedInitiativeId);
@@ -97,6 +99,7 @@ export default function Dashboard() {
           <p className="text-muted-foreground">
             Track and manage your school improvement initiatives
           </p>
+          {org && <p className="text-xs text-muted-foreground mt-1">{org.name}</p>}
         </div>
         <div className="flex items-center gap-4">
           {initiatives.length > 0 && (

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getMyOrgId } from "@/hooks/useOrganization";
 
 export interface Initiative {
   id: string;
@@ -38,6 +39,12 @@ export function useInitiatives() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
 
+      // Personal (no-org) users keep working exactly as today: the key is
+      // only sent when there is an org to attach, so a deployment where the
+      // organizations schema has not been pasted in yet never sees an
+      // unknown "organization_id" column in the insert.
+      const organizationId = await getMyOrgId(supabase);
+
       const { data, error } = await supabase
         .from("initiatives")
         .insert([{
@@ -49,6 +56,7 @@ export function useInitiatives() {
           start_date: initiative.start_date,
           target_end_date: initiative.target_end_date,
           context_tags: initiative.context_tags,
+          ...(organizationId ? { organization_id: organizationId } : {}),
         }])
         .select()
         .single();
