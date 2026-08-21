@@ -7,7 +7,69 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { School, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useOrganization, useOrgRoster, slugify, OrgRole, Organization } from "@/hooks/useOrganization";
+
+interface DirectoryRow {
+  school: string | null;
+  email: string;
+  member_role: string | null;
+  member_status: string | null;
+  signed_in: boolean;
+}
+
+/** Every account grouped by school. The backing function returns rows only
+ *  for the network administrator, so this renders nothing for anyone else. */
+function NetworkDirectory() {
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ["network-directory"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("network_directory" as any);
+      if (error) return [] as DirectoryRow[];
+      return (data as DirectoryRow[]) || [];
+    },
+    retry: false,
+  });
+
+  if (isLoading) return <Skeleton className="h-4 w-2/3" />;
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground">No accounts yet.</p>;
+
+  const groups = new Map<string, DirectoryRow[]>();
+  for (const r of rows) {
+    const g = r.school || "No school yet";
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g)!.push(r);
+  }
+
+  return (
+    <div className="space-y-4">
+      {[...groups.entries()].map(([school, members]) => (
+        <div key={school}>
+          <h4 className="text-sm font-medium">{school}</h4>
+          <ul className="mt-1 space-y-1">
+            {members.map((m) => (
+              <li key={school + m.email} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="truncate">{m.email}</span>
+                {m.member_role ? (
+                  <Badge variant={m.member_role === "admin" ? "default" : "secondary"}>{m.member_role}</Badge>
+                ) : null}
+                {m.member_status === "pending" ? (
+                  <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
+                    Pending
+                  </Badge>
+                ) : null}
+                {!m.signed_in ? (
+                  <span className="text-xs text-muted-foreground">not signed in yet</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** School workspace: create or join a school, see membership status, and
  *  (for admins) manage the roster. One card, six states, degrading quietly
@@ -38,6 +100,7 @@ export function OrganizationPanel() {
   const [slug, setSlug] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [showAddSchool, setShowAddSchool] = useState(false);
+  const [showDirectory, setShowDirectory] = useState(false);
 
   const handleNameChange = (value: string) => {
     setSchoolName(value);
@@ -255,9 +318,19 @@ export function OrganizationPanel() {
                     Remove this school
                   </Button>
                 ) : null}
+                <Button variant="outline" onClick={() => setShowDirectory((v) => !v)}>
+                  {showDirectory ? "Hide directory" : "Network directory"}
+                </Button>
               </div>
             )}
           </div>
+
+          {showDirectory ? (
+            <div className="border-t pt-6">
+              <h3 className="mb-3 text-sm font-medium">Everyone, by school</h3>
+              <NetworkDirectory />
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     );
