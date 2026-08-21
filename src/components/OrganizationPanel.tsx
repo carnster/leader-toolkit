@@ -36,6 +36,7 @@ export function OrganizationPanel() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [slug, setSlug] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [showAddSchool, setShowAddSchool] = useState(false);
 
   const handleNameChange = (value: string) => {
     setSchoolName(value);
@@ -192,6 +193,50 @@ export function OrganizationPanel() {
             </p>
           </div>
           {org ? <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} /> : null}
+
+          <div className="border-t pt-6">
+            {showAddSchool ? (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">Add a school</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="new-school-name">School name</Label>
+                  <Input
+                    id="new-school-name"
+                    value={schoolName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder="Riverside Elementary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-school-slug">Join code</Label>
+                  <Input
+                    id="new-school-slug"
+                    value={slug}
+                    onChange={(e) => {
+                      setSlugTouched(true);
+                      setSlug(slugify(e.target.value));
+                    }}
+                    placeholder="riverside-elementary"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Share this join code with the school's staff so they can request to join.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleCreate} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
+                    {isCreatingOrg ? "Creating..." : "Create school"}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowAddSchool(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button variant="outline" onClick={() => setShowAddSchool(true)}>
+                Add a school
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
