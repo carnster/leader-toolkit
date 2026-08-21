@@ -467,7 +467,7 @@ export function OrganizationPanel() {
           <div className="border-t pt-6">
             {showAddSchool ? (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium">Add a school</h3>
+                <h3 className="text-sm font-medium">Add a school / district</h3>
                 <div className="space-y-2">
                   <Label htmlFor="new-school-name">School name</Label>
                   <Input
@@ -551,7 +551,7 @@ export function OrganizationPanel() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => setShowAddSchool(true)}>
-                  Add a school
+                  Add a school / district
                 </Button>
                 {org ? (
                   <Button
