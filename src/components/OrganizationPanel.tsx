@@ -21,6 +21,28 @@ import {
   DISTRICT_ITSELF_VALUE,
 } from "@/hooks/useOrganization";
 
+const JOB_ROLE_LABELS: Record<string, string> = {
+  teacher: "Teacher",
+  admin_lead: "Admin Lead",
+  implementation_lead: "Implementation Lead",
+  data_manager: "Data Manager",
+  principal: "Principal",
+  governor: "Governor",
+  district_leader: "District Leader",
+  superadmin: "Superadmin",
+};
+
+const JOB_ROLE_OPTIONS = [
+  "teacher",
+  "admin_lead",
+  "implementation_lead",
+  "data_manager",
+  "principal",
+  "governor",
+];
+
+const NETWORK_ONLY_JOB_ROLE_OPTIONS = ["district_leader", "superadmin"];
+
 interface DirectoryRow {
   school: string | null;
   email: string;
@@ -392,7 +414,12 @@ export function OrganizationPanel() {
             </p>
           </div>
           {org ? (
-            <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} />
+            <AdminRoster
+              orgId={org.id}
+              membershipId={membership?.id || ""}
+              logoUrl={org.logo_url}
+              isNetworkLeader={isNetworkLeader}
+            />
           ) : selectedOrgId === WHOLE_NETWORK_VALUE ? (
             <p className="text-sm text-muted-foreground">
               Choose a school to manage its roster and logo.
@@ -543,7 +570,12 @@ export function OrganizationPanel() {
           </div>
 
           {org ? (
-            <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} />
+            <AdminRoster
+              orgId={org.id}
+              membershipId={membership?.id || ""}
+              logoUrl={org.logo_url}
+              isNetworkLeader={isNetworkLeader}
+            />
           ) : null}
 
           <div className="border-t pt-6">
@@ -656,7 +688,12 @@ export function OrganizationPanel() {
       <CardContent className="space-y-6">
         {isAdmin ? (
           <>
-            <AdminRoster orgId={org.id} membershipId={membership.id} logoUrl={org.logo_url} />
+            <AdminRoster
+              orgId={org.id}
+              membershipId={membership.id}
+              logoUrl={org.logo_url}
+              isNetworkLeader={isNetworkLeader}
+            />
             <div className="border-t pt-4">
               <Button variant="outline" onClick={() => setShowInitiatives((v) => !v)}>
                 {showInitiatives ? "Hide initiatives" : "Initiatives"}
@@ -683,10 +720,12 @@ function AdminRoster({
   orgId,
   membershipId,
   logoUrl,
+  isNetworkLeader,
 }: {
   orgId: string;
   membershipId: string;
   logoUrl: string | null;
+  isNetworkLeader: boolean;
 }) {
   const {
     members,
@@ -697,11 +736,15 @@ function AdminRoster({
     deny,
     remove,
     setRole,
+    setJobRole,
     uploadLogo,
     isUploadingLogo,
     removeLogo,
     isRemovingLogo,
   } = useOrgRoster(orgId);
+  const jobRoleOptions = isNetworkLeader
+    ? [...JOB_ROLE_OPTIONS, ...NETWORK_ONLY_JOB_ROLE_OPTIONS]
+    : JOB_ROLE_OPTIONS;
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<OrgRole>("member");
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -826,25 +869,48 @@ function AdminRoster({
                           Decline
                         </Button>
                       </>
-                    ) : !isSelf ? (
+                    ) : (
                       <>
-                        <Select
-                          value={m.role}
-                          onValueChange={(value) => setRole({ memberId: m.id, role: value as OrgRole })}
-                        >
-                          <SelectTrigger className="h-8 w-[110px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="member">Member</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button size="sm" variant="outline" onClick={() => handleRemove(m.id, label)}>
-                          Remove
-                        </Button>
+                        {m.user_id ? (
+                          <Select
+                            value={m.profiles?.role || "teacher"}
+                            onValueChange={(value) => setJobRole({ userId: m.user_id!, role: value })}
+                          >
+                            <SelectTrigger className="h-8 w-[150px]">
+                              <SelectValue>
+                                {JOB_ROLE_LABELS[m.profiles?.role || "teacher"] || "Teacher"}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {jobRoleOptions.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {JOB_ROLE_LABELS[role]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : null}
+                        {!isSelf ? (
+                          <>
+                            <Select
+                              value={m.role}
+                              onValueChange={(value) => setRole({ memberId: m.id, role: value as OrgRole })}
+                            >
+                              <SelectTrigger className="h-8 w-[110px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="member">Member</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button size="sm" variant="outline" onClick={() => handleRemove(m.id, label)}>
+                              Remove
+                            </Button>
+                          </>
+                        ) : null}
                       </>
-                    ) : null}
+                    )}
                   </div>
                 </div>
               );

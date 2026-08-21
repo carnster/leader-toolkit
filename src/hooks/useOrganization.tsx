@@ -392,7 +392,7 @@ export interface OrgRosterMember {
   status: OrgMemberStatus;
   created_at: string;
   updated_at: string;
-  profiles?: { full_name: string | null } | null;
+  profiles?: { full_name: string | null; role: string | null } | null;
 }
 
 /** Admin-facing roster for one organization: who is on it, who is waiting
@@ -410,7 +410,7 @@ export function useOrgRoster(orgId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organization_members" as any)
-        .select("*, profiles(full_name)")
+        .select("*, profiles(full_name, role)")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -517,6 +517,22 @@ export function useOrgRoster(orgId: string | undefined) {
     },
   });
 
+  const setJobRole = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const { error } = await (supabase.from("profiles") as any)
+        .update({ role })
+        .eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Job role updated" });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not update the job role", description: e.message, variant: "destructive" });
+    },
+  });
+
   const uploadLogo = useMutation({
     mutationFn: async (file: File) => {
       const ext = LOGO_MIME_EXT[file.type];
@@ -617,6 +633,7 @@ export function useOrgRoster(orgId: string | undefined) {
     deny: deny.mutate,
     remove: remove.mutate,
     setRole: setRole.mutate,
+    setJobRole: setJobRole.mutate,
     uploadLogo: uploadLogo.mutate,
     isUploadingLogo: uploadLogo.isPending,
     removeLogo: removeLogo.mutate,
