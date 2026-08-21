@@ -36,14 +36,18 @@ export function useDashboardAnalytics(initiativeId?: string) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Build query
+      // Build query. Acting on a school (network/district admin) scopes to
+      // the whole school, not just this account's own initiatives; RLS
+      // still enforces who may actually read the rows. Everyone else keeps
+      // the personal, owner-scoped query exactly as before.
       let query = supabase
         .from("initiatives")
-        .select("id, title, status, stage")
-        .eq("owner_id", user.id);
+        .select("id, title, status, stage");
 
       if (actingOrgId) {
         query = (query as any).eq("organization_id", actingOrgId);
+      } else {
+        query = query.eq("owner_id", user.id);
       }
 
       if (initiativeId) {

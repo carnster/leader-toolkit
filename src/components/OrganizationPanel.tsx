@@ -287,7 +287,11 @@ export function OrganizationPanel() {
       selectedOrgId !== WHOLE_NETWORK_VALUE &&
       !allOrgs.some((o) => o.id === selectedOrgId)
     ) {
-      setSelectedOrg(allOrgs[0].id);
+      // No stored selection yet: start in the unfiltered whole-network view
+      // rather than silently acting on whichever school sorts first. Only a
+      // stale id left over from a removed school falls back to the first
+      // school in the list.
+      setSelectedOrg(selectedOrgId ? allOrgs[0].id : WHOLE_NETWORK_VALUE);
     }
   }, [isNetworkLeader, allOrgs, selectedOrgId]);
 

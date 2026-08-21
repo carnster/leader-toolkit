@@ -30,14 +30,19 @@ export function useFidelityTrends(days: number = 30, initiativeId?: string) {
       if (initiativeId) {
         initiativeIds = [initiativeId];
       } else {
-        // Fetch all user initiatives
+        // Fetch initiatives. Acting on a school (network/district admin)
+        // scopes to the whole school, not just this account's own
+        // initiatives; RLS still enforces who may actually read the rows.
+        // Everyone else keeps the personal, owner-scoped query exactly as
+        // before.
         let initiativesQuery = supabase
           .from("initiatives")
-          .select("id")
-          .eq("owner_id", user.id);
+          .select("id");
 
         if (actingOrgId) {
           initiativesQuery = (initiativesQuery as any).eq("organization_id", actingOrgId);
+        } else {
+          initiativesQuery = initiativesQuery.eq("owner_id", user.id);
         }
 
         const { data: initiatives } = await initiativesQuery;

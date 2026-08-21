@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StageProgress } from "@/components/StageProgress";
@@ -37,6 +38,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
+
+  // If the initiative currently selected in the switcher gets deleted (or
+  // otherwise drops out of the list, e.g. an acting-scope change), fall back
+  // to "All Initiatives" instead of continuing to query a dead id.
+  useEffect(() => {
+    if (selectedInitiativeId && !initiatives.some((i) => i.id === selectedInitiativeId)) {
+      setSelectedInitiativeId(undefined);
+    }
+  }, [selectedInitiativeId, initiatives]);
 
   const handleNewInitiative = () => navigate('/decide?new=true');
 

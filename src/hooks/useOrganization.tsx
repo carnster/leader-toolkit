@@ -89,6 +89,25 @@ export async function getMyOrgId(client: SupabaseClient): Promise<string | null>
   return data.organization_id as string;
 }
 
+/** The organization id to stamp on something a user is creating right now,
+ *  honoring whatever "Acting on" scope is currently selected: a network
+ *  leader acting on a specific school stamps that school; a network leader
+ *  acting on the whole network, or an ordinary member, falls through to the
+ *  same personal/own-org resolution as before. Reads localStorage directly
+ *  (rather than depending on the useOrganization hook) so call sites that
+ *  are not React components, like a plain mutation function, can call this
+ *  too. */
+export async function getActingOrgId(client: SupabaseClient): Promise<string | null> {
+  if (typeof window !== "undefined") {
+    const net = window.localStorage.getItem(SELECTED_ORG_STORAGE_KEY);
+    if (net === WHOLE_NETWORK_VALUE) return null;
+    if (net) return net;
+    const dist = window.localStorage.getItem(DISTRICT_ACTING_STORAGE_KEY);
+    if (dist && dist !== DISTRICT_ITSELF_VALUE) return dist;
+  }
+  return getMyOrgId(client);
+}
+
 const JOIN_MESSAGES: Record<string, { title: string; description: string }> = {
   requested: { title: "Request sent", description: "A school admin approves new members." },
   "not found": { title: "School not found", description: "No school uses that join code. Double check it with your admin." },
@@ -304,6 +323,7 @@ export function useOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.invalidateQueries({ queryKey: allOrgsKey });
+      queryClient.invalidateQueries({ queryKey: ["district-schools"] });
       toast({
         title: "School removed",
         description: "Its memberships were removed too. Its initiatives were kept and now belong to their owners personally.",
@@ -731,6 +751,10 @@ export function useOrgInitiatives(opts: { orgId: string | null; networkWide: boo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardAnalytics"] });
+      queryClient.invalidateQueries({ queryKey: ["readinessStats"] });
+      queryClient.invalidateQueries({ queryKey: ["budgetTracking"] });
+      queryClient.invalidateQueries({ queryKey: ["fidelityTrends"] });
       toast({ title: "Initiative deleted", description: "All of its data was removed." });
     },
     onError: (e: Error) => {

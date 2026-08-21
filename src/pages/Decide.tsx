@@ -16,7 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
 import { getPendingTemplate, setPendingTemplate } from "@/lib/templateHandoff";
 import { useInitiatives } from "@/hooks/useInitiatives";
-import { getMyOrgId } from "@/hooks/useOrganization";
+import { getActingOrgId } from "@/hooks/useOrganization";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
@@ -340,9 +340,11 @@ export default function Decide() {
       const fallbackTitle = newInitiative.title?.trim() ||
         (problemStatement ? `${problemStatement.slice(0, 40)}...` : `Initiative - ${new Date().toLocaleDateString()}`);
 
+      // Stamp whatever school is currently being acted on (network/district
+      // admin's "Acting on" selection), falling back to the user's own org.
       // Personal (no-org) users keep working exactly as today: the key is
       // only sent when there is an org to attach.
-      const organizationId = await getMyOrgId(supabase);
+      const organizationId = await getActingOrgId(supabase);
 
       const { data: created, error: createErr } = await supabase
         .from("initiatives")

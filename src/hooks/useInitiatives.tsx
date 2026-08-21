@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getMyOrgId, useOrganization } from "@/hooks/useOrganization";
+import { getActingOrgId, useOrganization } from "@/hooks/useOrganization";
 
 export interface Initiative {
   id: string;
@@ -50,11 +50,13 @@ export function useInitiatives() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
 
+      // Stamp whatever school is currently being acted on (network/district
+      // admin's "Acting on" selection), falling back to the user's own org.
       // Personal (no-org) users keep working exactly as today: the key is
       // only sent when there is an org to attach, so a deployment where the
       // organizations schema has not been pasted in yet never sees an
       // unknown "organization_id" column in the insert.
-      const organizationId = await getMyOrgId(supabase);
+      const organizationId = await getActingOrgId(supabase);
 
       const { data, error } = await supabase
         .from("initiatives")
@@ -139,6 +141,10 @@ export function useInitiatives() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardAnalytics"] });
+      queryClient.invalidateQueries({ queryKey: ["readinessStats"] });
+      queryClient.invalidateQueries({ queryKey: ["budgetTracking"] });
+      queryClient.invalidateQueries({ queryKey: ["fidelityTrends"] });
       toast({
         title: "Initiative deleted",
         description: "The initiative has been permanently deleted.",

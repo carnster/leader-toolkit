@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -9,8 +10,10 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  // Run the invite link-up once per app load, not on every auth event.
-  const linkedRef = useRef(false);
+  const queryClient = useQueryClient();
+  // Run the invite link-up once per signed-in user, not once per app load,
+  // so a second account signing in without a page reload still gets linked.
+  const linkedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener
@@ -19,7 +22,7 @@ export function useAuth() {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        if (session?.user) linkInvites();
+        if (session?.user) linkInvites(session.user.id);
       }
     );
 
@@ -28,16 +31,16 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      if (session?.user) linkInvites();
+      if (session?.user) linkInvites(session.user.id);
     });
 
     // Claim any roster rows that were invited by this user's email address.
     // A teammate added by email has no account yet; the moment they sign in,
     // this binds the invite to their real user id and their shared
     // initiatives appear. Failure is silent: the next sign-in retries.
-    function linkInvites() {
-      if (linkedRef.current) return;
-      linkedRef.current = true;
+    function linkInvites(userId: string) {
+      if (linkedUserIdRef.current === userId) return;
+      linkedUserIdRef.current = userId;
       supabase
         .rpc("link_team_invites" as any)
         .then(({ data }) => {
@@ -76,6 +79,16 @@ export function useAuth() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Clear acting-scope and initiative context so the next account signed
+    // into this browser never inherits the previous account's selections.
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("network-leader-selected-org");
+      window.localStorage.removeItem("district-admin-selected-org");
+      window.sessionStorage.removeItem("initiativeId");
+    }
+    // Drop every cached query so a subsequent sign-in never renders stale
+    // data left over from this account.
+    queryClient.clear();
     navigate("/auth");
   };
 
