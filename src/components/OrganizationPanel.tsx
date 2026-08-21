@@ -28,8 +28,8 @@ const JOB_ROLE_LABELS: Record<string, string> = {
   data_manager: "Data Manager",
   principal: "Principal",
   governor: "Governor",
-  district_leader: "District Leader",
-  superadmin: "Superadmin",
+  district_leader: "District / Network Admin",
+  superadmin: "Super Admin",
 };
 
 const JOB_ROLE_OPTIONS = [
@@ -126,7 +126,9 @@ function InitiativesSection({
 
   const schoolName = (organizationId: string | null) => {
     if (!organizationId) return "Personal";
-    return allOrgs?.find((o) => o.id === organizationId)?.name || "Unknown school";
+    const o = allOrgs?.find((o) => o.id === organizationId);
+    if (!o) return "Unknown school";
+    return (o.is_district ?? false) ? `${o.name} (district)` : o.name;
   };
 
   const handleDelete = (initiative: OrgInitiative) => {
@@ -242,6 +244,15 @@ export function OrganizationPanel() {
   const [showDirectory, setShowDirectory] = useState(false);
   const [showInitiatives, setShowInitiatives] = useState(false);
   const [addSchoolParentId, setAddSchoolParentId] = useState("none");
+  const [isDistrictType, setIsDistrictType] = useState(false);
+
+  /** Orgs eligible for the "Part of district" picker: anything created as a
+   *  district, plus anything that already has schools under it (covers a
+   *  pre-paste parent org that predates the is_district column). */
+  const districtIds = new Set(
+    allOrgs.filter((o) => o.parent_id).map((o) => o.parent_id as string)
+  );
+  const districtOptions = allOrgs.filter((o) => (o.is_district ?? false) || districtIds.has(o.id));
 
   const handleNameChange = (value: string) => {
     setSchoolName(value);
@@ -250,7 +261,12 @@ export function OrganizationPanel() {
 
   const handleCreate = (parentId?: string) => {
     if (!schoolName.trim() || !slug.trim()) return;
-    createOrg({ name: schoolName.trim(), slug: slugify(slug), parentId });
+    createOrg({
+      name: schoolName.trim(),
+      slug: slugify(slug),
+      parentId: isDistrictType ? undefined : parentId,
+      isDistrict: isDistrictType,
+    });
   };
 
   const handleJoin = () => {
@@ -310,6 +326,24 @@ export function OrganizationPanel() {
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="school-type">Type</Label>
+            <Select
+              value={isDistrictType ? "district" : "school"}
+              onValueChange={(value) => setIsDistrictType(value === "district")}
+            >
+              <SelectTrigger id="school-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="school">School</SelectItem>
+                <SelectItem value="district">District</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              A district holds schools. You can add its schools right after creating it.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="school-slug">Join code</Label>
             <Input
               id="school-slug"
@@ -325,7 +359,7 @@ export function OrganizationPanel() {
             </p>
           </div>
           <Button onClick={() => handleCreate()} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
-            {isCreatingOrg ? "Creating..." : "Create school"}
+            {isCreatingOrg ? "Creating..." : isDistrictType ? "Create district" : "Create school"}
           </Button>
         </div>
 
@@ -404,7 +438,7 @@ export function OrganizationPanel() {
                 <SelectItem value={WHOLE_NETWORK_VALUE}>Whole network</SelectItem>
                 {allOrgs.map((o: Organization) => (
                   <SelectItem key={o.id} value={o.id}>
-                    {o.name}
+                    {(o.is_district ?? false) ? `${o.name} (district)` : o.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -440,6 +474,24 @@ export function OrganizationPanel() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="new-school-type">Type</Label>
+                  <Select
+                    value={isDistrictType ? "district" : "school"}
+                    onValueChange={(value) => setIsDistrictType(value === "district")}
+                  >
+                    <SelectTrigger id="new-school-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="school">School</SelectItem>
+                      <SelectItem value="district">District</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    A district holds schools. You can add its schools right after creating it.
+                  </p>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="new-school-slug">Join code</Label>
                   <Input
                     id="new-school-slug"
@@ -454,28 +506,38 @@ export function OrganizationPanel() {
                     Share this join code with the school's staff so they can request to join.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-school-parent">Part of district</Label>
-                  <Select value={addSchoolParentId} onValueChange={setAddSchoolParentId}>
-                    <SelectTrigger id="new-school-parent">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (standalone school)</SelectItem>
-                      {allOrgs.filter((o) => !o.parent_id).map((o) => (
-                        <SelectItem key={o.id} value={o.id}>
-                          {o.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!isDistrictType ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="new-school-parent">Part of district</Label>
+                    <Select
+                      value={addSchoolParentId}
+                      onValueChange={setAddSchoolParentId}
+                      disabled={districtOptions.length === 0}
+                    >
+                      <SelectTrigger id="new-school-parent">
+                        <SelectValue placeholder="No districts yet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districtOptions.length > 0 ? (
+                          <>
+                            <SelectItem value="none">None (standalone school)</SelectItem>
+                            {districtOptions.map((o) => (
+                              <SelectItem key={o.id} value={o.id}>
+                                {o.name}
+                              </SelectItem>
+                            ))}
+                          </>
+                        ) : null}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
                 <div className="flex gap-2">
                   <Button
                     onClick={() => handleCreate(addSchoolParentId !== "none" ? addSchoolParentId : undefined)}
                     disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}
                   >
-                    {isCreatingOrg ? "Creating..." : "Create school"}
+                    {isCreatingOrg ? "Creating..." : isDistrictType ? "Create district" : "Create school"}
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddSchool(false)}>
                     Cancel

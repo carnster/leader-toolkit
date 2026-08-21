@@ -36,6 +36,11 @@ export interface Organization {
    *  in an environment where the column doesn't exist yet; always read
    *  through `?? null` rather than assumed present. */
   parent_id: string | null;
+  /** True when this organization was created as a district rather than a
+   *  school. Undefined (not null) in an environment where the column
+   *  doesn't exist yet; always read through `?? false` rather than assumed
+   *  present, so a pre-paste row behaves as an ordinary school. */
+  is_district: boolean;
 }
 
 export type OrgRole = "admin" | "member";
@@ -203,7 +208,8 @@ export function useOrganization() {
     .filter((m) => m.status === "approved" && m.role === "admin")
     .map((m) => m.organizations);
   const districtParentIds = new Set(districtSchools.map((s) => s.parent_id).filter((id): id is string => !!id));
-  const managedDistrict = myAdminOrgs.find((o) => districtParentIds.has(o.id)) || null;
+  const managedDistrict =
+    myAdminOrgs.find((o) => (o.is_district ?? false) || districtParentIds.has(o.id)) || null;
   const isDistrictAdmin = !!managedDistrict;
 
   const [actingDistrictOrgId, setActingDistrictOrgIdState] = useState<string | null>(() => {
@@ -225,10 +231,23 @@ export function useOrganization() {
   const actingAsDistrictAdmin = isDistrictAdmin && (!!selectedDistrictSchool || isDistrictItselfSelected);
 
   const createOrg = useMutation({
-    mutationFn: async ({ name, slug, parentId }: { name: string; slug: string; parentId?: string }) => {
+    mutationFn: async ({
+      name,
+      slug,
+      parentId,
+      isDistrict,
+    }: {
+      name: string;
+      slug: string;
+      parentId?: string;
+      isDistrict?: boolean;
+    }) => {
       if (!user) throw new Error("Not signed in.");
       const insertPayload: Record<string, unknown> = { name: name.trim(), slug: slug.trim(), created_by: user.id };
       if (parentId) insertPayload.parent_id = parentId;
+      // Only sent when true, so pre-paste environments (no is_district column)
+      // keep creating ordinary schools without a column error.
+      if (isDistrict) insertPayload.is_district = true;
       const { data, error } = await supabase
         .from("organizations" as any)
         .insert(insertPayload)
@@ -237,14 +256,21 @@ export function useOrganization() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.invalidateQueries({ queryKey: allOrgsKey });
       queryClient.invalidateQueries({ queryKey: ["district-schools"] });
-      toast({
-        title: "School created",
-        description: "You are set as the admin. Share the join code with your staff.",
-      });
+      toast(
+        variables.isDistrict
+          ? {
+              title: "District created",
+              description: "You are set as the admin. Add its schools next.",
+            }
+          : {
+              title: "School created",
+              description: "You are set as the admin. Share the join code with your staff.",
+            }
+      );
     },
     onError: (e: Error) => {
       toast({ title: "Could not create the school", description: e.message, variant: "destructive" });

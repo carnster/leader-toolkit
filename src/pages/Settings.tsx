@@ -12,19 +12,28 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sun, Moon, Monitor } from "lucide-react";
 import { OrganizationPanel } from "@/components/OrganizationPanel";
+import { useOrganization } from "@/hooks/useOrganization";
 
 const ROLES = [
   { value: "teacher", label: "Teacher" },
   { value: "implementation_lead", label: "Implementation Lead" },
+  { value: "admin_lead", label: "Admin Lead" },
   { value: "principal", label: "Principal/Head of School" },
-  { value: "district_leader", label: "District Leader" },
+  { value: "district_leader", label: "District / Network Admin" },
   { value: "data_manager", label: "Data Manager" },
   { value: "governor", label: "Board Member" },
+  { value: "superadmin", label: "Super Admin" },
 ];
+
+/** These two roles describe network-level access, not a school job. Only a
+ *  network leader should be able to hand them out from their own profile. */
+const NETWORK_ONLY_ROLE_VALUES = new Set(["district_leader", "superadmin"]);
 
 export default function Settings() {
   const { isEnabled, missingTable: prefsMissingTable, setEnabled, isSaving, pendingType } = useNotificationPrefs();
   const { user, signOut } = useAuth();
+  const { isNetworkLeader } = useOrganization();
+  const roleOptions = ROLES.filter((r) => isNetworkLeader || !NETWORK_ONLY_ROLE_VALUES.has(r.value));
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [fullName, setFullName] = useState("");
@@ -109,7 +118,7 @@ export default function Settings() {
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLES.map((r) => (
+                    {roleOptions.map((r) => (
                       <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                     ))}
                   </SelectContent>
