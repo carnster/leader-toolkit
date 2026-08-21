@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfDay } from "date-fns";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export interface FidelityTrendData {
   date: string;
@@ -9,8 +10,15 @@ export interface FidelityTrendData {
 }
 
 export function useFidelityTrends(days: number = 30, initiativeId?: string) {
+  // The network administrator's "Acting on" school scopes the dashboard to
+  // that school, agreeing with the initiative switcher and lists; everyone
+  // else queries exactly as before.
+  const { isNetworkLeader, actingOrgId } = useOrganization();
+
   return useQuery({
-    queryKey: ["fidelityTrends", days, initiativeId],
+    queryKey: isNetworkLeader
+      ? ["fidelityTrends", days, initiativeId, actingOrgId]
+      : ["fidelityTrends", days, initiativeId],
     queryFn: async (): Promise<FidelityTrendData[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -18,15 +26,21 @@ export function useFidelityTrends(days: number = 30, initiativeId?: string) {
       const startDate = subDays(new Date(), days);
 
       let initiativeIds: string[] = [];
-      
+
       if (initiativeId) {
         initiativeIds = [initiativeId];
       } else {
         // Fetch all user initiatives
-        const { data: initiatives } = await supabase
+        let initiativesQuery = supabase
           .from("initiatives")
           .select("id")
           .eq("owner_id", user.id);
+
+        if (isNetworkLeader && actingOrgId) {
+          initiativesQuery = (initiativesQuery as any).eq("organization_id", actingOrgId);
+        }
+
+        const { data: initiatives } = await initiativesQuery;
 
         initiativeIds = initiatives?.map(i => i.id) || [];
       }

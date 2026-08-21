@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { parseDateOnly } from "@/lib/dates";
+import { useOrganization } from "@/hooks/useOrganization";
 
 export interface InitiativeHealthRow {
   id: string;
@@ -22,8 +23,15 @@ export interface DashboardStats {
 }
 
 export function useDashboardAnalytics(initiativeId?: string) {
+  // The network administrator's "Acting on" school scopes the dashboard to
+  // that school, agreeing with the initiative switcher and lists; everyone
+  // else queries exactly as before.
+  const { isNetworkLeader, actingOrgId } = useOrganization();
+
   return useQuery({
-    queryKey: ["dashboardAnalytics", initiativeId],
+    queryKey: isNetworkLeader
+      ? ["dashboardAnalytics", initiativeId, actingOrgId]
+      : ["dashboardAnalytics", initiativeId],
     queryFn: async (): Promise<DashboardStats> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
@@ -33,6 +41,10 @@ export function useDashboardAnalytics(initiativeId?: string) {
         .from("initiatives")
         .select("id, title, status, stage")
         .eq("owner_id", user.id);
+
+      if (isNetworkLeader && actingOrgId) {
+        query = (query as any).eq("organization_id", actingOrgId);
+      }
 
       if (initiativeId) {
         query = query.eq("id", initiativeId);

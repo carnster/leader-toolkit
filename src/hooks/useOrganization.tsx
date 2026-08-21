@@ -8,6 +8,13 @@ import { isMissingTable } from "@/lib/missingTable";
 
 const SELECTED_ORG_STORAGE_KEY = "network-leader-selected-org";
 
+/** Sentinel stored in `selectedOrgId` (same localStorage key, same setter)
+ *  when the network administrator picks "Whole network" instead of a
+ *  specific school. It never matches a real organization id, so `selectedOrg`
+ *  resolves to null and every acting-scope check below falls through to the
+ *  unfiltered, network-wide behavior. */
+export const WHOLE_NETWORK_VALUE = "__network__";
+
 export interface Organization {
   id: string;
   name: string;
@@ -229,7 +236,13 @@ export function useOrganization() {
     },
   });
 
-  const actingAsNetworkLeader = isNetworkLeader && !!selectedOrg;
+  const isWholeNetworkSelected = isNetworkLeader && selectedOrgId === WHOLE_NETWORK_VALUE;
+  const actingAsNetworkLeader = isNetworkLeader && (!!selectedOrg || isWholeNetworkSelected);
+
+  /** The school the network administrator is acting on, for callers that
+   *  need to scope a query to it. Null for everyone else, and null when
+   *  "Whole network" is chosen, since that is the unfiltered view. */
+  const actingOrgId = isNetworkLeader && selectedOrg ? selectedOrg.id : null;
 
   return {
     org: actingAsNetworkLeader ? selectedOrg : membership?.organizations || null,
@@ -249,6 +262,7 @@ export function useOrganization() {
     deleteOrg: deleteOrg.mutate,
     isDeletingOrg: deleteOrg.isPending,
     isNetworkLeader,
+    actingOrgId,
     allOrgs,
     selectedOrgId,
     setSelectedOrg,

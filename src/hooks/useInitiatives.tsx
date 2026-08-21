@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { getMyOrgId } from "@/hooks/useOrganization";
+import { getMyOrgId, useOrganization } from "@/hooks/useOrganization";
 
 export interface Initiative {
   id: string;
@@ -20,14 +20,24 @@ export interface Initiative {
 export function useInitiatives() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // The network administrator's "Acting on" school scopes the initiative
+  // list to that school; everyone else queries exactly as before, with the
+  // same query key shape, so an ordinary account sees zero change.
+  const { isNetworkLeader, actingOrgId } = useOrganization();
 
   const { data: initiatives, isLoading, error } = useQuery({
-    queryKey: ["initiatives"],
+    queryKey: isNetworkLeader ? ["initiatives", actingOrgId] : ["initiatives"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("initiatives")
         .select("*")
         .order("created_at", { ascending: false });
+
+      if (isNetworkLeader && actingOrgId) {
+        query = (query as any).eq("organization_id", actingOrgId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Initiative[];

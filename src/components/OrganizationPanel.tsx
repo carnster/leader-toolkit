@@ -17,6 +17,7 @@ import {
   OrgRole,
   Organization,
   OrgInitiative,
+  WHOLE_NETWORK_VALUE,
 } from "@/hooks/useOrganization";
 
 interface DirectoryRow {
@@ -89,12 +90,14 @@ function InitiativesSection({
   orgId,
   allowAllSchools,
   allOrgs,
+  defaultScope = "this",
 }: {
   orgId: string | null;
   allowAllSchools: boolean;
   allOrgs?: Organization[];
+  defaultScope?: "this" | "all";
 }) {
-  const [scope, setScope] = useState<"this" | "all">("this");
+  const [scope, setScope] = useState<"this" | "all">(defaultScope);
   const networkWide = allowAllSchools && scope === "all";
   const { initiatives, isLoading, deleteInitiative } = useOrgInitiatives({ orgId, networkWide });
 
@@ -233,7 +236,12 @@ export function OrganizationPanel() {
   };
 
   useEffect(() => {
-    if (isNetworkLeader && allOrgs.length > 0 && !allOrgs.some((o) => o.id === selectedOrgId)) {
+    if (
+      isNetworkLeader &&
+      allOrgs.length > 0 &&
+      selectedOrgId !== WHOLE_NETWORK_VALUE &&
+      !allOrgs.some((o) => o.id === selectedOrgId)
+    ) {
       setSelectedOrg(allOrgs[0].id);
     }
   }, [isNetworkLeader, allOrgs, selectedOrgId]);
@@ -354,6 +362,7 @@ export function OrganizationPanel() {
                 <SelectValue placeholder="Choose a school" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={WHOLE_NETWORK_VALUE}>Whole network</SelectItem>
                 {allOrgs.map((o: Organization) => (
                   <SelectItem key={o.id} value={o.id}>
                     {o.name}
@@ -365,7 +374,13 @@ export function OrganizationPanel() {
               You are the network administrator. You can manage any school.
             </p>
           </div>
-          {org ? <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} /> : null}
+          {org ? (
+            <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} />
+          ) : selectedOrgId === WHOLE_NETWORK_VALUE ? (
+            <p className="text-sm text-muted-foreground">
+              Choose a school to manage its roster and logo.
+            </p>
+          ) : null}
 
           <div className="border-t pt-6">
             {showAddSchool ? (
@@ -440,7 +455,12 @@ export function OrganizationPanel() {
           {showInitiatives ? (
             <div className="border-t pt-6">
               <h3 className="mb-3 text-sm font-medium">Initiatives</h3>
-              <InitiativesSection orgId={org?.id ?? null} allowAllSchools allOrgs={allOrgs} />
+              <InitiativesSection
+                orgId={org?.id ?? null}
+                allowAllSchools
+                allOrgs={allOrgs}
+                defaultScope={org ? "this" : "all"}
+              />
             </div>
           ) : null}
 
