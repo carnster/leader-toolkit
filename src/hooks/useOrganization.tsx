@@ -176,6 +176,24 @@ export function useOrganization() {
   };
 }
 
+const LOGO_MIME_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+};
+const MAX_LOGO_BYTES = 1024 * 1024;
+
+/** True when a storage error means the bucket itself does not exist yet.
+ *  Narrow on purpose: a real, post-migration storage error (bad path, RLS
+ *  denial) should still surface as an error, not be swallowed as "not ready". */
+function isMissingBucket(error: unknown): boolean {
+  if (!error) return false;
+  const e = error as { message?: string; error?: string };
+  const msg = `${e.message || ""} ${e.error || ""}`.toLowerCase();
+  return msg.includes("bucket not found") || msg.includes("not found");
+}
+
 export interface OrgRosterMember {
   id: string;
   organization_id: string;
@@ -310,6 +328,96 @@ export function useOrgRoster(orgId: string | undefined) {
     },
   });
 
+  const uploadLogo = useMutation({
+    mutationFn: async (file: File) => {
+      const ext = LOGO_MIME_EXT[file.type];
+      if (!ext) {
+        throw new Error("Please choose a PNG, JPG, WebP, or SVG image.");
+      }
+      if (file.size > MAX_LOGO_BYTES) {
+        throw new Error("That image is larger than 1MB. Please choose a smaller file.");
+      }
+      if (!orgId) throw new Error("No school selected.");
+
+      const path = `${orgId}/logo.${ext}`;
+      const { error: uploadError } = await (supabase.storage as any)
+        .from("org-logos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) {
+        if (isMissingBucket(uploadError)) throw { missingBucket: true };
+        throw uploadError;
+      }
+
+      const { data: publicUrlData } = (supabase.storage as any).from("org-logos").getPublicUrl(path);
+      const logoUrl = `${publicUrlData.publicUrl}?v=${Date.now()}`;
+
+      const { error: updateError } = await supabase
+        .from("organizations" as any)
+        .update({ logo_url: logoUrl } as any)
+        .eq("id", orgId);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Logo updated", description: "Your school's logo is live on the workspace." });
+    },
+    onError: (e: any) => {
+      if (e?.missingBucket) {
+        toast({ title: "Logo upload activates after the next database update." });
+        return;
+      }
+      toast({
+        title: "Could not upload the logo",
+        description: e instanceof Error ? e.message : "Something went wrong.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeLogo = useMutation({
+    mutationFn: async () => {
+      if (!orgId) throw new Error("No school selected.");
+
+      const { data: files, error: listError } = await (supabase.storage as any)
+        .from("org-logos")
+        .list(orgId);
+      if (listError) {
+        if (isMissingBucket(listError)) throw { missingBucket: true };
+        throw listError;
+      }
+      if (files && files.length > 0) {
+        const { error: removeError } = await (supabase.storage as any)
+          .from("org-logos")
+          .remove(files.map((f: { name: string }) => `${orgId}/${f.name}`));
+        if (removeError) {
+          if (isMissingBucket(removeError)) throw { missingBucket: true };
+          throw removeError;
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from("organizations" as any)
+        .update({ logo_url: null } as any)
+        .eq("id", orgId);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Logo removed" });
+    },
+    onError: (e: any) => {
+      if (e?.missingBucket) {
+        toast({ title: "Logo upload activates after the next database update." });
+        return;
+      }
+      toast({
+        title: "Could not remove the logo",
+        description: e instanceof Error ? e.message : "Something went wrong.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     members: data || [],
     isLoading,
@@ -320,5 +428,9 @@ export function useOrgRoster(orgId: string | undefined) {
     deny: deny.mutate,
     remove: remove.mutate,
     setRole: setRole.mutate,
+    uploadLogo: uploadLogo.mutate,
+    isUploadingLogo: uploadLogo.isPending,
+    removeLogo: removeLogo.mutate,
+    isRemovingLogo: removeLogo.isPending,
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,6 +177,13 @@ export function OrganizationPanel() {
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
               <School className="h-5 w-5" aria-hidden="true" />
+              {org.logo_url && (
+                <img
+                  src={org.logo_url}
+                  alt={org.name}
+                  className="h-10 max-h-10 rounded-sm object-contain"
+                />
+              )}
               {org.name}
             </CardTitle>
             <CardDescription>Join code: {org.slug}</CardDescription>
@@ -186,7 +193,7 @@ export function OrganizationPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {isAdmin ? (
-          <AdminRoster orgId={org.id} membershipId={membership.id} />
+          <AdminRoster orgId={org.id} membershipId={membership.id} logoUrl={org.logo_url} />
         ) : null}
         <div className="border-t pt-4">
           <Button variant="outline" onClick={handleLeave}>
@@ -198,10 +205,44 @@ export function OrganizationPanel() {
   );
 }
 
-function AdminRoster({ orgId, membershipId }: { orgId: string; membershipId: string }) {
-  const { members, isLoading, inviteByEmail, isInviting, approve, deny, remove, setRole } = useOrgRoster(orgId);
+function AdminRoster({
+  orgId,
+  membershipId,
+  logoUrl,
+}: {
+  orgId: string;
+  membershipId: string;
+  logoUrl: string | null;
+}) {
+  const {
+    members,
+    isLoading,
+    inviteByEmail,
+    isInviting,
+    approve,
+    deny,
+    remove,
+    setRole,
+    uploadLogo,
+    isUploadingLogo,
+    removeLogo,
+    isRemovingLogo,
+  } = useOrgRoster(orgId);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<OrgRole>("member");
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadLogo(file);
+    e.target.value = "";
+  };
+
+  const handleRemoveLogo = () => {
+    if (window.confirm("Remove your school's logo?")) {
+      removeLogo();
+    }
+  };
 
   const pendingCount = members.filter((m) => m.status === "pending").length;
 
@@ -226,6 +267,52 @@ function AdminRoster({ orgId, membershipId }: { orgId: string; membershipId: str
       )}
 
       <div className="space-y-2">
+        <h3 className="text-sm font-medium">School logo</h3>
+        {logoUrl ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <img src={logoUrl} alt="School logo" className="h-10 max-h-10 rounded-sm border object-contain" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={isUploadingLogo || isRemovingLogo}
+            >
+              {isUploadingLogo ? "Uploading..." : "Replace"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRemoveLogo}
+              disabled={isUploadingLogo || isRemovingLogo}
+            >
+              {isRemovingLogo ? "Removing..." : "Remove"}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={isUploadingLogo}
+            >
+              {isUploadingLogo ? "Uploading..." : "Upload logo"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Shown on your school's workspace and reports. PNG, JPG, WebP, or SVG, up to 1MB.
+            </p>
+          </div>
+        )}
+        <input
+          ref={logoInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="hidden"
+          onChange={handleLogoChange}
+        />
+      </div>
+
+      <div className="space-y-2 border-t pt-4">
         <h3 className="text-sm font-medium">Roster</h3>
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />

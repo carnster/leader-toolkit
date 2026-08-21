@@ -99,7 +99,14 @@ export default function Dashboard() {
           <p className="text-muted-foreground">
             Track and manage your school improvement initiatives
           </p>
-          {org && <p className="text-xs text-muted-foreground mt-1">{org.name}</p>}
+          {org && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+              {org.logo_url && (
+                <img src={org.logo_url} alt={org.name} className="h-6 object-contain" />
+              )}
+              {org.name}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {initiatives.length > 0 && (

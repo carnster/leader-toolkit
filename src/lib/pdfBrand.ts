@@ -61,9 +61,44 @@ export function brandMarks(doc: jsPDF, y: number): number {
   return y + h;
 }
 
+/** Fetches an org logo for embedding in a PDF header. Only the three raster
+ *  formats jsPDF's addImage understands are embedded; an SVG logo (or any
+ *  fetch/decode failure) resolves to null so the header just omits it rather
+ *  than blocking the export. */
+export async function loadOrgLogoForPdf(
+  url: string
+): Promise<(Loaded & { format: "PNG" | "JPEG" | "WEBP" }) | null> {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const format =
+      blob.type === "image/jpeg" ? "JPEG" : blob.type === "image/webp" ? "WEBP" : blob.type === "image/png" ? "PNG" : null;
+    if (!format) return null;
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    const dims = await new Promise<{ w: number; h: number } | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+    if (!dims) return null;
+    return { dataUrl, w: dims.w, h: dims.h, format };
+  } catch {
+    return null;
+  }
+}
+
 export interface BrandHeaderOptions {
   title: string;
   subtitle?: string;
+  /** The school's own logo, placed at the top-right of the header opposite
+   *  the IMPACT mark. From loadOrgLogoForPdf; omit or pass null if unavailable. */
+  orgLogo?: (Loaded & { format: "PNG" | "JPEG" | "WEBP" }) | null;
 }
 
 /** Draws the branded header and returns the y position content should start at. */
@@ -72,6 +107,19 @@ export function brandedHeader(doc: jsPDF, opts: BrandHeaderOptions): number {
   const margin = pageW * 0.075;
 
   let y = brandMarks(doc, margin) + pageW * 0.03;
+
+  if (opts.orgLogo) {
+    const maxW = pageW * 0.18;
+    const maxH = pageW * 0.05;
+    const scale = Math.min(maxW / opts.orgLogo.w, maxH / opts.orgLogo.h);
+    const w = opts.orgLogo.w * scale;
+    const h = opts.orgLogo.h * scale;
+    try {
+      doc.addImage(opts.orgLogo.dataUrl, opts.orgLogo.format, pageW - margin - w, margin, w, h, undefined, "FAST");
+    } catch {
+      /* a bad image must never block the export */
+    }
+  }
 
   doc.setFontSize(18);
   doc.setTextColor(20, 20, 20);

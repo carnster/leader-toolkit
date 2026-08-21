@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import jsPDF from "jspdf";
-import { brandedHeader, brandedFooter } from "@/lib/pdfBrand";
+import { brandedHeader, brandedFooter, loadOrgLogoForPdf } from "@/lib/pdfBrand";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { parseDateOnly } from "@/lib/dates";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { getMyOrgId } from "@/hooks/useOrganization";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
@@ -74,15 +76,33 @@ export function BoardReportExport({ initiativeId, initiativeTitle }: BoardReport
   const { commitments } = useCommitments(initiativeId);
   const { indicators, indicatorValues } = useIndicators(initiativeId);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       const initiative = initiatives.find((i) => i.id === initiativeId) || null;
+
+      // Best-effort: a school without a logo, or a fetch/decode failure,
+      // must never block the export.
+      let orgLogo = null;
+      try {
+        const orgId = await getMyOrgId(supabase);
+        if (orgId) {
+          const { data: orgRow } = await (supabase.from("organizations" as any) as any)
+            .select("logo_url")
+            .eq("id", orgId)
+            .maybeSingle();
+          if (orgRow?.logo_url) orgLogo = await loadOrgLogoForPdf(orgRow.logo_url);
+        }
+      } catch {
+        /* logo is a nice-to-have on this report, not a requirement */
+      }
+
       const doc = new jsPDF();
       const pageW = doc.internal.pageSize.getWidth();
 
       let y = brandedHeader(doc, {
         title: "Board Report",
         subtitle: initiativeTitle,
+        orgLogo,
       });
 
       const ensureRoom = (needed = 30) => {
