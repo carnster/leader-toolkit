@@ -513,3 +513,83 @@ export function useOrgRoster(orgId: string | undefined) {
     isRemovingLogo: removeLogo.isPending,
   };
 }
+
+export interface OrgInitiative {
+  id: string;
+  title: string;
+  status: string;
+  owner_id: string;
+  organization_id: string | null;
+  created_at: string;
+  owner_name: string | null;
+}
+
+/** Admin-facing initiative list: every initiative an admin can act on, with
+ *  its owner's name resolved client-side (a profile miss just renders as
+ *  "Unknown" rather than failing the whole list). `networkWide` fetches
+ *  every initiative the network role can see; otherwise the list is scoped
+ *  to one school. Deleting cascades all of that initiative's data at the
+ *  database level, so the confirm step lives in the component. */
+export function useOrgInitiatives(opts: { orgId: string | null; networkWide: boolean }) {
+  const { orgId, networkWide } = opts;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const key = ["org-initiatives", networkWide ? "all" : orgId];
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: key,
+    enabled: networkWide || !!orgId,
+    queryFn: async () => {
+      let query = supabase
+        .from("initiatives" as any)
+        .select("id,title,status,owner_id,organization_id,created_at")
+        .order("created_at", { ascending: false });
+      if (!networkWide) {
+        query = query.eq("organization_id", orgId!);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      const initiatives = (data as unknown as Omit<OrgInitiative, "owner_name">[]) || [];
+
+      const ownerIds = [...new Set(initiatives.map((i) => i.owner_id).filter(Boolean))];
+      let namesByOwnerId = new Map<string, string | null>();
+      if (ownerIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles" as any)
+          .select("id, full_name")
+          .in("id", ownerIds);
+        if (!profilesError && profiles) {
+          namesByOwnerId = new Map(
+            (profiles as unknown as { id: string; full_name: string | null }[]).map((p) => [p.id, p.full_name])
+          );
+        }
+      }
+
+      return initiatives.map((i) => ({ ...i, owner_name: namesByOwnerId.get(i.owner_id) ?? null }));
+    },
+    retry: (failureCount, err) => !isMissingTable(err) && failureCount < 2,
+  });
+
+  const deleteInitiative = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("initiatives" as any).delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: ["initiatives"] });
+      toast({ title: "Initiative deleted", description: "All of its data was removed." });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not delete the initiative", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return {
+    initiatives: data || [],
+    isLoading,
+    missingTable: isMissingTable(error),
+    deleteInitiative: deleteInitiative.mutate,
+    isDeletingInitiative: deleteInitiative.isPending,
+  };
+}

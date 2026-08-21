@@ -9,7 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { School, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useOrganization, useOrgRoster, slugify, OrgRole, Organization } from "@/hooks/useOrganization";
+import {
+  useOrganization,
+  useOrgRoster,
+  useOrgInitiatives,
+  slugify,
+  OrgRole,
+  Organization,
+  OrgInitiative,
+} from "@/hooks/useOrganization";
 
 interface DirectoryRow {
   school: string | null;
@@ -71,6 +79,106 @@ function NetworkDirectory() {
   );
 }
 
+/** Admin-facing initiative list, scoped to one school or (for the network
+ *  role) toggled across every school. Owner names come pre-resolved from
+ *  the hook; school names are resolved here from `allOrgs` since the hook
+ *  only knows organization ids. Deletion asks the admin to type the
+ *  initiative's title back before it fires, since it cascades everything
+ *  the initiative owns. */
+function InitiativesSection({
+  orgId,
+  allowAllSchools,
+  allOrgs,
+}: {
+  orgId: string | null;
+  allowAllSchools: boolean;
+  allOrgs?: Organization[];
+}) {
+  const [scope, setScope] = useState<"this" | "all">("this");
+  const networkWide = allowAllSchools && scope === "all";
+  const { initiatives, isLoading, deleteInitiative } = useOrgInitiatives({ orgId, networkWide });
+
+  const schoolName = (organizationId: string | null) => {
+    if (!organizationId) return "Personal";
+    return allOrgs?.find((o) => o.id === organizationId)?.name || "Unknown school";
+  };
+
+  const handleDelete = (initiative: OrgInitiative) => {
+    const typed = window.prompt(
+      `Deleting "${initiative.title}" removes all of its data. Type its title to confirm:`
+    );
+    if (typed === null) return;
+    if (typed === initiative.title) {
+      deleteInitiative(initiative.id);
+    } else {
+      window.alert("The title did not match. Nothing was deleted.");
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      {allowAllSchools ? (
+        <Select value={scope} onValueChange={(value) => setScope(value as "this" | "all")}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="this">This school</SelectItem>
+            <SelectItem value="all">All schools</SelectItem>
+          </SelectContent>
+        </Select>
+      ) : null}
+
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : initiatives.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No initiatives yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {initiatives.map((initiative) => (
+            <div
+              key={initiative.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{initiative.title}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  Owner: {initiative.owner_name || "Unknown"}
+                </p>
+                {networkWide ? (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {schoolName(initiative.organization_id)}
+                  </p>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={initiative.status === "pending" ? "outline" : "secondary"}
+                  className={
+                    initiative.status === "pending"
+                      ? "border-amber-500/50 text-amber-700 dark:text-amber-400"
+                      : undefined
+                  }
+                >
+                  {initiative.status}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => handleDelete(initiative)}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** School workspace: create or join a school, see membership status, and
  *  (for admins) manage the roster. One card, six states, degrading quietly
  *  to a placeholder until the organizations schema lands. */
@@ -101,6 +209,7 @@ export function OrganizationPanel() {
   const [joinCode, setJoinCode] = useState("");
   const [showAddSchool, setShowAddSchool] = useState(false);
   const [showDirectory, setShowDirectory] = useState(false);
+  const [showInitiatives, setShowInitiatives] = useState(false);
 
   const handleNameChange = (value: string) => {
     setSchoolName(value);
@@ -321,9 +430,19 @@ export function OrganizationPanel() {
                 <Button variant="outline" onClick={() => setShowDirectory((v) => !v)}>
                   {showDirectory ? "Hide directory" : "Network directory"}
                 </Button>
+                <Button variant="outline" onClick={() => setShowInitiatives((v) => !v)}>
+                  {showInitiatives ? "Hide initiatives" : "Initiatives"}
+                </Button>
               </div>
             )}
           </div>
+
+          {showInitiatives ? (
+            <div className="border-t pt-6">
+              <h3 className="mb-3 text-sm font-medium">Initiatives</h3>
+              <InitiativesSection orgId={org?.id ?? null} allowAllSchools allOrgs={allOrgs} />
+            </div>
+          ) : null}
 
           {showDirectory ? (
             <div className="border-t pt-6">
@@ -381,7 +500,19 @@ export function OrganizationPanel() {
       </CardHeader>
       <CardContent className="space-y-6">
         {isAdmin ? (
-          <AdminRoster orgId={org.id} membershipId={membership.id} logoUrl={org.logo_url} />
+          <>
+            <AdminRoster orgId={org.id} membershipId={membership.id} logoUrl={org.logo_url} />
+            <div className="border-t pt-4">
+              <Button variant="outline" onClick={() => setShowInitiatives((v) => !v)}>
+                {showInitiatives ? "Hide initiatives" : "Initiatives"}
+              </Button>
+              {showInitiatives ? (
+                <div className="mt-4">
+                  <InitiativesSection orgId={org.id} allowAllSchools={false} />
+                </div>
+              ) : null}
+            </div>
+          </>
         ) : null}
         <div className="border-t pt-4">
           <Button variant="outline" onClick={handleLeave}>
