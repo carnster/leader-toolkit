@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { School, Loader2 } from "lucide-react";
-import { useOrganization, useOrgRoster, slugify, OrgRole } from "@/hooks/useOrganization";
+import { useOrganization, useOrgRoster, slugify, OrgRole, Organization } from "@/hooks/useOrganization";
 
 /** School workspace: create or join a school, see membership status, and
  *  (for admins) manage the roster. One card, six states, degrading quietly
@@ -26,6 +26,10 @@ export function OrganizationPanel() {
     isRequestingToJoin,
     joinRequestResult,
     leaveOrg,
+    isNetworkLeader,
+    allOrgs,
+    selectedOrgId,
+    setSelectedOrg,
   } = useOrganization();
 
   const [schoolName, setSchoolName] = useState("");
@@ -53,6 +57,78 @@ export function OrganizationPanel() {
       leaveOrg();
     }
   };
+
+  useEffect(() => {
+    if (isNetworkLeader && allOrgs.length > 0 && !allOrgs.some((o) => o.id === selectedOrgId)) {
+      setSelectedOrg(allOrgs[0].id);
+    }
+  }, [isNetworkLeader, allOrgs, selectedOrgId]);
+
+  const renderCreateJoinCard = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <School className="h-5 w-5" aria-hidden="true" />
+          School workspace
+        </CardTitle>
+        <CardDescription>
+          Connect this account to your school so initiatives, teams, and reports live in one
+          shared workspace.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium">Create your school</h3>
+          <div className="space-y-2">
+            <Label htmlFor="school-name">School name</Label>
+            <Input
+              id="school-name"
+              value={schoolName}
+              onChange={(e) => handleNameChange(e.target.value)}
+              placeholder="Riverside Elementary"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="school-slug">Join code</Label>
+            <Input
+              id="school-slug"
+              value={slug}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setSlug(slugify(e.target.value));
+              }}
+              placeholder="riverside-elementary"
+            />
+            <p className="text-xs text-muted-foreground">
+              This is your school's join code. Share it with staff so they can request to join.
+            </p>
+          </div>
+          <Button onClick={handleCreate} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
+            {isCreatingOrg ? "Creating..." : "Create school"}
+          </Button>
+        </div>
+
+        <div className="space-y-3 border-t pt-6">
+          <h3 className="text-sm font-medium">Join a school</h3>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              placeholder="Enter a join code"
+            />
+            <Button variant="outline" onClick={handleJoin} disabled={!joinCode.trim() || isRequestingToJoin}>
+              {isRequestingToJoin ? "Sending..." : "Request to join"}
+            </Button>
+          </div>
+          {joinRequestResult === "requested" && (
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+              Request sent. A school admin approves new members.
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (missingTable) {
     return (
@@ -84,6 +160,43 @@ export function OrganizationPanel() {
     );
   }
 
+  if (isNetworkLeader) {
+    if (allOrgs.length === 0) {
+      return renderCreateJoinCard();
+    }
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <School className="h-5 w-5" aria-hidden="true" />
+            School workspace
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="acting-on-select">Acting on</Label>
+            <Select value={selectedOrgId ?? undefined} onValueChange={(value) => setSelectedOrg(value)}>
+              <SelectTrigger id="acting-on-select">
+                <SelectValue placeholder="Choose a school" />
+              </SelectTrigger>
+              <SelectContent>
+                {allOrgs.map((o: Organization) => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              You are the network administrator. You can manage any school.
+            </p>
+          </div>
+          {org ? <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} /> : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isPending) {
     return (
       <Card>
@@ -103,71 +216,7 @@ export function OrganizationPanel() {
   }
 
   if (!membership || !org) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <School className="h-5 w-5" aria-hidden="true" />
-            School workspace
-          </CardTitle>
-          <CardDescription>
-            Connect this account to your school so initiatives, teams, and reports live in one
-            shared workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <h3 className="text-sm font-medium">Create your school</h3>
-            <div className="space-y-2">
-              <Label htmlFor="school-name">School name</Label>
-              <Input
-                id="school-name"
-                value={schoolName}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Riverside Elementary"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="school-slug">Join code</Label>
-              <Input
-                id="school-slug"
-                value={slug}
-                onChange={(e) => {
-                  setSlugTouched(true);
-                  setSlug(slugify(e.target.value));
-                }}
-                placeholder="riverside-elementary"
-              />
-              <p className="text-xs text-muted-foreground">
-                This is your school's join code. Share it with staff so they can request to join.
-              </p>
-            </div>
-            <Button onClick={handleCreate} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
-              {isCreatingOrg ? "Creating..." : "Create school"}
-            </Button>
-          </div>
-
-          <div className="space-y-3 border-t pt-6">
-            <h3 className="text-sm font-medium">Join a school</h3>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Enter a join code"
-              />
-              <Button variant="outline" onClick={handleJoin} disabled={!joinCode.trim() || isRequestingToJoin}>
-                {isRequestingToJoin ? "Sending..." : "Request to join"}
-              </Button>
-            </div>
-            {joinRequestResult === "requested" && (
-              <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
-                Request sent. A school admin approves new members.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return renderCreateJoinCard();
   }
 
   return (

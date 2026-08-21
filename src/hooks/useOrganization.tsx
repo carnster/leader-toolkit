@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isMissingTable } from "@/lib/missingTable";
+
+const SELECTED_ORG_STORAGE_KEY = "network-leader-selected-org";
 
 export interface Organization {
   id: string;
@@ -98,6 +101,52 @@ export function useOrganization() {
   const membership = memberships.find((m) => m.status === "approved") || null;
   const pendingMembership = memberships.find((m) => m.status === "pending") || null;
 
+  /** Whether this account holds the network superadmin role. False (never
+   *  an error state) until the backing RPC exists, so a pre-paste
+   *  environment behaves exactly as it does today. */
+  const networkLeaderKey = ["network-leader", user?.id];
+  const { data: isNetworkLeader = false } = useQuery({
+    queryKey: networkLeaderKey,
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("is_network_leader" as any);
+      if (error) return false;
+      return !!data;
+    },
+    retry: false,
+  });
+
+  const allOrgsKey = ["all-organizations", user?.id];
+  const { data: allOrgs = [] } = useQuery({
+    queryKey: allOrgsKey,
+    enabled: !!user && isNetworkLeader,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations" as any)
+        .select("*")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data as unknown as Organization[]) || [];
+    },
+    retry: (failureCount, err) => !isMissingTable(err) && failureCount < 2,
+  });
+
+  const [selectedOrgId, setSelectedOrgIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(SELECTED_ORG_STORAGE_KEY);
+  });
+
+  const setSelectedOrg = (id: string) => {
+    setSelectedOrgIdState(id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SELECTED_ORG_STORAGE_KEY, id);
+    }
+  };
+
+  const selectedOrg = isNetworkLeader
+    ? allOrgs.find((o) => o.id === selectedOrgId) || null
+    : null;
+
   const createOrg = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
       if (!user) throw new Error("Not signed in.");
@@ -111,6 +160,7 @@ export function useOrganization() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: allOrgsKey });
       toast({
         title: "School created",
         description: "You are set as the admin. Share the join code with your staff.",
@@ -158,10 +208,12 @@ export function useOrganization() {
     },
   });
 
+  const actingAsNetworkLeader = isNetworkLeader && !!selectedOrg;
+
   return {
-    org: membership?.organizations || null,
+    org: actingAsNetworkLeader ? selectedOrg : membership?.organizations || null,
     membership,
-    isAdmin: membership?.role === "admin",
+    isAdmin: actingAsNetworkLeader ? true : membership?.role === "admin",
     isPending: !!pendingMembership,
     pendingMembership,
     missingTable: isMissingTable(error),
@@ -173,6 +225,10 @@ export function useOrganization() {
     joinRequestResult: requestToJoin.data as string | undefined,
     leaveOrg: leaveOrg.mutate,
     isLeavingOrg: leaveOrg.isPending,
+    isNetworkLeader,
+    allOrgs,
+    selectedOrgId,
+    setSelectedOrg,
   };
 }
 
