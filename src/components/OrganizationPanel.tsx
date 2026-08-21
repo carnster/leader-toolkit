@@ -18,6 +18,7 @@ import {
   Organization,
   OrgInitiative,
   WHOLE_NETWORK_VALUE,
+  DISTRICT_ITSELF_VALUE,
 } from "@/hooks/useOrganization";
 
 interface DirectoryRow {
@@ -204,6 +205,11 @@ export function OrganizationPanel() {
     selectedOrgId,
     setSelectedOrg,
     deleteOrg,
+    isDistrictAdmin,
+    managedDistrict,
+    districtSchools,
+    actingDistrictOrgId,
+    setDistrictActingOrg,
   } = useOrganization();
 
   const [schoolName, setSchoolName] = useState("");
@@ -213,15 +219,16 @@ export function OrganizationPanel() {
   const [showAddSchool, setShowAddSchool] = useState(false);
   const [showDirectory, setShowDirectory] = useState(false);
   const [showInitiatives, setShowInitiatives] = useState(false);
+  const [addSchoolParentId, setAddSchoolParentId] = useState("none");
 
   const handleNameChange = (value: string) => {
     setSchoolName(value);
     if (!slugTouched) setSlug(slugify(value));
   };
 
-  const handleCreate = () => {
+  const handleCreate = (parentId?: string) => {
     if (!schoolName.trim() || !slug.trim()) return;
-    createOrg({ name: schoolName.trim(), slug: slugify(slug) });
+    createOrg({ name: schoolName.trim(), slug: slugify(slug), parentId });
   };
 
   const handleJoin = () => {
@@ -245,6 +252,16 @@ export function OrganizationPanel() {
       setSelectedOrg(allOrgs[0].id);
     }
   }, [isNetworkLeader, allOrgs, selectedOrgId]);
+
+  useEffect(() => {
+    if (
+      isDistrictAdmin &&
+      actingDistrictOrgId !== DISTRICT_ITSELF_VALUE &&
+      !districtSchools.some((s) => s.id === actingDistrictOrgId)
+    ) {
+      setDistrictActingOrg(DISTRICT_ITSELF_VALUE);
+    }
+  }, [isDistrictAdmin, districtSchools, actingDistrictOrgId]);
 
   const renderCreateJoinCard = () => (
     <Card>
@@ -285,7 +302,7 @@ export function OrganizationPanel() {
               This is your school's join code. Share it with staff so they can request to join.
             </p>
           </div>
-          <Button onClick={handleCreate} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
+          <Button onClick={() => handleCreate()} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
             {isCreatingOrg ? "Creating..." : "Create school"}
           </Button>
         </div>
@@ -410,8 +427,27 @@ export function OrganizationPanel() {
                     Share this join code with the school's staff so they can request to join.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-school-parent">Part of district</Label>
+                  <Select value={addSchoolParentId} onValueChange={setAddSchoolParentId}>
+                    <SelectTrigger id="new-school-parent">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (standalone school)</SelectItem>
+                      {allOrgs.filter((o) => !o.parent_id).map((o) => (
+                        <SelectItem key={o.id} value={o.id}>
+                          {o.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleCreate} disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}>
+                  <Button
+                    onClick={() => handleCreate(addSchoolParentId !== "none" ? addSchoolParentId : undefined)}
+                    disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}
+                  >
                     {isCreatingOrg ? "Creating..." : "Create school"}
                   </Button>
                   <Button variant="ghost" onClick={() => setShowAddSchool(false)}>
@@ -470,6 +506,105 @@ export function OrganizationPanel() {
               <NetworkDirectory />
             </div>
           ) : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isDistrictAdmin && managedDistrict) {
+    const actingOnDistrict = actingDistrictOrgId === DISTRICT_ITSELF_VALUE;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <School className="h-5 w-5" aria-hidden="true" />
+            School workspace
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="district-acting-select">Acting on</Label>
+            <Select value={actingDistrictOrgId ?? undefined} onValueChange={(value) => setDistrictActingOrg(value)}>
+              <SelectTrigger id="district-acting-select">
+                <SelectValue placeholder="Choose where to act" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DISTRICT_ITSELF_VALUE}>{managedDistrict.name} (district)</SelectItem>
+                {districtSchools.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              You are the district administrator. You can manage every school in your district.
+            </p>
+          </div>
+
+          {org ? (
+            <AdminRoster orgId={org.id} membershipId={membership?.id || ""} logoUrl={org.logo_url} />
+          ) : null}
+
+          <div className="border-t pt-6">
+            {actingOnDistrict ? (
+              showAddSchool ? (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium">Add a school</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-district-school-name">School name</Label>
+                    <Input
+                      id="new-district-school-name"
+                      value={schoolName}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      placeholder="Riverside Elementary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-district-school-slug">Join code</Label>
+                    <Input
+                      id="new-district-school-slug"
+                      value={slug}
+                      onChange={(e) => {
+                        setSlugTouched(true);
+                        setSlug(slugify(e.target.value));
+                      }}
+                      placeholder="riverside-elementary"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Share this join code with the school's staff so they can request to join.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleCreate(managedDistrict.id)}
+                      disabled={!schoolName.trim() || !slug.trim() || isCreatingOrg}
+                    >
+                      {isCreatingOrg ? "Creating..." : "Create school"}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setShowAddSchool(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" onClick={() => setShowAddSchool(true)}>
+                  Add a school
+                </Button>
+              )
+            ) : null}
+          </div>
+
+          <div className="border-t pt-6">
+            <Button variant="outline" onClick={() => setShowInitiatives((v) => !v)}>
+              {showInitiatives ? "Hide initiatives" : "Initiatives"}
+            </Button>
+            {showInitiatives ? (
+              <div className="mt-4">
+                <InitiativesSection orgId={org?.id ?? null} allowAllSchools={false} />
+              </div>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     );

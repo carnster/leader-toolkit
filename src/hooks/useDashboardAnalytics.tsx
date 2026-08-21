@@ -23,13 +23,13 @@ export interface DashboardStats {
 }
 
 export function useDashboardAnalytics(initiativeId?: string) {
-  // The network administrator's "Acting on" school scopes the dashboard to
-  // that school, agreeing with the initiative switcher and lists; everyone
-  // else queries exactly as before.
-  const { isNetworkLeader, actingOrgId } = useOrganization();
+  // The network administrator's or a district administrator's "Acting on"
+  // school scopes the dashboard to that school, agreeing with the
+  // initiative switcher and lists; everyone else queries exactly as before.
+  const { actingOrgId } = useOrganization();
 
   return useQuery({
-    queryKey: isNetworkLeader
+    queryKey: actingOrgId
       ? ["dashboardAnalytics", initiativeId, actingOrgId]
       : ["dashboardAnalytics", initiativeId],
     queryFn: async (): Promise<DashboardStats> => {
@@ -42,7 +42,7 @@ export function useDashboardAnalytics(initiativeId?: string) {
         .select("id, title, status, stage")
         .eq("owner_id", user.id);
 
-      if (isNetworkLeader && actingOrgId) {
+      if (actingOrgId) {
         query = (query as any).eq("organization_id", actingOrgId);
       }
 

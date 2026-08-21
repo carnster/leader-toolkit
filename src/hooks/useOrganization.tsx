@@ -15,6 +15,13 @@ const SELECTED_ORG_STORAGE_KEY = "network-leader-selected-org";
  *  unfiltered, network-wide behavior. */
 export const WHOLE_NETWORK_VALUE = "__network__";
 
+const DISTRICT_ACTING_STORAGE_KEY = "district-admin-selected-org";
+
+/** Sentinel stored in `actingDistrictOrgId` when a district administrator
+ *  picks the district itself instead of one of its schools. Mirrors
+ *  WHOLE_NETWORK_VALUE's role for the network switcher. */
+export const DISTRICT_ITSELF_VALUE = "__district__";
+
 export interface Organization {
   id: string;
   name: string;
@@ -24,6 +31,11 @@ export interface Organization {
   created_by: string;
   created_at: string;
   updated_at: string;
+  /** Null for a standalone school or for a district itself. Set to the
+   *  district's id for a school that belongs to one. Undefined (not null)
+   *  in an environment where the column doesn't exist yet; always read
+   *  through `?? null` rather than assumed present. */
+  parent_id: string | null;
 }
 
 export type OrgRole = "admin" | "member";
@@ -154,12 +166,72 @@ export function useOrganization() {
     ? allOrgs.find((o) => o.id === selectedOrgId) || null
     : null;
 
-  const createOrg = useMutation({
-    mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
-      if (!user) throw new Error("Not signed in.");
+  /** Every org this user is an approved admin of, top level and school
+   *  alike. A district admin's district id lives in here. */
+  const myAdminOrgIds = memberships
+    .filter((m) => m.status === "approved" && m.role === "admin")
+    .map((m) => m.organization_id);
+
+  /** Schools belonging to any district this user administers. A missing
+   *  parent_id column (pre-paste environment) or any other query error just
+   *  yields an empty list rather than throwing, so district features quietly
+   *  do not appear instead of breaking the panel. */
+  const districtSchoolsKey = ["district-schools", user?.id, ...myAdminOrgIds];
+  const { data: districtSchools = [] } = useQuery({
+    queryKey: districtSchoolsKey,
+    enabled: !!user && myAdminOrgIds.length > 0,
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations" as any)
-        .insert({ name: name.trim(), slug: slug.trim(), created_by: user.id })
+        .select("*")
+        .in("parent_id", myAdminOrgIds)
+        .order("name", { ascending: true });
+      if (error) return [];
+      return ((data as unknown as Organization[]) || []).map((o) => ({
+        ...o,
+        parent_id: o.parent_id ?? null,
+      }));
+    },
+    retry: false,
+  });
+
+  /** The org this user administers that is a district, i.e. has at least
+   *  one school reporting to it among districtSchools. Null for an admin
+   *  whose org(s) have no children, so ordinary school admins see no
+   *  district UI at all. */
+  const myAdminOrgs = memberships
+    .filter((m) => m.status === "approved" && m.role === "admin")
+    .map((m) => m.organizations);
+  const districtParentIds = new Set(districtSchools.map((s) => s.parent_id).filter((id): id is string => !!id));
+  const managedDistrict = myAdminOrgs.find((o) => districtParentIds.has(o.id)) || null;
+  const isDistrictAdmin = !!managedDistrict;
+
+  const [actingDistrictOrgId, setActingDistrictOrgIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return window.localStorage.getItem(DISTRICT_ACTING_STORAGE_KEY);
+  });
+
+  const setDistrictActingOrg = (id: string) => {
+    setActingDistrictOrgIdState(id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(DISTRICT_ACTING_STORAGE_KEY, id);
+    }
+  };
+
+  const selectedDistrictSchool = isDistrictAdmin
+    ? districtSchools.find((s) => s.id === actingDistrictOrgId) || null
+    : null;
+  const isDistrictItselfSelected = isDistrictAdmin && actingDistrictOrgId === DISTRICT_ITSELF_VALUE;
+  const actingAsDistrictAdmin = isDistrictAdmin && (!!selectedDistrictSchool || isDistrictItselfSelected);
+
+  const createOrg = useMutation({
+    mutationFn: async ({ name, slug, parentId }: { name: string; slug: string; parentId?: string }) => {
+      if (!user) throw new Error("Not signed in.");
+      const insertPayload: Record<string, unknown> = { name: name.trim(), slug: slug.trim(), created_by: user.id };
+      if (parentId) insertPayload.parent_id = parentId;
+      const { data, error } = await supabase
+        .from("organizations" as any)
+        .insert(insertPayload)
         .select()
         .single();
       if (error) throw error;
@@ -168,6 +240,7 @@ export function useOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.invalidateQueries({ queryKey: allOrgsKey });
+      queryClient.invalidateQueries({ queryKey: ["district-schools"] });
       toast({
         title: "School created",
         description: "You are set as the admin. Share the join code with your staff.",
@@ -239,15 +312,33 @@ export function useOrganization() {
   const isWholeNetworkSelected = isNetworkLeader && selectedOrgId === WHOLE_NETWORK_VALUE;
   const actingAsNetworkLeader = isNetworkLeader && (!!selectedOrg || isWholeNetworkSelected);
 
-  /** The school the network administrator is acting on, for callers that
-   *  need to scope a query to it. Null for everyone else, and null when
-   *  "Whole network" is chosen, since that is the unfiltered view. */
-  const actingOrgId = isNetworkLeader && selectedOrg ? selectedOrg.id : null;
+  /** The school the network administrator, or a district administrator, is
+   *  acting on, for callers that need to scope a query to it. Null for
+   *  everyone else, and null when "Whole network" or the district itself is
+   *  chosen, since those are the unfiltered views. Network acting wins if an
+   *  account somehow holds both roles. */
+  const actingOrgId = actingAsNetworkLeader && selectedOrg
+    ? selectedOrg.id
+    : !isNetworkLeader && actingAsDistrictAdmin && selectedDistrictSchool
+    ? selectedDistrictSchool.id
+    : null;
+
+  const org = actingAsNetworkLeader
+    ? selectedOrg
+    : !isNetworkLeader && actingAsDistrictAdmin
+    ? selectedDistrictSchool || managedDistrict
+    : membership?.organizations || null;
+
+  const isAdmin = actingAsNetworkLeader
+    ? true
+    : !isNetworkLeader && actingAsDistrictAdmin
+    ? true
+    : membership?.role === "admin";
 
   return {
-    org: actingAsNetworkLeader ? selectedOrg : membership?.organizations || null,
+    org,
     membership,
-    isAdmin: actingAsNetworkLeader ? true : membership?.role === "admin",
+    isAdmin,
     isPending: !!pendingMembership,
     pendingMembership,
     missingTable: isMissingTable(error),
@@ -266,6 +357,11 @@ export function useOrganization() {
     allOrgs,
     selectedOrgId,
     setSelectedOrg,
+    isDistrictAdmin,
+    managedDistrict,
+    districtSchools,
+    actingDistrictOrgId,
+    setDistrictActingOrg,
   };
 }
 

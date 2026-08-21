@@ -26,13 +26,13 @@ const READINESS_ITEMS = [
 ];
 
 export function useReadinessStats(initiativeId?: string) {
-  // The network administrator's "Acting on" school scopes the dashboard to
-  // that school, agreeing with the initiative switcher and lists; everyone
-  // else queries exactly as before.
-  const { isNetworkLeader, actingOrgId } = useOrganization();
+  // The network administrator's or a district administrator's "Acting on"
+  // school scopes the dashboard to that school, agreeing with the
+  // initiative switcher and lists; everyone else queries exactly as before.
+  const { actingOrgId } = useOrganization();
 
   return useQuery({
-    queryKey: isNetworkLeader
+    queryKey: actingOrgId
       ? ["readinessStats", initiativeId, actingOrgId]
       : ["readinessStats", initiativeId],
     queryFn: async (): Promise<ReadinessStats[]> => {
@@ -46,7 +46,7 @@ export function useReadinessStats(initiativeId?: string) {
         .eq("owner_id", user.id)
         .eq("status", "active");
 
-      if (isNetworkLeader && actingOrgId) {
+      if (actingOrgId) {
         query = (query as any).eq("organization_id", actingOrgId);
       }
 

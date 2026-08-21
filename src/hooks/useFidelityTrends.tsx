@@ -10,13 +10,13 @@ export interface FidelityTrendData {
 }
 
 export function useFidelityTrends(days: number = 30, initiativeId?: string) {
-  // The network administrator's "Acting on" school scopes the dashboard to
-  // that school, agreeing with the initiative switcher and lists; everyone
-  // else queries exactly as before.
-  const { isNetworkLeader, actingOrgId } = useOrganization();
+  // The network administrator's or a district administrator's "Acting on"
+  // school scopes the dashboard to that school, agreeing with the
+  // initiative switcher and lists; everyone else queries exactly as before.
+  const { actingOrgId } = useOrganization();
 
   return useQuery({
-    queryKey: isNetworkLeader
+    queryKey: actingOrgId
       ? ["fidelityTrends", days, initiativeId, actingOrgId]
       : ["fidelityTrends", days, initiativeId],
     queryFn: async (): Promise<FidelityTrendData[]> => {
@@ -36,7 +36,7 @@ export function useFidelityTrends(days: number = 30, initiativeId?: string) {
           .select("id")
           .eq("owner_id", user.id);
 
-        if (isNetworkLeader && actingOrgId) {
+        if (actingOrgId) {
           initiativesQuery = (initiativesQuery as any).eq("organization_id", actingOrgId);
         }
 

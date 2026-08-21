@@ -20,20 +20,21 @@ export interface Initiative {
 export function useInitiatives() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  // The network administrator's "Acting on" school scopes the initiative
-  // list to that school; everyone else queries exactly as before, with the
-  // same query key shape, so an ordinary account sees zero change.
-  const { isNetworkLeader, actingOrgId } = useOrganization();
+  // The network administrator's or a district administrator's "Acting on"
+  // school scopes the initiative list to that school; everyone else queries
+  // exactly as before, with the same query key shape, so an ordinary account
+  // sees zero change.
+  const { actingOrgId } = useOrganization();
 
   const { data: initiatives, isLoading, error } = useQuery({
-    queryKey: isNetworkLeader ? ["initiatives", actingOrgId] : ["initiatives"],
+    queryKey: actingOrgId ? ["initiatives", actingOrgId] : ["initiatives"],
     queryFn: async () => {
       let query = supabase
         .from("initiatives")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (isNetworkLeader && actingOrgId) {
+      if (actingOrgId) {
         query = (query as any).eq("organization_id", actingOrgId);
       }
 
