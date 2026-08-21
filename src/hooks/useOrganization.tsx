@@ -187,6 +187,27 @@ export function useOrganization() {
     },
   });
 
+  const deleteOrg = useMutation({
+    mutationFn: async (orgId: string) => {
+      const { error } = await supabase
+        .from("organizations" as any)
+        .delete()
+        .eq("id", orgId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+      queryClient.invalidateQueries({ queryKey: allOrgsKey });
+      toast({
+        title: "School removed",
+        description: "Its memberships were removed too. Its initiatives were kept and now belong to their owners personally.",
+      });
+    },
+    onError: (e: Error) => {
+      toast({ title: "Could not remove the school", description: e.message, variant: "destructive" });
+    },
+  });
+
   const leaveOrg = useMutation({
     mutationFn: async () => {
       if (!membership) throw new Error("No membership to leave.");
@@ -225,6 +246,8 @@ export function useOrganization() {
     joinRequestResult: requestToJoin.data as string | undefined,
     leaveOrg: leaveOrg.mutate,
     isLeavingOrg: leaveOrg.isPending,
+    deleteOrg: deleteOrg.mutate,
+    isDeletingOrg: deleteOrg.isPending,
     isNetworkLeader,
     allOrgs,
     selectedOrgId,

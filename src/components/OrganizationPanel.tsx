@@ -30,6 +30,7 @@ export function OrganizationPanel() {
     allOrgs,
     selectedOrgId,
     setSelectedOrg,
+    deleteOrg,
   } = useOrganization();
 
   const [schoolName, setSchoolName] = useState("");
@@ -232,9 +233,29 @@ export function OrganizationPanel() {
                 </div>
               </div>
             ) : (
-              <Button variant="outline" onClick={() => setShowAddSchool(true)}>
-                Add a school
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" onClick={() => setShowAddSchool(true)}>
+                  Add a school
+                </Button>
+                {org ? (
+                  <Button
+                    variant="outline"
+                    className="text-destructive hover:text-destructive"
+                    onClick={() => {
+                      const typed = window.prompt(
+                        `Removing ${org.name} deletes its roster and join code. Its initiatives are kept and revert to their owners personally.\n\nType the school's name to confirm:`
+                      );
+                      if (typed !== null && typed.trim() === org.name) {
+                        deleteOrg(org.id);
+                      } else if (typed !== null) {
+                        window.alert("The name did not match. Nothing was removed.");
+                      }
+                    }}
+                  >
+                    Remove this school
+                  </Button>
+                ) : null}
+              </div>
             )}
           </div>
         </CardContent>
