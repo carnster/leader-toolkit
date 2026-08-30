@@ -66,8 +66,14 @@ export function useDashboardAnalytics(initiativeId?: string) {
         .select("rating")
         .in("initiative_id", initiativeIds);
 
-      const avgFidelity = fidelityLogs && fidelityLogs.length > 0
-        ? fidelityLogs.reduce((sum, log) => sum + log.rating, 0) / fidelityLogs.length
+      // Two-dimension checklist logs write rating = NULL (Delivery and
+      // Enactment are never averaged into one number), so this legacy
+      // average is computed only over logs that carry a 1-5 rating.
+      const ratedFidelityLogs = (fidelityLogs || []).filter(
+        (log): log is typeof log & { rating: number } => typeof log.rating === "number"
+      );
+      const avgFidelity = ratedFidelityLogs.length > 0
+        ? ratedFidelityLogs.reduce((sum, log) => sum + log.rating, 0) / ratedFidelityLogs.length
         : 0;
 
       // Fetch team members count (unique across all initiatives).

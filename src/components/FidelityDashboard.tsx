@@ -1,28 +1,65 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
-import { useFidelityLogs } from "@/hooks/useFidelityLogs";
+import { useFidelityLogs, type FidelityLog } from "@/hooks/useFidelityLogs";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import type { ActiveIngredient } from "@/hooks/useActiveIngredients";
+import {
+  isTwoDimensionResponse,
+  summarizeTwoDimensionResponses,
+  formatLevelCounts,
+  levelColorClass,
+  type TwoDimensionResponse,
+} from "@/lib/fidelityModel";
 
 interface FidelityDashboardProps {
   initiativeId: string;
+}
+
+// Two-dimension logs write rating = NULL, since Delivery and Enactment are
+// never averaged into one number. Every average on this page is a legacy
+// (1-5) concept, so it's computed only over logs that actually carry one.
+const hasRating = (log: FidelityLog): log is FidelityLog & { rating: number } =>
+  typeof log.rating === "number";
+
+// Pool every per-item { delivery, enactment } response across a set of
+// two-dimension logs into one Delivery/Enactment/divergence summary.
+function summarizeTwoDimensionLogs(logs: FidelityLog[]) {
+  const pooled: Record<string, TwoDimensionResponse> = {};
+  let key = 0;
+  logs.forEach(log => {
+    const responses = log.checklist_responses;
+    if (!responses || typeof responses !== "object") return;
+    Object.entries(responses as Record<string, unknown>).forEach(([itemId, value]) => {
+      if (itemId === "_not_rated") return;
+      if (isTwoDimensionResponse(value)) {
+        pooled[`${log.id}:${itemId}:${key++}`] = value;
+      }
+    });
+  });
+  return summarizeTwoDimensionResponses(pooled);
 }
 
 export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
   const { fidelityLogs, isLoading } = useFidelityLogs(initiativeId);
   const { activeIngredients } = useActiveIngredients(initiativeId);
 
-  // Calculate average fidelity score
-  const avgFidelity = fidelityLogs.length > 0
-    ? fidelityLogs.reduce((sum, log) => sum + log.rating, 0) / fidelityLogs.length
+  const ratedLogs = fidelityLogs.filter(hasRating);
+  const twoDimLogs: FidelityLog[] = fidelityLogs.filter(log => typeof log.rating !== "number");
+
+  // Calculate average fidelity score (legacy 1-5 logs only)
+  const avgFidelity = ratedLogs.length > 0
+    ? ratedLogs.reduce((sum, log) => sum + log.rating, 0) / ratedLogs.length
     : 0;
+
+  const twoDimSummary = summarizeTwoDimensionLogs(twoDimLogs);
+  const hasTwoDimData = twoDimLogs.length > 0;
 
   // Calculate fidelity by ingredient
   const fidelityByIngredient = activeIngredients
     .filter(ing => ing.is_core)
     .map((ingredient: ActiveIngredient) => {
-      const logs = fidelityLogs.filter(log => log.component_id === ingredient.id);
+      const logs = ratedLogs.filter(log => log.component_id === ingredient.id);
       const avg = logs.length > 0
         ? logs.reduce((sum, log) => sum + log.rating, 0) / logs.length
         : 0;
@@ -30,24 +67,27 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
       const recentAvg = recent.length > 0
         ? recent.reduce((sum, log) => sum + log.rating, 0) / recent.length
         : avg;
-      
+
       const trend = logs.length > 1 ? (recentAvg > avg ? "up" : recentAvg < avg ? "down" : "stable") : "stable";
-      
+
+      const ingredientTwoDimLogs = twoDimLogs.filter(log => log.component_id === ingredient.id);
+
       return {
         ingredient,
         avgScore: avg,
         recentAvg,
         trend,
-        observationCount: logs.length,
+        observationCount: logs.length + ingredientTwoDimLogs.length,
+        twoDimSummary: ingredientTwoDimLogs.length > 0 ? summarizeTwoDimensionLogs(ingredientTwoDimLogs) : null,
       };
     });
 
-  // Calculate trend for overall fidelity
-  const recentLogs = fidelityLogs.slice(-10);
+  // Calculate trend for overall fidelity (legacy 1-5 logs only)
+  const recentLogs = ratedLogs.slice(-10);
   const recentAvg = recentLogs.length > 0
     ? recentLogs.reduce((sum, log) => sum + log.rating, 0) / recentLogs.length
     : avgFidelity;
-  const overallTrend = fidelityLogs.length > 1 
+  const overallTrend = ratedLogs.length > 1
     ? (recentAvg > avgFidelity ? "up" : recentAvg < avgFidelity ? "down" : "stable")
     : "stable";
 
@@ -106,6 +146,40 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
         </CardContent>
       </Card>
 
+      {/* Two-Dimension Fidelity Summary (PB 14: Delivery + Enactment) */}
+      {hasTwoDimData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Delivery and Enactment</CardTitle>
+            <CardDescription>
+              Two-dimension checklists rate each look-for on Delivery and Enactment separately.
+              These are never averaged into a single score ({twoDimLogs.length} two-dimension observation{twoDimLogs.length === 1 ? "" : "s"}).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium">Delivery:</span>
+              <Badge variant="outline">{formatLevelCounts(twoDimSummary.delivery)}</Badge>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium">Enactment:</span>
+              <Badge variant="outline">{formatLevelCounts(twoDimSummary.enactment)}</Badge>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="font-medium">Practice rating (lower of the two):</span>
+              <Badge variant="outline">{formatLevelCounts(twoDimSummary.practice)}</Badge>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm pt-2 border-t">
+              <span className="font-medium">Divergence flags:</span>
+              <Badge variant="outline" className={twoDimSummary.divergentCount > 0 ? levelColorClass("M") : undefined}>
+                {twoDimSummary.divergentCount}
+                {twoDimSummary.deliveredNotWorkingCount > 0 && ` (${twoDimSummary.deliveredNotWorkingCount} Delivered, Not Working)`}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Fidelity by Active Ingredient */}
       <Card>
         <CardHeader>
@@ -126,7 +200,7 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {fidelityByIngredient.map(({ ingredient, avgScore, trend, observationCount }) => (
+              {fidelityByIngredient.map(({ ingredient, avgScore, trend, observationCount, twoDimSummary: ingredientTwoDim }) => (
                 <div key={ingredient.id} className="p-4 rounded-lg border space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -170,6 +244,29 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
                           style={{ width: `${(avgScore / 5) * 100}%` }}
                         />
                       </div>
+                    </div>
+                  )}
+
+                  {/* Two-dimension summary for this ingredient, side by side, never averaged */}
+                  {ingredientTwoDim && (
+                    <div className="space-y-1 pt-2 border-t text-xs">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-muted-foreground">Delivery:</span>
+                        <Badge variant="outline">{formatLevelCounts(ingredientTwoDim.delivery)}</Badge>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-muted-foreground">Enactment:</span>
+                        <Badge variant="outline">{formatLevelCounts(ingredientTwoDim.enactment)}</Badge>
+                      </div>
+                      {ingredientTwoDim.divergentCount > 0 && (
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-muted-foreground">Divergence:</span>
+                          <Badge variant="outline" className={levelColorClass("M")}>
+                            {ingredientTwoDim.divergentCount}
+                            {ingredientTwoDim.deliveredNotWorkingCount > 0 && ` (${ingredientTwoDim.deliveredNotWorkingCount} Delivered, Not Working)`}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

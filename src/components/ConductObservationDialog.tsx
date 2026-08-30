@@ -12,10 +12,31 @@ import { useObservationSchedules, type ObservationSchedule } from "@/hooks/useOb
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { BARRIER_DOMAINS } from "@/lib/barrierDomains";
+import { useToast } from "@/hooks/use-toast";
+import {
+  isTwoDimension,
+  isTwoDimensionResponse,
+  practiceRating,
+  isDivergent,
+  deliveredNotWorking,
+  levelLabel,
+  levelColorClass,
+  isNotRated,
+  summarizeTwoDimensionResponses,
+  formatLevelCounts,
+  LEVELS,
+  type FidelityCode,
+  type TwoDimensionResponse,
+} from "@/lib/fidelityModel";
 
 // Sentinel for "no barrier picked": a Radix Select item cannot hold an empty
 // string value, so this maps back to null on save.
 const NO_BARRIER = "none";
+
+// All codes offered on each Delivery/Enactment selector, worst to... well,
+// NO stands apart from the F>P>M>N ladder, so it's appended rather than
+// folded into LEVELS order.
+const TWO_DIM_CODES: FidelityCode[] = [...LEVELS, "NO"];
 
 interface ConductObservationDialogProps {
   schedule?: ObservationSchedule;
@@ -24,8 +45,13 @@ interface ConductObservationDialogProps {
   initiativeId: string;
 }
 
+// A legacy log rates each item 1-5. A two-dimension log rates each item on
+// Delivery and Enactment separately; either side of the pair may be unset
+// until the observer picks it.
+type ChecklistResponseValue = number | Partial<TwoDimensionResponse>;
+
 interface ChecklistResponse {
-  [itemId: string]: number;
+  [itemId: string]: ChecklistResponseValue;
 }
 
 export function ConductObservationDialog({ schedule, open, onOpenChange, initiativeId }: ConductObservationDialogProps) {
@@ -33,7 +59,8 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
   const { checklists } = useFidelityChecklists(initiativeId);
   const { updateSchedule } = useObservationSchedules(initiativeId);
   const { activeIngredients } = useActiveIngredients(initiativeId);
-  
+  const { toast } = useToast();
+
   const [selectedIngredientId, setSelectedIngredientId] = useState(schedule?.active_ingredient_id || "");
   const [selectedChecklistId, setSelectedChecklistId] = useState("");
   const [rating, setRating] = useState(3);
@@ -42,6 +69,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
   const [barrierDomain, setBarrierDomain] = useState<string>(NO_BARRIER);
 
   const selectedChecklist = checklists.find(c => c.id === selectedChecklistId);
+  const isTwoDim = isTwoDimension(selectedChecklist?.rating_scale as any);
   const coreIngredients = activeIngredients.filter(ing => ing.is_core);
 
   useEffect(() => {
@@ -61,33 +89,66 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       const matchingChecklist = checklists.find(c => c.active_ingredient_id === selectedIngredientId);
       if (matchingChecklist) {
         setSelectedChecklistId(matchingChecklist.id);
-        // Initialize responses
-        const initialResponses: ChecklistResponse = {};
-        matchingChecklist.checklist_items.forEach(item => {
-          initialResponses[item.id] = 3; // Default to middle rating
-        });
-        setChecklistResponses(initialResponses);
       }
     }
   }, [selectedIngredientId, checklists]);
 
+  useEffect(() => {
+    // (Re)initialize per-item responses whenever the active checklist changes,
+    // in whichever shape that checklist's rating scale calls for.
+    if (!selectedChecklist) return;
+    const initialResponses: ChecklistResponse = {};
+    const twoDim = isTwoDimension(selectedChecklist.rating_scale as any);
+    selectedChecklist.checklist_items.forEach(item => {
+      initialResponses[item.id] = twoDim ? {} : 3;
+    });
+    setChecklistResponses(initialResponses);
+  }, [selectedChecklistId]);
+
+  const updateTwoDimResponse = (itemId: string, dimension: "delivery" | "enactment", value: FidelityCode) => {
+    setChecklistResponses(prev => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] as Partial<TwoDimensionResponse>), [dimension]: value },
+    }));
+  };
+
   const handleSubmit = async () => {
     if (!selectedIngredientId) return;
 
-    // Calculate average rating if using checklist
-    const finalRating = selectedChecklist 
-      ? Object.values(checklistResponses).reduce((sum, val) => sum + val, 0) / Object.values(checklistResponses).length
-      : rating;
+    let finalRating: number | null;
+    let responsesToSave: ChecklistResponse | Record<string, unknown> = {};
+
+    if (selectedChecklist && isTwoDim) {
+      // Two-dimension checklists never collapse to a 1-5 average; rating
+      // stays null and each item's Delivery/Enactment pair is what's saved.
+      finalRating = null;
+      responsesToSave = { ...checklistResponses };
+      if (isNotRated(checklistResponses as Record<string, TwoDimensionResponse>)) {
+        (responsesToSave as Record<string, unknown>)._not_rated = true;
+        toast({
+          title: "Marked Not Rated",
+          description: "More than a quarter of look-fors were Not Observed, so this checklist wasn't scored on the remainder.",
+        });
+      }
+    } else if (selectedChecklist) {
+      // Legacy checklist: average the 1-5 item ratings, unchanged.
+      const values = Object.values(checklistResponses) as number[];
+      finalRating = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
+      responsesToSave = checklistResponses;
+    } else {
+      finalRating = rating;
+      responsesToSave = {};
+    }
 
     const logData = {
       initiative_id: initiativeId,
       component_id: selectedIngredientId,
       observer_id: schedule?.observer_id || null,
-      rating: Math.round(finalRating),
+      rating: finalRating,
       notes: notes || null,
       schedule_id: schedule?.id || null,
       checklist_id: selectedChecklistId || null,
-      checklist_responses: selectedChecklist ? checklistResponses : {},
+      checklist_responses: responsesToSave,
       evidence_photos: [],
       duration_minutes: schedule?.duration_minutes || null,
       location: schedule?.location || null,
@@ -168,8 +229,106 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
             </div>
           )}
 
-          {/* Checklist Items */}
-          {selectedChecklist && (
+          {/* Checklist Items: two-dimension (Delivery + Enactment) */}
+          {selectedChecklist && isTwoDim && (
+            <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
+              <h4 className="font-semibold">Observation Indicators</h4>
+              {selectedChecklist.checklist_items.map((item: ChecklistItem) => {
+                const response = (checklistResponses[item.id] as Partial<TwoDimensionResponse>) || {};
+                const practice = practiceRating(response.delivery, response.enactment);
+                const divergent = isDivergent(response.delivery, response.enactment);
+                const dnw = deliveredNotWorking(response.delivery, response.enactment);
+                return (
+                  <div key={item.id} className="space-y-3 pb-4 border-b last:border-0 last:pb-0">
+                    <div>
+                      <p className="font-medium text-sm">{item.indicator}</p>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Delivery</Label>
+                        <Select
+                          value={response.delivery || ""}
+                          onValueChange={(value) => updateTwoDimResponse(item.id, "delivery", value as FidelityCode)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Rate" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TWO_DIM_CODES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {code} — {levelLabel(code)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Enactment</Label>
+                        <Select
+                          value={response.enactment || ""}
+                          onValueChange={(value) => updateTwoDimResponse(item.id, "enactment", value as FidelityCode)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Rate" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TWO_DIM_CODES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {code} — {levelLabel(code)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className={levelColorClass(practice)}>
+                        Practice: {practice ? levelLabel(practice) : "—"}
+                      </Badge>
+                      {divergent && (
+                        <Badge variant="outline" className={levelColorClass("M")}>
+                          {dnw ? "Delivered, Not Working" : "Divergent"}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {(() => {
+                const summary = summarizeTwoDimensionResponses(checklistResponses as Record<string, TwoDimensionResponse>);
+                return (
+                  <div className="pt-2 space-y-2 bg-primary/5 p-3 rounded-lg text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">Delivery:</span>
+                      <Badge variant="outline">{formatLevelCounts(summary.delivery)}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">Enactment:</span>
+                      <Badge variant="outline">{formatLevelCounts(summary.enactment)}</Badge>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-medium">Divergence flags:</span>
+                      <Badge variant="outline" className={summary.divergentCount > 0 ? levelColorClass("M") : undefined}>
+                        {summary.divergentCount}
+                        {summary.deliveredNotWorkingCount > 0 && ` (${summary.deliveredNotWorkingCount} Delivered, Not Working)`}
+                      </Badge>
+                    </div>
+                    {isNotRated(checklistResponses as Record<string, TwoDimensionResponse>) && (
+                      <p className="text-xs text-muted-foreground">
+                        More than a quarter of these items are Not Observed. This observation will be marked Not Rated.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Checklist Items: legacy 1-5 */}
+          {selectedChecklist && !isTwoDim && (
             <div className="space-y-4 border rounded-lg p-4 bg-muted/20">
               <h4 className="font-semibold">Observation Indicators</h4>
               {selectedChecklist.checklist_items.map((item: ChecklistItem) => (
@@ -183,19 +342,19 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        {ratingLabels[checklistResponses[item.id] - 1] || "Select rating"}
+                        {ratingLabels[(checklistResponses[item.id] as number) - 1] || "Select rating"}
                       </span>
                       <Badge variant="outline">
-                        {checklistResponses[item.id] || 3} / {selectedChecklist.rating_scale.max}
+                        {(checklistResponses[item.id] as number) || 3} / {(selectedChecklist.rating_scale as any).max}
                       </Badge>
                     </div>
                     <Slider
-                      value={[checklistResponses[item.id] || 3]}
+                      value={[(checklistResponses[item.id] as number) || 3]}
                       onValueChange={([value]) => {
                         setChecklistResponses({ ...checklistResponses, [item.id]: value });
                       }}
-                      min={selectedChecklist.rating_scale.min}
-                      max={selectedChecklist.rating_scale.max}
+                      min={(selectedChecklist.rating_scale as any).min}
+                      max={(selectedChecklist.rating_scale as any).max}
                       step={1}
                       className="w-full"
                     />
@@ -206,8 +365,8 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
                 <span className="font-medium">Average Fidelity Score:</span>
                 <Badge variant="default" className="text-base">
                   {Object.values(checklistResponses).length > 0
-                    ? (Object.values(checklistResponses).reduce((sum, val) => sum + val, 0) / Object.values(checklistResponses).length).toFixed(1)
-                    : "—"} / {selectedChecklist.rating_scale.max}
+                    ? ((Object.values(checklistResponses) as number[]).reduce((sum, val) => sum + val, 0) / Object.values(checklistResponses).length).toFixed(1)
+                    : "—"} / {(selectedChecklist.rating_scale as any).max}
                 </Badge>
               </div>
             </div>

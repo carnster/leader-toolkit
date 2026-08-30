@@ -8,7 +8,10 @@ export interface FidelityLog {
   initiative_id: string;
   component_id: string | null;
   observer_id: string;
-  rating: number;
+  // Two-dimension checklist logs (rating_scale.model === "two_dimension")
+  // never collapse Delivery/Enactment into a 1-5 average, so this stays
+  // null for them. Legacy 1-5 logs keep writing a number as before.
+  rating: number | null;
   notes: string | null;
   observed_at: string;
   created_at: string;

@@ -39,6 +39,9 @@ export default function Implement() {
   const { strategies, isLoading: isLoadingStrategies, error: strategiesError } = useImplementationStrategies(effectiveInitiativeId);
   const { teamMembers } = useTeamMembers(effectiveInitiativeId);
   const { fidelityLogs, createLog, isCreating } = useFidelityLogs(effectiveInitiativeId);
+  // Two-dimension checklist logs write rating = null; legacy 1-5 averages
+  // below are computed only over logs that carry a rating.
+  const ratedFidelityLogs = fidelityLogs.filter((log): log is typeof log & { rating: number } => typeof log.rating === "number");
   const { milestones } = useTimelineMilestones(effectiveInitiativeId);
   const { activities: pdActivities } = usePDActivities(effectiveInitiativeId);
 
@@ -238,8 +241,11 @@ export default function Implement() {
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-success" />
                   <span className="text-sm font-medium">
-                    Avg: {fidelityLogs.length > 0 
-                      ? (fidelityLogs.reduce((sum, log) => sum + log.rating, 0) / fidelityLogs.length).toFixed(1)
+                    {/* Two-dimension checklist logs write rating = null (Delivery and
+                        Enactment are never averaged into one number), so this legacy
+                        average only counts logs that carry a 1-5 rating. */}
+                    Avg: {ratedFidelityLogs.length > 0
+                      ? (ratedFidelityLogs.reduce((sum, log) => sum + log.rating, 0) / ratedFidelityLogs.length).toFixed(1)
                       : '0'}/5
                   </span>
                 </div>
@@ -274,9 +280,13 @@ export default function Implement() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "outline"}>
-                            {log.rating}/5
-                          </Badge>
+                          {typeof log.rating === "number" ? (
+                            <Badge variant={log.rating >= 4 ? "default" : log.rating >= 3 ? "secondary" : "outline"}>
+                              {log.rating}/5
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Delivery / Enactment</Badge>
+                          )}
                         </div>
                       </div>
                     );

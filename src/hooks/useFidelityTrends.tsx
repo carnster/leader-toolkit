@@ -62,10 +62,18 @@ export function useFidelityTrends(days: number = 30, initiativeId?: string) {
 
       if (error) throw error;
 
-      // Group by date and calculate averages
+      // Group by date and calculate averages.
+      // TODO(PB 14 two-dimension model): two-dimension checklist logs write
+      // rating = null (Delivery/Enactment are never averaged into a single
+      // number), so they're excluded here rather than folded into this
+      // legacy avgRating line. A real two-dimension trend needs its own
+      // Delivery series, Enactment series, and divergence-rate-over-time —
+      // deliberately deferred rather than bolted on here; see
+      // src/lib/fidelityModel.ts for the building blocks (practiceRating,
+      // isDivergent) that follow-up should reuse.
       const groupedByDate: Record<string, { sum: number; count: number }> = {};
 
-      logs?.forEach(log => {
+      logs?.filter((log): log is typeof log & { rating: number } => typeof log.rating === "number").forEach(log => {
         const dateKey = format(startOfDay(new Date(log.observed_at)), "yyyy-MM-dd");
         if (!groupedByDate[dateKey]) {
           groupedByDate[dateKey] = { sum: 0, count: 0 };
