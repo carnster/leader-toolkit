@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Zap, CalendarClock, ShieldCheck, ArrowRight, ListChecks } from "lucide-react";
+import { Zap, CalendarClock, ShieldCheck, ArrowRight, ListChecks, Plus } from "lucide-react";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
 import { MandateBriefDialog } from "@/components/MandateBriefDialog";
+import { AddCorePracticeDialog } from "@/components/AddCorePracticeDialog";
 
 // Renders one look-for. Two-dimension look-fors are stored as strings prefixed
 // "Delivery:" / "Enactment:"; surface that label without depending on it.
@@ -30,6 +31,7 @@ export default function FastTrack() {
   const { initiatives, updateInitiative, isUpdating } = useInitiatives();
   const { activeIngredients, isLoading } = useActiveIngredients(initiativeId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   const initiative = initiatives.find((i) => i.id === initiativeId);
   const coreIngredients = (activeIngredients || []).filter((i) => i.is_core);
@@ -165,9 +167,17 @@ export default function FastTrack() {
 
       {/* The core practices: the floor */}
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck className="h-5 w-5 text-accent" aria-hidden="true" />
-          <h2 className="text-xl font-semibold">If you do only these, do these</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-accent" aria-hidden="true" />
+            <h2 className="text-xl font-semibold">If you do only these, do these</h2>
+          </div>
+          {coreIngredients.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add a core practice
+            </Button>
+          )}
         </div>
         <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
           The core practices of {mandate.practice || "this initiative"}. Drop one and you have not
@@ -179,9 +189,17 @@ export default function FastTrack() {
           <p className="text-sm text-muted-foreground">Loading core practices...</p>
         ) : coreIngredients.length === 0 ? (
           <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground text-center">
-              No core practices loaded yet. If this initiative was just created, give it a moment and
-              refresh.
+            <CardContent className="pt-6 text-center space-y-3">
+              <ShieldCheck className="h-9 w-9 text-accent mx-auto" aria-hidden="true" />
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                This practice is not in the library, so name its core practices yourself: the few
+                that have to be right for the mandate to count, each with a look-for. Three to five
+                is usually enough.
+              </p>
+              <Button onClick={() => setAddOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add a core practice
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -230,6 +248,12 @@ export default function FastTrack() {
           </Button>
         </CardContent>
       </Card>
+
+      <AddCorePracticeDialog
+        initiativeId={initiative.id}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+      />
     </div>
   );
 }

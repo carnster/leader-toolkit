@@ -47,12 +47,18 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
   const { createInitiative, isCreating } = useInitiatives();
   const { templates } = useInitiativeTemplates();
 
+  // Sentinel value for "the mandated practice is not in our library."
+  const OTHER = "__other__";
+
   const [title, setTitle] = useState("");
   const [templateId, setTemplateId] = useState("");
+  const [otherPractice, setOtherPractice] = useState("");
   const [rationale, setRationale] = useState("");
   const [deadline, setDeadline] = useState("");
   const [nonnegotiables, setNonnegotiables] = useState("");
   const [importing, setImporting] = useState(false);
+
+  const isOther = templateId === OTHER;
 
   const categories = useMemo(() => {
     const set = new Set(templates.map((t) => t.category));
@@ -69,15 +75,24 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
   const reset = () => {
     setTitle("");
     setTemplateId("");
+    setOtherPractice("");
     setRationale("");
     setDeadline("");
     setNonnegotiables("");
   };
 
-  const canSubmit = title.trim() && templateId && !isCreating && !importing;
+  // A practice is chosen either from the library (a real template) or typed in
+  // as "Other". Both are valid; Other simply skips the import and lets the
+  // school author its own core practices on the Fast Track page.
+  const practiceName = isOther ? otherPractice.trim() : chosen?.name || "";
+  const canSubmit =
+    title.trim() &&
+    (isOther ? otherPractice.trim() : !!chosen) &&
+    !isCreating &&
+    !importing;
 
   const handleSubmit = () => {
-    if (!canSubmit || !chosen) return;
+    if (!canSubmit) return;
 
     const list = nonnegotiables
       .split("\n")
@@ -93,7 +108,7 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
         mode: "fast_track",
         target_end_date: deadline || null,
         mandate: {
-          practice: chosen.name,
+          practice: practiceName,
           rationale: rationale.trim(),
           nonnegotiables: list,
         },
@@ -107,40 +122,46 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
           }
           setImporting(true);
           try {
-            // Import ONLY the core ingredients. This is the hard floor and the
-            // whole point of Fast Track: the practices that, if dropped, mean
-            // the mandate was not actually implemented.
-            const all = Array.isArray(chosen.active_ingredients)
-              ? chosen.active_ingredients
-              : [];
-            const core = all
-              .filter((ing: any) => ing?.is_core)
-              .map((ing: any) => ({
-                initiative_id: id,
-                name: ing.name,
-                description: ing.description ?? null,
-                is_core: true,
-                category: ing.category ?? null,
-                look_fors: ing.look_fors ?? null,
-                adaptable_boundaries: ing.adaptable_boundaries ?? null,
-              }));
-            if (core.length) {
-              const { error } = await supabase.from("active_ingredients").insert(core);
-              if (error) throw error;
+            // Library path: import ONLY the core ingredients. This is the hard
+            // floor and the whole point of Fast Track: the practices that, if
+            // dropped, mean the mandate was not actually implemented. Other
+            // path: nothing to import; the school authors core practices on the
+            // Fast Track page, where the same floor is enforced.
+            let coreCountLoaded = 0;
+            if (!isOther && chosen) {
+              const all = Array.isArray(chosen.active_ingredients)
+                ? chosen.active_ingredients
+                : [];
+              const core = all
+                .filter((ing: any) => ing?.is_core)
+                .map((ing: any) => ({
+                  initiative_id: id,
+                  name: ing.name,
+                  description: ing.description ?? null,
+                  is_core: true,
+                  category: ing.category ?? null,
+                  look_fors: ing.look_fors ?? null,
+                  adaptable_boundaries: ing.adaptable_boundaries ?? null,
+                }));
+              if (core.length) {
+                const { error } = await supabase.from("active_ingredients").insert(core);
+                if (error) throw error;
+                coreCountLoaded = core.length;
+              }
             }
 
             // Best-effort: seed a coherent decision brief so the initiative is
             // not empty if the school later expands to the full build. Non-fatal
             // if it fails; the core flow does not depend on it.
             try {
-              const tBrief = (chosen.decision_brief_template as any) || {};
+              const tBrief = (chosen?.decision_brief_template as any) || {};
               await supabase.from("decision_briefs").insert({
                 initiative_id: id,
-                problem_statement: `District-directed initiative: ${chosen.name}.` +
+                problem_statement: `District-directed initiative: ${practiceName}.` +
                   (rationale.trim() ? ` District rationale: ${rationale.trim()}` : ""),
                 target_group: tBrief.target_group || null,
-                chosen_approach: chosen.name,
-                evidence_base: chosen.evidence_base || null,
+                chosen_approach: practiceName,
+                evidence_base: chosen?.evidence_base || null,
               });
             } catch {
               /* brief seed is optional */
@@ -154,9 +175,9 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
 
             toast({
               title: "Fast Track started",
-              description: core.length
-                ? `${core.length} core practice${core.length === 1 ? "" : "s"} loaded.`
-                : "Initiative created.",
+              description: coreCountLoaded
+                ? `${coreCountLoaded} core practice${coreCountLoaded === 1 ? "" : "s"} loaded.`
+                : "Add your core practices on the next screen.",
             });
             reset();
             onOpenChange(false);
@@ -225,12 +246,29 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
                       ))}
                   </SelectGroup>
                 ))}
+                <SelectGroup>
+                  <SelectLabel>Not in the library</SelectLabel>
+                  <SelectItem value={OTHER}>Other — not in the library</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
-            {chosen && (
-              <p className="text-xs text-muted-foreground">
-                Loads {coreCount} core practice{coreCount === 1 ? "" : "s"} with their look-fors.
-              </p>
+            {isOther ? (
+              <div className="space-y-1.5 pt-1">
+                <Input
+                  value={otherPractice}
+                  onChange={(e) => setOtherPractice(e.target.value)}
+                  placeholder="Name the practice the district mandated"
+                />
+                <p className="text-xs text-muted-foreground">
+                  No template for this one, so you will name its core practices on the next screen.
+                </p>
+              </div>
+            ) : (
+              chosen && (
+                <p className="text-xs text-muted-foreground">
+                  Loads {coreCount} core practice{coreCount === 1 ? "" : "s"} with their look-fors.
+                </p>
+              )
             )}
           </div>
 
