@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StageProgress } from "@/components/StageProgress";
-import { Plus, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical, Calendar } from "lucide-react";
+import { Plus, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical, Calendar, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { parseDateOnly } from "@/lib/dates";
@@ -27,6 +27,7 @@ import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
 import { useOrganization } from "@/hooks/useOrganization";
+import { MandateBriefDialog } from "@/components/MandateBriefDialog";
 
 export default function Dashboard() {
   const { initiatives, isLoading, error: initiativesError, deleteInitiative, isDeleting } = useInitiatives();
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
+  const [mandateOpen, setMandateOpen] = useState(false);
 
   // If the initiative currently selected in the switcher gets deleted (or
   // otherwise drops out of the list, e.g. an acting-scope change), fall back
@@ -156,12 +158,18 @@ export default function Dashboard() {
               )}
             </>
           )}
+          <Button variant="outline" onClick={() => setMandateOpen(true)}>
+            <Zap className="mr-2 h-4 w-4 text-amber-500" />
+            District Initiative
+          </Button>
           <Button onClick={handleNewInitiative}>
             <Plus className="mr-2 h-4 w-4" />
             New Initiative
           </Button>
         </div>
       </div>
+
+      <MandateBriefDialog open={mandateOpen} onOpenChange={setMandateOpen} />
 
       {initiatives.length === 0 ? (
         <FirstRunWelcome onStartInitiative={handleNewInitiative} />

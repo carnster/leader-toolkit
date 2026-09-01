@@ -12,6 +12,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Decide = lazy(() => import("./pages/Decide"));
+const FastTrack = lazy(() => import("./pages/FastTrack"));
 const Plan = lazy(() => import("./pages/Plan"));
 const Implement = lazy(() => import("./pages/Implement"));
 const Monitor = lazy(() => import("./pages/Monitor"));
@@ -67,6 +68,7 @@ const App = () => (
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/decide" element={<Decide />} />
+                        <Route path="/fast-track" element={<FastTrack />} />
                         <Route path="/plan" element={<Plan />} />
                         <Route path="/implement" element={<Implement />} />
                         <Route path="/monitor" element={<Monitor />} />

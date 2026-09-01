@@ -3,12 +3,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { getActingOrgId, useOrganization } from "@/hooks/useOrganization";
 
+export interface InitiativeMandate {
+  practice?: string;
+  rationale?: string;
+  nonnegotiables?: string[];
+}
+
 export interface Initiative {
   id: string;
   title: string;
   description: string | null;
   stage: "decide" | "plan" | "implement" | "monitor" | "sustain";
   status: "active" | "on_hold" | "completed" | "archived";
+  // "full" is the complete four-stage process; "fast_track" is the compressed
+  // path for a district-directed initiative. Defaults to "full" server-side, so
+  // an older row (or a deployment that has not run the mode paste yet) reads as
+  // a normal initiative.
+  mode?: "full" | "fast_track";
+  // Present only on fast-track initiatives: how the district framed the mandate.
+  mandate?: InitiativeMandate | null;
   owner_id: string;
   start_date: string | null;
   target_end_date: string | null;
@@ -70,6 +83,11 @@ export function useInitiatives() {
           target_end_date: initiative.target_end_date,
           context_tags: initiative.context_tags,
           ...(organizationId ? { organization_id: organizationId } : {}),
+          // Only send these when set, same guard as organization_id: a
+          // deployment that has not run the fast-track paste yet never sees an
+          // unknown column in the insert.
+          ...(initiative.mode ? { mode: initiative.mode } : {}),
+          ...(initiative.mandate ? { mandate: initiative.mandate } : {}),
         }])
         .select()
         .single();
