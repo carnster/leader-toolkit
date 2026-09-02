@@ -14,15 +14,34 @@ const USED = [
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-pulse-via-link`;
 const CTX_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-pulse-context`;
 
-/** A stable, anonymous per-browser key so a repeat tap updates one row. */
+/** A random id that works even where crypto.randomUUID is unavailable
+ *  (non-HTTPS origins, older browsers). */
+function makeId(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID().replace(/-/g, "");
+    }
+  } catch {
+    /* fall through to the Math.random fallback */
+  }
+  return `k${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+}
+
+/** A stable, anonymous per-browser key so a repeat tap updates one row. Storage
+ *  is wrapped: some privacy modes throw on access, and this page must still
+ *  render for a teacher opening a QR link with no account. */
 function clientKeyFor(token: string): string {
   const k = `pulse-key:${token}`;
-  let v = localStorage.getItem(k);
-  if (!v) {
-    v = crypto.randomUUID().replace(/-/g, "");
-    localStorage.setItem(k, v);
+  try {
+    let v = localStorage.getItem(k);
+    if (!v) {
+      v = makeId();
+      localStorage.setItem(k, v);
+    }
+    return v;
+  } catch {
+    return makeId();
   }
-  return v;
 }
 
 export default function PublicPulse() {
@@ -33,7 +52,7 @@ export default function PublicPulse() {
   const [traction, setTraction] = useState<number | null>(null);
   const [needs, setNeeds] = useState("");
   const [name, setName] = useState("");
-  const [state, setState] = useState<"form" | "sending" | "done" | "closed">("form");
+  const [state, setState] = useState<"form" | "sending" | "done" | "closed" | "error">("form");
 
   // Which initiative and practice this link is about. Names only; see the
   // get-pulse-context function. Failure here is non-blocking: the form still
@@ -79,7 +98,8 @@ export default function PublicPulse() {
       if (res.ok) setState("done");
       else setState("closed");
     } catch {
-      setState("closed");
+      // A thrown fetch is a connection problem, not a revoked link.
+      setState("error");
     }
   };
 
@@ -116,6 +136,14 @@ export default function PublicPulse() {
               <p className="text-sm text-muted-foreground">
                 It may have been rotated or expired. Ask your leader for the current link.
               </p>
+            </div>
+          ) : state === "error" ? (
+            <div className="text-center py-8 space-y-3">
+              <h2 className="font-semibold text-lg">That didn&rsquo;t send</h2>
+              <p className="text-sm text-muted-foreground">
+                Looks like a connection problem, not a closed link. Your answers are still here.
+              </p>
+              <Button variant="outline" onClick={() => setState("form")}>Try again</Button>
             </div>
           ) : (
             <div className="space-y-5">

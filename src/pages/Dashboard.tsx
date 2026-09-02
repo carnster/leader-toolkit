@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { StageProgress } from "@/components/StageProgress";
 import { Plus, TrendingUp, Users, CheckCircle2, Trash2, MoreVertical, Calendar, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -179,7 +180,7 @@ export default function Dashboard() {
         <a href="#initiative-list" title="Every initiative you own. Click to jump to the list below." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Initiatives</CardTitle>
+            <CardTitle className="text-sm font-medium">Initiatives</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -289,12 +290,20 @@ export default function Dashboard() {
                     <div key={initiative.id} className="space-y-3">
                       <div className="flex items-start justify-between">
                         <div className="space-y-1 flex-1">
-                          <h3 className="font-semibold">{initiative.title}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{initiative.title}</h3>
+                            {initiative.mode === "fast_track" && (
+                              <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400 gap-1">
+                                <Zap className="h-3 w-3" aria-hidden="true" />
+                                Fast Track
+                              </Badge>
+                            )}
+                          </div>
                           {initiative.description && (
                             <p className="text-sm text-muted-foreground">{initiative.description}</p>
                           )}
                           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                            <span>Stage: {stageMap[initiative.stage]}</span>
+                            <span>{initiative.mode === "fast_track" ? "District initiative" : `Stage: ${stageMap[initiative.stage]}`}</span>
                             {initiative.target_end_date && (
                               <>
                                 <span>•</span>
@@ -305,7 +314,7 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" asChild>
-                            <Link to={`/${initiative.stage}?initiative=${initiative.id}`}>View Details</Link>
+                            <Link to={initiative.mode === "fast_track" ? `/fast-track?initiative=${initiative.id}` : `/${initiative.stage}?initiative=${initiative.id}`}>View Details</Link>
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -325,9 +334,11 @@ export default function Dashboard() {
                           </DropdownMenu>
                         </div>
                       </div>
-                      <div className="pt-2">
-                        <StageProgress stages={stages} />
-                      </div>
+                      {initiative.mode !== "fast_track" && (
+                        <div className="pt-2">
+                          <StageProgress stages={stages} />
+                        </div>
+                      )}
                     </div>
                   );
                 })}

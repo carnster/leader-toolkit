@@ -290,7 +290,7 @@ export function BoardReportExport({ initiativeId, initiativeTitle }: BoardReport
         sectionTitle("Staff pulse");
         const memberWord = pulseThisPeriod.length === 1 ? "team member" : "team members";
         const tractionText =
-          avgTraction !== null ? ` Average traction reported was ${avgTraction.toFixed(1)} of 5.` : "";
+          avgTraction !== null ? ` Average traction reported was ${avgTraction.toFixed(1)} of 4.` : "";
         para(
           `Week of ${format(parseDateOnly(weekOf), "PP")}`,
           `${pulseThisPeriod.length} ${memberWord} shared a pulse this period.${tractionText} Pulses are a voluntary read on how the work is landing and where the team needs support, not a measure of individual performance.`

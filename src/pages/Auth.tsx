@@ -16,6 +16,11 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Google OAuth is not configured in Supabase yet (the provider has no client
+  // secret, so the button returned "missing OAuth secret"). Hide it until the
+  // provider is set up in the dashboard, then flip this to true to restore it.
+  const GOOGLE_ENABLED = false;
+
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -177,7 +182,7 @@ export default function Auth() {
             </TabsList>
 
             <TabsContent value="signin">
-              <div className="mb-4">{socialButtons}</div>
+              {GOOGLE_ENABLED && <div className="mb-4">{socialButtons}</div>}
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email">Email</Label>
@@ -213,7 +218,7 @@ export default function Auth() {
             </TabsContent>
 
             <TabsContent value="signup">
-              <div className="mb-4">{socialButtons}</div>
+              {GOOGLE_ENABLED && <div className="mb-4">{socialButtons}</div>}
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>

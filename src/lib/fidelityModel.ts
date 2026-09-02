@@ -127,12 +127,19 @@ export function levelColorClass(code: FidelityCode | null | undefined): string {
   }
 }
 
-/** Fraction of a checklist's items rated "NO" (Not Observed), 0-1. */
+/**
+ * Fraction of a checklist's items that could not be rated, 0-1. An item is
+ * "not observed" exactly when it yields no practice rating (both dimensions NO,
+ * or unset). This is the complement of the items counted in the practice
+ * summary, so the "Not Rated" gate and the practice counts always agree. A
+ * single-NO item still produces a rating on its observed dimension and is NOT
+ * counted here.
+ */
 export function notObservedFraction(responses: Record<string, TwoDimensionResponse>): number {
   const entries = Object.values(responses);
   if (entries.length === 0) return 0;
   const notObservedCount = entries.filter(
-    (r) => r.delivery === "NO" && r.enactment === "NO"
+    (r) => practiceRating(r.delivery, r.enactment) === null
   ).length;
   return notObservedCount / entries.length;
 }
@@ -188,4 +195,97 @@ export function summarizeTwoDimensionResponses(responses: Record<string, TwoDime
   });
 
   return { delivery, enactment, practice, divergentCount, deliveredNotWorkingCount };
+}
+
+// ---------------------------------------------------------------------------
+// Equity: rate to the lowest observed student group.
+//
+// PB 14 requires fidelity to be read to the lowest observed student group, with
+// a 10-point equity threshold flagging inequitable delivery. The two dimensions
+// are still never averaged; this points mapping exists ONLY to compare groups
+// to each other and to measure the gap between them. Each practice level maps
+// to an evenly spaced point on 0-100; a group's score is the mean of its rated
+// items' practice-level points (Not-Observed items are excluded).
+
+export const LEVEL_POINTS: Record<FidelityLevel, number> = { F: 100, P: 67, M: 33, N: 0 };
+
+/** The equity gap, in points, above which delivery is flagged inequitable. */
+export const EQUITY_THRESHOLD_POINTS = 10;
+
+/**
+ * A 0-100 score for a set of practice-level counts, used only for group-to-group
+ * equity comparison. Returns null when no items were rated.
+ */
+export function practiceScore(counts: LevelCounts): number | null {
+  const rated = counts.F + counts.P + counts.M + counts.N;
+  if (rated === 0) return null;
+  const total =
+    counts.F * LEVEL_POINTS.F +
+    counts.P * LEVEL_POINTS.P +
+    counts.M * LEVEL_POINTS.M +
+    counts.N * LEVEL_POINTS.N;
+  return total / rated;
+}
+
+export interface GroupSummary {
+  group: string;
+  counts: LevelCounts;
+  score: number | null;
+}
+
+export interface EquityResult {
+  lowestGroup: string | null;
+  lowestScore: number | null;
+  highestScore: number | null;
+  gap: number;
+  flag: boolean;
+  ratedGroups: number;
+}
+
+/**
+ * Given each observed student group's practice-level counts, find the lowest
+ * scoring group (the one fidelity is read to) and the equity gap to the highest.
+ * The gap is flagged when it exceeds the 10-point threshold. With fewer than two
+ * rated groups there is no comparison to make, so the flag is false.
+ */
+export function equityFromGroups(groups: GroupSummary[]): EquityResult {
+  const rated = groups.filter((g) => g.score !== null) as (GroupSummary & { score: number })[];
+  if (rated.length === 0) {
+    return { lowestGroup: null, lowestScore: null, highestScore: null, gap: 0, flag: false, ratedGroups: 0 };
+  }
+  let lowest = rated[0];
+  let highest = rated[0];
+  for (const g of rated) {
+    if (g.score < lowest.score) lowest = g;
+    if (g.score > highest.score) highest = g;
+  }
+  const gap = highest.score - lowest.score;
+  return {
+    lowestGroup: lowest.group,
+    lowestScore: lowest.score,
+    highestScore: highest.score,
+    gap,
+    flag: rated.length >= 2 && gap > EQUITY_THRESHOLD_POINTS,
+    ratedGroups: rated.length,
+  };
+}
+
+/** The default student-group options an observation can be scoped to. */
+export const STUDENT_GROUPS = [
+  "All students",
+  "Students with disabilities (IEP/504)",
+  "Multilingual learners",
+  "Economically disadvantaged",
+  "Other focal group",
+] as const;
+
+export const DEFAULT_STUDENT_GROUP = STUDENT_GROUPS[0];
+
+/** Read the student group an observation was scoped to, defaulting to All students. */
+export function studentGroupOf(responses: unknown): string {
+  if (responses && typeof responses === "object") {
+    const g = (responses as Record<string, unknown>)._student_group;
+    if (typeof g === "string" && g.trim()) return g;
+  }
+  return DEFAULT_STUDENT_GROUP;
 }

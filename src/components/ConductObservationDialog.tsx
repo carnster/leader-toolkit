@@ -25,6 +25,8 @@ import {
   summarizeTwoDimensionResponses,
   formatLevelCounts,
   LEVELS,
+  STUDENT_GROUPS,
+  DEFAULT_STUDENT_GROUP,
   type FidelityCode,
   type TwoDimensionResponse,
 } from "@/lib/fidelityModel";
@@ -67,6 +69,9 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
   const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse>({});
   const [notes, setNotes] = useState("");
   const [barrierDomain, setBarrierDomain] = useState<string>(NO_BARRIER);
+  // Which student group this observation was scoped to. Fidelity is read to the
+  // lowest observed group, so every observation records whose experience it saw.
+  const [studentGroup, setStudentGroup] = useState<string>(DEFAULT_STUDENT_GROUP);
 
   const selectedChecklist = checklists.find(c => c.id === selectedChecklistId);
   const isTwoDim = isTwoDimension(selectedChecklist?.rating_scale as any);
@@ -80,6 +85,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       setChecklistResponses({});
       setNotes("");
       setBarrierDomain(NO_BARRIER);
+      setStudentGroup(DEFAULT_STUDENT_GROUP);
     }
   }, [open, schedule]);
 
@@ -131,14 +137,24 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
         });
       }
     } else if (selectedChecklist) {
-      // Legacy checklist: average the 1-5 item ratings, unchanged.
-      const values = Object.values(checklistResponses) as number[];
-      finalRating = Math.round(values.reduce((sum, val) => sum + val, 0) / values.length);
-      responsesToSave = checklistResponses;
+      // Legacy checklist: average the 1-5 item ratings, unchanged. Guard the
+      // empty case so a checklist with no items can never write NaN.
+      const values = Object.values(checklistResponses).filter(
+        (v): v is number => typeof v === "number"
+      );
+      finalRating = values.length > 0
+        ? Math.round(values.reduce((sum, val) => sum + val, 0) / values.length)
+        : null;
+      responsesToSave = { ...checklistResponses };
     } else {
       finalRating = rating;
       responsesToSave = {};
     }
+
+    // Record which student group this observation saw, on every log type, so
+    // fidelity can be read to the lowest observed group. Stored under a
+    // reserved key that the two-dimension summariser already skips.
+    (responsesToSave as Record<string, unknown>)._student_group = studentGroup;
 
     const logData = {
       initiative_id: initiativeId,
@@ -226,6 +242,27 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
                     ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Student group observed: fidelity is read to the lowest group */}
+          {selectedIngredientId && (
+            <div className="space-y-2">
+              <Label htmlFor="student-group">Student group observed</Label>
+              <Select value={studentGroup} onValueChange={setStudentGroup}>
+                <SelectTrigger id="student-group">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STUDENT_GROUPS.map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Whose experience did this observation see? Fidelity is read to the lowest observed
+                group, so recording this is how the equity gap becomes visible.
+              </p>
             </div>
           )}
 

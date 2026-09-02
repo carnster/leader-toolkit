@@ -7,6 +7,9 @@ export interface InitiativeMandate {
   practice?: string;
   rationale?: string;
   nonnegotiables?: string[];
+  // True when the mandated practice was not in the template library, so the
+  // school authors its own core practices rather than importing them.
+  not_in_library?: boolean;
 }
 
 export interface Initiative {
@@ -113,9 +116,15 @@ export function useInitiatives() {
 
   const updateInitiative = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Initiative> & { id: string }) => {
+      // Never let a normal update rewrite tenancy. organization_id and owner_id
+      // are set only at creation (guarded by RLS WITH CHECK); stripping them here
+      // is defense in depth against a client relocating a row into another org.
+      const safeUpdates: Record<string, unknown> = { ...updates };
+      delete safeUpdates.organization_id;
+      delete safeUpdates.owner_id;
       const { data, error } = await supabase
         .from("initiatives")
-        .update(updates)
+        .update(safeUpdates)
         .eq("id", id)
         .select()
         .single();
