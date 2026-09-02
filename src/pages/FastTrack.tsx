@@ -192,9 +192,9 @@ export default function FastTrack() {
             <CardContent className="pt-6 text-center space-y-3">
               <ShieldCheck className="h-9 w-9 text-accent mx-auto" aria-hidden="true" />
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                This practice is not in the library, so name its core practices yourself: the few
-                that have to be right for the mandate to count, each with a look-for. Three to five
-                is usually enough.
+                {mandate.not_in_library
+                  ? "This practice is not in the library, so name its core practices yourself: the few that have to be right for the mandate to count, each with a look-for. Three to five is usually enough."
+                  : "The core practices did not load for this initiative. Add them by hand below, or delete it and start again to retry the import."}
               </p>
               <Button onClick={() => setAddOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />

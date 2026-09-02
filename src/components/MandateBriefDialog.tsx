@@ -111,6 +111,7 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
           practice: practiceName,
           rationale: rationale.trim(),
           nonnegotiables: list,
+          not_in_library: isOther,
         },
       },
       {

@@ -9,7 +9,12 @@ import {
   summarizeTwoDimensionResponses,
   formatLevelCounts,
   levelColorClass,
+  studentGroupOf,
+  practiceScore,
+  equityFromGroups,
+  EQUITY_THRESHOLD_POINTS,
   type TwoDimensionResponse,
+  type GroupSummary,
 } from "@/lib/fidelityModel";
 
 interface FidelityDashboardProps {
@@ -30,6 +35,9 @@ function summarizeTwoDimensionLogs(logs: FidelityLog[]) {
   logs.forEach(log => {
     const responses = log.checklist_responses;
     if (!responses || typeof responses !== "object") return;
+    // An observation the dialog marked "Not Rated" (>25% Not Observed) must not
+    // feed its scored items into the pooled counts at all.
+    if ((responses as Record<string, unknown>)._not_rated) return;
     Object.entries(responses as Record<string, unknown>).forEach(([itemId, value]) => {
       if (itemId === "_not_rated") return;
       if (isTwoDimensionResponse(value)) {
@@ -38,6 +46,32 @@ function summarizeTwoDimensionLogs(logs: FidelityLog[]) {
     });
   });
   return summarizeTwoDimensionResponses(pooled);
+}
+
+// Pool two-dimension responses separately per student group, then compute the
+// lowest observed group and the equity gap to the highest (PB 14: fidelity is
+// read to the lowest group, with a 10-point equity threshold).
+function equityAcrossGroups(logs: FidelityLog[]) {
+  const byGroup: Record<string, Record<string, TwoDimensionResponse>> = {};
+  let key = 0;
+  logs.forEach(log => {
+    const responses = log.checklist_responses;
+    if (!responses || typeof responses !== "object") return;
+    if ((responses as Record<string, unknown>)._not_rated) return;
+    const group = studentGroupOf(responses);
+    byGroup[group] = byGroup[group] || {};
+    Object.entries(responses as Record<string, unknown>).forEach(([itemId, value]) => {
+      if (itemId.startsWith("_")) return;
+      if (isTwoDimensionResponse(value)) {
+        byGroup[group][`${log.id}:${itemId}:${key++}`] = value;
+      }
+    });
+  });
+  const groups: GroupSummary[] = Object.entries(byGroup).map(([group, responses]) => {
+    const counts = summarizeTwoDimensionResponses(responses).practice;
+    return { group, counts, score: practiceScore(counts) };
+  });
+  return equityFromGroups(groups);
 }
 
 export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
@@ -54,6 +88,7 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
 
   const twoDimSummary = summarizeTwoDimensionLogs(twoDimLogs);
   const hasTwoDimData = twoDimLogs.length > 0;
+  const equity = hasTwoDimData ? equityAcrossGroups(twoDimLogs) : null;
 
   // Calculate fidelity by ingredient
   const fidelityByIngredient = activeIngredients
@@ -108,7 +143,11 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Overall Fidelity Score */}
+      {/* Overall Fidelity Score: legacy 1-5 checklists only. Two-dimension logs
+          carry rating = null and are never averaged, so this card is hidden
+          entirely when there are no rated logs (otherwise it showed a false
+          0.0 / 5.0 "focus area" for initiatives that only use two-dimension). */}
+      {ratedLogs.length > 0 && (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -116,7 +155,7 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
             Overall Fidelity Score
           </CardTitle>
           <CardDescription>
-            Average across all observations ({fidelityLogs.length} total observations)
+            Average across the {ratedLogs.length} rated observation{ratedLogs.length === 1 ? "" : "s"} (two-dimension checklists are summarized separately below)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -145,6 +184,7 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Two-Dimension Fidelity Summary (PB 14: Delivery + Enactment) */}
       {hasTwoDimData && (
@@ -176,6 +216,30 @@ export function FidelityDashboard({ initiativeId }: FidelityDashboardProps) {
                 {twoDimSummary.deliveredNotWorkingCount > 0 && ` (${twoDimSummary.deliveredNotWorkingCount} Delivered, Not Working)`}
               </Badge>
             </div>
+
+            {/* Equity: fidelity read to the lowest observed student group */}
+            {equity && equity.lowestGroup && (
+              <div className="pt-2 border-t space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="font-medium">Lowest observed group:</span>
+                  <Badge variant="outline">
+                    {equity.lowestGroup}
+                    {equity.lowestScore !== null && ` (${Math.round(equity.lowestScore)}/100)`}
+                  </Badge>
+                </div>
+                {equity.ratedGroups >= 2 && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span className="font-medium">Equity gap:</span>
+                    <Badge variant="outline" className={equity.flag ? levelColorClass("M") : levelColorClass("F")}>
+                      {Math.round(equity.gap)} points
+                      {equity.flag
+                        ? ` (over the ${EQUITY_THRESHOLD_POINTS}-point threshold)`
+                        : ` (within ${EQUITY_THRESHOLD_POINTS})`}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
