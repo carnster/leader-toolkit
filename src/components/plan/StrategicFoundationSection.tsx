@@ -122,7 +122,9 @@ export function StrategicFoundationSection({
             </div>
           </div>
           <CardDescription>
-            Define which ingredients are non-negotiable and which can flex, with look-fors that describe what each should look like in practice.
+            Active ingredients are the specific practices that make this initiative work. Core ones are
+            non-negotiable, and keeping them in place is what fidelity means; adaptable ones can flex to
+            your context. Add look-fors so each is observable in practice.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -232,7 +234,9 @@ export function StrategicFoundationSection({
             </Button>
           </div>
           <CardDescription>
-            Select implementation strategies that address your feasibility barriers. Not sure where to start? Open the strategy reference library below.
+            Implementation strategies are the research-backed methods for how you put a practice in place,
+            things like training, coaching, and reminders. This menu is the ERIC compilation. Select the
+            ones that address your feasibility barriers, or open the strategy reference library below.
           </CardDescription>
         </CardHeader>
         <CardContent>

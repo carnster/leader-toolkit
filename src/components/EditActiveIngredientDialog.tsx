@@ -142,7 +142,7 @@ export function EditActiveIngredientDialog({ ingredient, open, onOpenChange, ini
             </div>
 
             <div className="space-y-2">
-              <Label>Look-Fors (Observable indicators)</Label>
+              <Label>Look-fors (the observable evidence that this practice is actually happening)</Label>
               {formData.look_fors.map((lookFor, index) => (
                 <div key={index} className="flex gap-2">
                   <Input

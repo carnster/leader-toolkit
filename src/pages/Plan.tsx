@@ -14,13 +14,14 @@ import { useInitiatives } from "@/hooks/useInitiatives";
 import { useFidelityChecklists } from "@/hooks/useFidelityChecklists";
 import { useObservationSchedules } from "@/hooks/useObservationSchedules";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
-import { PlanProgressSuggestions } from "@/components/PlanProgressSuggestions";
-import { calculateOverallProgress, type CompletionCounts } from "@/lib/planProgress";
+import { getPlanProgress, stepForSection, type PlanCounts, type PlanStepId } from "@/lib/planSteps";
+import { PlanProgressHeader } from "@/components/plan/PlanProgressHeader";
+import { PlanStepFrame } from "@/components/plan/PlanStepFrame";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getPendingTemplate, clearPendingTemplate } from "@/lib/templateHandoff";
+import { getPendingTemplate, clearPendingTemplate, markTemplatePrefilled } from "@/lib/templateHandoff";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { EditActiveIngredientDialog } from "@/components/EditActiveIngredientDialog";
@@ -46,9 +47,10 @@ import type { ImplementationRisk } from "@/hooks/useImplementationRisks";
 import type { PDActivity } from "@/hooks/usePDActivities";
 import type { ImplementationStrategy } from "@/hooks/useImplementationStrategies";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
+import { ReadinessChecklist } from "@/components/ReadinessChecklist";
 
 export default function Plan() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { initiativeId: effectiveInitiativeId } = useInitiativeContext();
   const currentSection = searchParams.get("section") || "overview";
   
@@ -126,6 +128,7 @@ export default function Plan() {
           .insert(ingredients);
 
         if (insertError) throw insertError;
+        markTemplatePrefilled(initiativeId);
         await queryClient.invalidateQueries({ queryKey: ["active-ingredients", initiativeId] });
         toast({ title: "Active ingredients loaded", description: `${ingredients.length} components added from template` });
       }
@@ -445,32 +448,34 @@ export default function Plan() {
     }
   };
 
-  // Calculate next step
-  const getNextStep = (): string => {
-    if (activeIngredients.length === 0) return "Start by defining your Active Ingredients (core practices and adaptable elements).";
-    if (strategies.length === 0) return "Add Implementation Strategies to address your feasibility barriers.";
-    if (teamMembers.length === 0) return "Build your Implementation Team with clear roles.";
-    if (milestones.length === 0) return "Create a Timeline with key milestones.";
-    if (risks.length === 0) return "Identify and plan for Implementation Risks.";
-    if (activities.length === 0) return "Plan Professional Development activities for your team.";
-    return "Review all sections and ensure readiness for implementation.";
-  };
-
-  // Section rendering
-  const overallProgress = calculateOverallProgress({
+  const counts: PlanCounts = {
     ingredients: activeIngredients.length,
     strategies: strategies.length,
     team: teamMembers.length,
-    timeline: milestones.length,
-    risks: risks.length,
     pd: activities.length,
     communication: communicationActivities.length,
+    timeline: milestones.length,
+    risks: risks.length,
     budget: budgetItems?.length || 0,
-  });
+    fidelity: (fidelityChecklists?.length || 0) + (observationSchedules?.length || 0),
+    adaptation: activeIngredients.filter(
+      (ing) => !ing.is_core && Array.isArray(ing.adaptable_boundaries) && ing.adaptable_boundaries.length > 0
+    ).length,
+  };
+  const progress = getPlanProgress(counts);
+
+  const goToSection = (section: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("section", section);
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const goToStep = (id: PlanStepId) => goToSection(id);
+  const reviewReadiness = () => goToSection("overview");
 
   const currentInitiative = initiatives?.find(i => i.id === effectiveInitiativeId);
 
-  const renderSection = () => {
+  const renderSectionBody = () => {
     switch (currentSection) {
       case "overview":
         return (
@@ -484,7 +489,8 @@ export default function Plan() {
             pdActivitiesCount={activities.length}
             onGenerateFullPlan={generateFullPlan}
             isGenerating={isGeneratingFullPlan}
-            nextStep={getNextStep()}
+            counts={counts}
+            onGoToStep={goToStep}
             initiativeId={effectiveInitiativeId}
             initiativeTitle={currentInitiative?.title || ""}
             activeIngredients={activeIngredients}
@@ -633,7 +639,8 @@ export default function Plan() {
             pdActivitiesCount={activities.length}
             onGenerateFullPlan={generateFullPlan}
             isGenerating={isGeneratingFullPlan}
-            nextStep={getNextStep()}
+            counts={counts}
+            onGoToStep={goToStep}
             initiativeId={effectiveInitiativeId}
             initiativeTitle={currentInitiative?.title || "Untitled Initiative"}
             activeIngredients={activeIngredients}
@@ -653,21 +660,27 @@ export default function Plan() {
     }
   };
 
+  const renderSection = () => {
+    const body = renderSectionBody();
+    const step = stepForSection(currentSection);
+    if (!step || !effectiveInitiativeId) return body;
+    return (
+      <PlanStepFrame
+        step={step}
+        counts={counts}
+        initiativeId={effectiveInitiativeId}
+        onGoToStep={goToStep}
+        onReviewReadiness={reviewReadiness}
+      >
+        {body}
+      </PlanStepFrame>
+    );
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <PlanSidebar
-          completionCounts={{
-            ingredients: activeIngredients.length,
-            strategies: strategies.length,
-            team: teamMembers.length,
-            timeline: milestones.length,
-            risks: risks.length,
-            pd: activities.length,
-            communication: communicationActivities.length,
-            budget: budgetItems?.length || 0,
-          }}
-        />
+        <PlanSidebar counts={counts} />
 
         <div className="flex-1 flex flex-col">
           {/* Header with Trigger */}
@@ -677,25 +690,51 @@ export default function Plan() {
               <FileText className="h-5 w-5 text-primary" />
               <div>
                 <h1 className="text-xl font-bold">Plan & Prepare</h1>
-                <p className="text-xs text-muted-foreground">Stage 2 of 4: design a comprehensive implementation plan</p>
+                <p className="text-xs text-muted-foreground">Stage 2 of 4: ten steps in order. Required steps unlock Implement.</p>
               </div>
             </div>
           </header>
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto p-8">
-            <div className="max-w-6xl mx-auto">
-              {isGeneratingFullPlan && genStep && (
-                <div
-                  role="status"
-                  aria-live="polite"
-                  className="mb-6 flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3"
-                >
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm font-medium">{genStep}</span>
-                </div>
+            <div className="mx-auto flex max-w-7xl gap-6">
+              <div className="min-w-0 flex-1">
+                {effectiveInitiativeId && currentSection !== "team-dashboard" && (
+                  <PlanProgressHeader progress={progress} onGoToStep={goToStep} onReviewReadiness={reviewReadiness} />
+                )}
+                {isGeneratingFullPlan && genStep && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="mb-6 flex items-center gap-3 rounded-lg border bg-muted/40 px-4 py-3"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                    <span className="text-sm font-medium">{genStep}</span>
+                  </div>
+                )}
+                {renderSection()}
+              </div>
+              {effectiveInitiativeId && currentSection !== "overview" && currentSection !== "team-dashboard" && (
+                <aside className="hidden w-72 shrink-0 xl:block">
+                  <div className="sticky top-6">
+                    <ReadinessChecklist
+                      compact
+                      activeIngredientsCount={activeIngredients.length}
+                      strategiesCount={strategies.length}
+                      teamMembersCount={teamMembers.length}
+                      milestonesCount={milestones.length}
+                      risksCount={risks.length}
+                      pdActivitiesCount={activities.length}
+                      communicationActivitiesCount={communicationActivities.length}
+                      budgetItemsCount={budgetItems?.length || 0}
+                      fidelityChecklistsCount={fidelityChecklists?.length || 0}
+                      observationSchedulesCount={observationSchedules?.length || 0}
+                      activeIngredients={activeIngredients}
+                      decisionBrief={decisionBrief}
+                    />
+                  </div>
+                </aside>
               )}
-              {renderSection()}
             </div>
           </main>
         </div>

@@ -27,3 +27,23 @@ export function clearPendingTemplate(initiativeId: string) {
     // ignore
   }
 }
+
+const PREFILLED_PREFIX = "templatePrefilled:";
+
+/** Record that this initiative's Plan was seeded from a template (session only). */
+export function markTemplatePrefilled(initiativeId: string): void {
+  try {
+    sessionStorage.setItem(`${PREFILLED_PREFIX}${initiativeId}`, "1");
+  } catch {
+    /* sessionStorage unavailable: ignore */
+  }
+}
+
+export function wasTemplatePrefilled(initiativeId: string | undefined): boolean {
+  if (!initiativeId) return false;
+  try {
+    return sessionStorage.getItem(`${PREFILLED_PREFIX}${initiativeId}`) === "1";
+  } catch {
+    return false;
+  }
+}

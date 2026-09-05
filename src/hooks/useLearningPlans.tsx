@@ -10,6 +10,7 @@ export interface LearningPlanSession {
   audience: string;
   cadence?: string;
   rationale?: string;
+  locked?: boolean;
 }
 export interface LearningPlanPeriod {
   label: string;
@@ -38,6 +39,27 @@ interface GenerateInput {
   scope: "single" | "all";
   initiativeIds: string[];
   schoolYearStart: string;
+  /** The currently displayed plan's data, if this is a rebuild. Sessions the
+   *  leader has locked (edited) are preserved into the freshly generated plan. */
+  previousPlanData?: LearningPlanData;
+}
+
+/** Carries forward any locked (leader-edited) sessions from the previous plan
+ *  into the newly generated one, so a rebuild never silently discards an edit.
+ *  A locked session replaces a same-titled session in its target period, or is
+ *  appended to that period (falling back to the first period) if no match is found. */
+export function mergeLockedSessions(prev: LearningPlanData | undefined, next: LearningPlanData): LearningPlanData {
+  if (!prev) return next;
+  const locked = prev.periods.flatMap((p) => p.sessions.filter((s) => s.locked).map((s) => ({ periodLabel: p.label, session: s })));
+  if (locked.length === 0) return next;
+  const periods = next.periods.map((p) => ({ ...p, sessions: [...p.sessions] }));
+  for (const { periodLabel, session } of locked) {
+    const target = periods.find((p) => p.label === periodLabel) ?? periods[0];
+    if (!target) continue;
+    const dup = target.sessions.findIndex((s) => s.title.trim().toLowerCase() === session.title.trim().toLowerCase());
+    if (dup >= 0) target.sessions[dup] = session; else target.sessions.push(session);
+  }
+  return { ...next, periods };
 }
 
 async function assembleInitiative(id: string) {
@@ -77,7 +99,7 @@ export function useLearningPlans() {
   });
 
   const generate = useMutation({
-    mutationFn: async ({ scope, initiativeIds, schoolYearStart }: GenerateInput) => {
+    mutationFn: async ({ scope, initiativeIds, schoolYearStart, previousPlanData }: GenerateInput) => {
       if (initiativeIds.length === 0) throw new Error("Select at least one initiative.");
       const initiatives = await Promise.all(initiativeIds.map(assembleInitiative));
 
@@ -94,6 +116,8 @@ export function useLearningPlans() {
           ? `${initiatives[0].title}: Professional Learning Plan`
           : `Professional Learning Plan, ${schoolYearStart}`;
 
+      const mergedPlan = mergeLockedSessions(previousPlanData, plan);
+
       const { data: saved, error: saveError } = await supabase
         .from("learning_plans" as any)
         .insert({
@@ -101,7 +125,7 @@ export function useLearningPlans() {
           scope,
           initiative_ids: initiativeIds,
           school_year_start: schoolYearStart,
-          plan_data: plan,
+          plan_data: mergedPlan,
         })
         .select()
         .single();
@@ -114,6 +138,25 @@ export function useLearningPlans() {
     },
     onError: (e: Error) =>
       toast({ title: "Could not build the plan", description: e.message, variant: "destructive" }),
+  });
+
+  const updatePlan = useMutation({
+    mutationFn: async ({ id, plan_data }: { id: string; plan_data: LearningPlanData }) => {
+      const { data, error } = await supabase
+        .from("learning_plans" as any)
+        .update({ plan_data, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as LearningPlan;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["learning-plans"] });
+      toast({ title: "Plan updated" });
+    },
+    onError: (e: Error) =>
+      toast({ title: "Could not update the plan", description: e.message, variant: "destructive" }),
   });
 
   const remove = useMutation({
@@ -135,6 +178,8 @@ export function useLearningPlans() {
     isLoading,
     generate: generate.mutateAsync,
     isGenerating: generate.isPending,
+    updatePlan: updatePlan.mutateAsync,
+    isUpdating: updatePlan.isPending,
     remove: remove.mutate,
   };
 }
