@@ -669,6 +669,33 @@ export function useOrgRoster(orgId: string | undefined) {
     },
   });
 
+  // The school's or district's accent color, stored on organizations.brand.
+  // Exports read it so a board packet carries the school's own color rather
+  // than the app default. Pass null to clear it and fall back to the default.
+  const setBrandColor = useMutation({
+    mutationFn: async (hex: string | null) => {
+      if (!orgId) throw new Error("No school selected.");
+      if (hex !== null && !/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        throw new Error("Please choose a color in #RRGGBB form.");
+      }
+      const { error: updateError } = await supabase
+        .from("organizations" as any)
+        .update({ brand: hex ? { primary: hex.toLowerCase() } : null } as any)
+        .eq("id", orgId);
+      if (updateError) throw updateError;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Brand color saved", description: "Exports will use this color." });
+    },
+    onError: (e: any) =>
+      toast({
+        title: "Could not save the brand color",
+        description: e instanceof Error ? e.message : "Something went wrong.",
+        variant: "destructive",
+      }),
+  });
+
   return {
     members: data || [],
     isLoading,
@@ -684,7 +711,24 @@ export function useOrgRoster(orgId: string | undefined) {
     isUploadingLogo: uploadLogo.isPending,
     removeLogo: removeLogo.mutate,
     isRemovingLogo: removeLogo.isPending,
+    setBrandColor: setBrandColor.mutate,
+    isSavingBrandColor: setBrandColor.isPending,
   };
+}
+
+/** Reads a hex color out of an organization's `brand` jsonb, or null. */
+export function orgBrandColor(org: { brand?: Record<string, unknown> | null } | null | undefined): string | null {
+  const raw = org?.brand?.primary;
+  return typeof raw === "string" && /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : null;
+}
+
+/** Hex to the [r, g, b] triple jsPDF and autoTable expect. */
+export function hexToRgb(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
 }
 
 export interface OrgInitiative {
