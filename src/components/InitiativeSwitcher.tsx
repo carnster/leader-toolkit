@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
+import { useToast } from "@/hooks/use-toast";
 import { Briefcase } from "lucide-react";
 
 const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain", "/team", "/learning"];
@@ -20,18 +21,41 @@ interface InitiativeSwitcherProps {
  */
 export function InitiativeSwitcher({ variant = "desktop" }: InitiativeSwitcherProps) {
   const location = useLocation();
-  const { initiatives } = useInitiatives();
+  const { initiatives, isLoading, isFetching, refetch } = useInitiatives();
   const { initiativeId, setInitiativeId } = useInitiativeContext();
+  const { toast } = useToast();
   const isMobile = variant === "mobile";
+  // The id we have already refetched for once; an id that is still unknown after
+  // a fresh fetch is genuinely not in the user's list.
+  const refetchedForRef = useRef<string | null>(null);
 
-  // If the selected initiative is no longer in the visible list (for example
-  // after switching which school is being acted on), fall to the first one
-  // that is, so every page states which initiative it is showing.
+  // If the selected initiative is not in the visible list, fall to the first one
+  // that is, so every page states which initiative it is showing. Two guards keep
+  // valid links from being bounced: wait for the initial load, and when an id is
+  // unknown, refetch once before deciding (an initiative created seconds ago is
+  // not in the cached list yet).
   useEffect(() => {
-    if (initiatives.length > 0 && initiativeId && !initiatives.some((i) => i.id === initiativeId)) {
+    if (isLoading || isFetching || !initiatives || initiatives.length === 0) return;
+    if (!initiativeId) {
       setInitiativeId(initiatives[0].id);
+      return;
     }
-  }, [initiatives, initiativeId]);
+    const known = initiatives.some((i) => i.id === initiativeId);
+    if (known) {
+      refetchedForRef.current = null;
+      return;
+    }
+    if (refetchedForRef.current !== initiativeId) {
+      refetchedForRef.current = initiativeId;
+      void refetch();
+      return;
+    }
+    toast({
+      title: "That initiative isn't in your list",
+      description: `Showing ${initiatives[0].title} instead. Ask the owner to add you to the team if you need it.`,
+    });
+    setInitiativeId(initiatives[0].id);
+  }, [isLoading, isFetching, initiatives, initiativeId, refetch, setInitiativeId, toast]);
 
   if (initiatives.length === 0) return null;
   // Desktop switcher only appears on the stage/hub pages; the mobile menu shows
