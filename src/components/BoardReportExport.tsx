@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { parseDateOnly } from "@/lib/dates";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyOrgId } from "@/hooks/useOrganization";
+import { getMyOrgId, orgBrandColor, hexToRgb } from "@/hooks/useOrganization";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useDecisionBrief } from "@/hooks/useDecisionBrief";
 import { useTimelineMilestones } from "@/hooks/useTimelineMilestones";
@@ -83,17 +83,20 @@ export function BoardReportExport({ initiativeId, initiativeTitle }: BoardReport
       // Best-effort: a school without a logo, or a fetch/decode failure,
       // must never block the export.
       let orgLogo = null;
+      let accent: [number, number, number] | null = null;
       try {
         const orgId = await getMyOrgId(supabase);
         if (orgId) {
           const { data: orgRow } = await (supabase.from("organizations" as any) as any)
-            .select("logo_url")
+            .select("logo_url, brand")
             .eq("id", orgId)
             .maybeSingle();
           if (orgRow?.logo_url) orgLogo = await loadOrgLogoForPdf(orgRow.logo_url);
+          const hex = orgBrandColor(orgRow);
+          if (hex) accent = hexToRgb(hex);
         }
       } catch {
-        /* logo is a nice-to-have on this report, not a requirement */
+        /* branding is a nice-to-have on this report, not a requirement */
       }
 
       const doc = new jsPDF();
@@ -103,6 +106,7 @@ export function BoardReportExport({ initiativeId, initiativeTitle }: BoardReport
         title: "Board Report",
         subtitle: initiativeTitle,
         orgLogo,
+        accent,
       });
 
       const ensureRoom = (needed = 30) => {

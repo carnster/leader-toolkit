@@ -19,7 +19,9 @@ export function AdaptationProtocol({ activeIngredients }: AdaptationProtocolProp
           <CardTitle>Adaptation Protocol</CardTitle>
         </div>
         <CardDescription>
-          Guidelines for maintaining fidelity while allowing contextual adaptation
+          Adaptation boundaries define how much you can change an adaptable ingredient before it stops
+          working. These guidelines help you fit the initiative to your context while keeping fidelity to
+          the core.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

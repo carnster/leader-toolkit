@@ -11,7 +11,7 @@ export function ObservationModeSelector({ onSelectMode }: ObservationModeSelecto
     {
       id: 'quick' as const,
       title: '60-Second Fidelity Log',
-      description: 'Quick check: are core components happening as planned?',
+      description: 'A quick check on whether the core practices are happening as planned.',
       icon: Clock,
       buttonText: 'Start Quick Log',
       color: 'text-green-600',
@@ -20,7 +20,7 @@ export function ObservationModeSelector({ onSelectMode }: ObservationModeSelecto
     {
       id: 'detailed' as const,
       title: 'Coach Observation',
-      description: 'Detailed observation with feedback notes',
+      description: 'A longer visit where you write down feedback notes as you watch.',
       icon: Eye,
       buttonText: 'New Observation',
       color: 'text-blue-600',
@@ -29,7 +29,7 @@ export function ObservationModeSelector({ onSelectMode }: ObservationModeSelecto
     {
       id: 'team' as const,
       title: 'Team Check-In',
-      description: 'Log team reflections and adjustments',
+      description: 'A chance for the team to reflect together and note what to adjust.',
       icon: Users,
       buttonText: 'Record Check-In',
       color: 'text-purple-600',
@@ -40,7 +40,7 @@ export function ObservationModeSelector({ onSelectMode }: ObservationModeSelecto
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Record Implementation Observations</CardTitle>
+        <CardTitle>How do you want to look today?</CardTitle>
         <CardDescription>
           Choose the type of observation that fits your current need
         </CardDescription>

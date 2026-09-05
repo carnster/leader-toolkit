@@ -125,7 +125,7 @@ export function AddActiveIngredientDialog({ initiativeId }: AddActiveIngredientD
           </div>
 
           <div className="space-y-2">
-            <Label>Look-Fors (Observable indicators of quality implementation)</Label>
+            <Label>Look-fors (the observable evidence that this practice is actually happening)</Label>
             {formData.look_fors.map((lookFor, index) => (
               <Input
                 key={index}

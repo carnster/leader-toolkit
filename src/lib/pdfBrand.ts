@@ -99,6 +99,9 @@ export interface BrandHeaderOptions {
   /** The school's own logo, placed at the top-right of the header opposite
    *  the IMPACT mark. From loadOrgLogoForPdf; omit or pass null if unavailable. */
   orgLogo?: (Loaded & { format: "PNG" | "JPEG" | "WEBP" }) | null;
+  /** The school's brand color as [r, g, b], used for the header rule so an
+   *  exported report reads as that school's document. Falls back to grey. */
+  accent?: [number, number, number] | null;
 }
 
 /** Draws the branded header and returns the y position content should start at. */
@@ -134,8 +137,13 @@ export function brandedHeader(doc: jsPDF, opts: BrandHeaderOptions): number {
     y += lines.length * pageW * 0.014;
   }
 
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(pageW * 0.0012);
+  if (opts.accent) {
+    doc.setDrawColor(opts.accent[0], opts.accent[1], opts.accent[2]);
+    doc.setLineWidth(pageW * 0.003);
+  } else {
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(pageW * 0.0012);
+  }
   doc.line(margin, y, pageW - margin, y);
   doc.setTextColor(0, 0, 0);
 
