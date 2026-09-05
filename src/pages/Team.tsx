@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Plus, CheckCircle2, AlertCircle, MessageCircle, Handshake, RefreshCw } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Users, Plus, CheckCircle2, AlertCircle, MessageCircle, Handshake, RefreshCw, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
@@ -13,6 +16,17 @@ import { MeetingLog } from "@/components/MeetingLog";
 import { MeetingBrief } from "@/components/MeetingBrief";
 import { CalendarTaskExport } from "@/components/CalendarTaskExport";
 import { QueryErrorState } from "@/components/QueryErrorState";
+
+// Sentences to nudge a leader toward filling a specific missing seat. Keyed
+// by COMPOSITION_ROLES[].key; roles without a tailored line (e.g. "leader")
+// fall back to a generic prompt.
+const MISSING_ROLE_MESSAGES: Record<string, string> = {
+  lead: "No one is named as the lead yet. Every initiative needs one person who owns it.",
+  implementers: "The people who will actually do the practice aren't on the team yet. Add at least one.",
+  data: "No one is watching the data yet. Add a data owner.",
+  coach: "No coach or supporter is listed. Someone needs to help people get better at this.",
+  voice: "Student or family voice is missing. Add someone who brings it.",
+};
 
 // Team composition guidance from Implement with IMPACT (Ch. 3): effective
 // implementation teams blend roles and perspectives. Detection is keyword-based
@@ -95,6 +109,16 @@ export default function Team() {
   const { teamMembers, isLoading, error } = useTeamMembers(initiativeId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { data: lastMeeting } = useQuery({
+    queryKey: ["team-meetings-latest", initiativeId],
+    enabled: !!initiativeId,
+    queryFn: async () => {
+      const { data } = await supabase.from("team_meetings" as any).select("meeting_date").eq("initiative_id", initiativeId!).order("meeting_date", { ascending: false }).limit(1).maybeSingle();
+      return (data as any)?.meeting_date as string | undefined;
+    },
+  });
+  const daysSinceMeeting = lastMeeting ? Math.floor((Date.now() - new Date(lastMeeting).getTime()) / 86400000) : null;
+
   const initiativeTitle = initiatives?.find((i) => i.id === initiativeId)?.title || "Initiative";
 
   const roleText = teamMembers
@@ -165,10 +189,23 @@ export default function Team() {
         </div>
       </div>
 
+      {/* Health line */}
+      <Card className="border-primary/20">
+        <CardContent className="py-4 text-sm">
+          <span className="font-medium">Team of {teamMembers.length}.</span>{" "}
+          {coveredCount} of {COMPOSITION_ROLES.length} seats filled.{" "}
+          {daysSinceMeeting === null ? "No team meeting logged yet." : daysSinceMeeting === 0 ? "Met today." : `Last met ${daysSinceMeeting} day${daysSinceMeeting === 1 ? "" : "s"} ago.`}
+          {daysSinceMeeting !== null && daysSinceMeeting > 21 && <span className="text-amber-700 dark:text-amber-300"> Time to get the team in a room.</span>}
+        </CardContent>
+      </Card>
+
+      {/* Meeting brief: walk into the team meeting already prepared */}
+      <MeetingBrief initiativeId={initiativeId || undefined} />
+
       {/* Roster */}
       <Card>
         <CardHeader>
-          <CardTitle>Roster</CardTitle>
+          <CardTitle>Who's on the team</CardTitle>
           <CardDescription>
             {teamMembers.length} {teamMembers.length === 1 ? "member" : "members"} on this initiative
           </CardDescription>
@@ -205,7 +242,7 @@ export default function Team() {
                         <Badge variant="secondary" className="shrink-0 text-xs">Joined</Badge>
                       ) : member.invited_email ? (
                         <Badge variant="outline" className="shrink-0 text-xs border-amber-500/50 text-amber-700 dark:text-amber-400" title={`Invite waiting for ${member.invited_email} to sign in`}>
-                          Invited
+                          Invited, waiting to join
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="shrink-0 text-xs text-muted-foreground" title="Name-only entry. Add their email so this initiative appears when they sign in.">
@@ -243,30 +280,58 @@ export default function Team() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {compositionStatus.map((role) => (
-            <div key={role.key} className="flex items-start gap-2 text-sm">
-              {role.covered ? (
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" aria-hidden="true" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" aria-hidden="true" />
-              )}
-              <div>
-                <span className={role.covered ? "font-medium" : "text-muted-foreground font-medium"}>
-                  {role.label}
-                </span>
-                <p className="text-xs text-muted-foreground">{role.why}</p>
-              </div>
+          {coveredCount === COMPOSITION_ROLES.length ? (
+            <p className="text-sm font-medium flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" aria-hidden="true" />
+              Every seat is filled. Nice work.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {compositionStatus
+                .filter((role) => !role.covered)
+                .map((role) => (
+                  <div key={role.key} className="flex items-start gap-2 text-sm">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" aria-hidden="true" />
+                    <p className="text-muted-foreground">
+                      {MISSING_ROLE_MESSAGES[role.key] ?? `Add someone to cover ${role.label}.`}
+                    </p>
+                  </div>
+                ))}
             </div>
-          ))}
-          <p className="text-xs text-muted-foreground pt-2">
-            One more worth naming on purpose: a candid skeptic. Their pushback now prevents quiet
-            resistance later.
-          </p>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Member
+          </Button>
+          <Collapsible>
+            <CollapsibleTrigger className="flex items-center gap-1 text-xs text-muted-foreground underline underline-offset-2 pt-1">
+              See all six seats
+              <ChevronDown className="h-3 w-3" aria-hidden="true" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 pt-3">
+              {compositionStatus.map((role) => (
+                <div key={role.key} className="flex items-start gap-2 text-sm">
+                  {role.covered ? (
+                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  )}
+                  <div>
+                    <span className={role.covered ? "font-medium" : "text-muted-foreground font-medium"}>
+                      {role.label}
+                    </span>
+                    <p className="text-xs text-muted-foreground">{role.why}</p>
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground pt-2">
+                One more worth naming on purpose: a candid skeptic. Their pushback now prevents quiet
+                resistance later.
+              </p>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
-
-      {/* Meeting brief: walk into the team meeting already prepared */}
-      <MeetingBrief initiativeId={initiativeId || undefined} />
 
       {/* Meeting Log: the protocol made practical */}
       <MeetingLog
@@ -275,33 +340,38 @@ export default function Team() {
       />
 
       {/* Engage / Unite / Reflect */}
-      <div>
-        <h2 className="text-xl font-semibold mb-1">How the Team Behaves: Engage, Unite, Reflect</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Three behaviors that separate teams that implement from teams that meet. Use these as
-          standing meeting protocols.
-        </p>
-        <div className="grid gap-4 md:grid-cols-3">
-          {BEHAVIORS.map((b) => (
-            <Card key={b.name}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <b.icon className="h-4 w-4 text-accent" aria-hidden="true" />
-                  {b.name}
-                </CardTitle>
-                <CardDescription>{b.summary}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  {b.protocol.map((p, i) => (
-                    <li key={i}>{p}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <Collapsible>
+        <CollapsibleTrigger className="flex items-center gap-2 text-xl font-semibold mb-1 hover:underline">
+          How strong teams behave: Engage, Unite, Reflect
+          <ChevronDown className="h-4 w-4" aria-hidden="true" />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <p className="text-sm text-muted-foreground mb-4 mt-1">
+            Three behaviors that separate teams that implement from teams that meet. Use these as
+            standing meeting protocols.
+          </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            {BEHAVIORS.map((b) => (
+              <Card key={b.name}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <b.icon className="h-4 w-4 text-accent" aria-hidden="true" />
+                    {b.name}
+                  </CardTitle>
+                  <CardDescription>{b.summary}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                    {b.protocol.map((p, i) => (
+                      <li key={i}>{p}</li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Assignments link */}
       <Card>

@@ -29,6 +29,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
+import { WeeklyRead } from "@/components/monitor/WeeklyRead";
 import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
 import { useSearchParams , Link as RouterLink} from "react-router-dom";
 import { useMemo, useState } from "react";
@@ -214,12 +215,24 @@ export default function Monitor() {
           />
         </div>
 
+        {/* The one question this hub answers first: what does this week say? */}
+        {effectiveInitiativeId && (
+          <div className="mt-4">
+            <WeeklyRead
+              initiativeId={effectiveInitiativeId}
+              onRecordValues={() =>
+                document.getElementById("indicators")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
+          </div>
+        )}
+
         <div className="mt-4">
           <CalendarSubscribePanel initiativeId={effectiveInitiativeId} />
         </div>
         
         {/* Indicator Import Banner */}
-        <div className="mt-4">
+        <div className="mt-4" id="indicators">
           <IndicatorImportBanner initiativeId={effectiveInitiativeId} />
         </div>
         

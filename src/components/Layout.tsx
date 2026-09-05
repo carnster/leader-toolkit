@@ -79,7 +79,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex min-h-16 flex-wrap items-center justify-between gap-y-1 py-1">
           <div className="flex shrink-0 items-center gap-4 xl:gap-8">
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex shrink-0 items-center space-x-3">
               <img
                 src={impactLogo}
                 alt="IMPACT"
@@ -101,7 +101,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     to={item.href}
                     title={remainingFor(item.href)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                      "flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
                         ? "text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -145,13 +145,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 );
               })}
               {/* Cross-cutting hubs: continuous companions, not stages */}
-              <div className="mx-2 h-6 w-px bg-border" aria-hidden="true" />
+              <div className="mx-2 h-6 w-px bg-border shrink-0" aria-hidden="true" />
               {hubs.map((hub) => (
                 <Link
                   key={hub.name}
                   to={hub.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
                     location.pathname === hub.href
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
