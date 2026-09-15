@@ -28,12 +28,24 @@ import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { MandateBriefDialog } from "@/components/MandateBriefDialog";
 
 export default function Dashboard() {
   const { initiatives, isLoading, error: initiativesError, deleteInitiative, isDeleting } = useInitiatives();
   const { org } = useOrganization();
+  // The stage pages (Decide, Plan, Implement...) read the initiative from the
+  // shared context, not from this page's local selection. Without the sync
+  // below, picking an initiative here and then clicking Decide opened whatever
+  // the context happened to be holding, which on a network-wide view is often
+  // another school's work.
+  const { setInitiativeId } = useInitiativeContext();
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
+
+  const selectInitiative = (id: string | undefined) => {
+    setSelectedInitiativeId(id);
+    if (id) setInitiativeId(id);
+  };
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
   const { data: fidelityTrends } = useFidelityTrends(30, selectedInitiativeId);
   const { data: budgetData } = useBudgetTracking(selectedInitiativeId);
@@ -124,7 +136,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           {initiatives.length > 0 && (
             <>
-              <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
+              <Select value={selectedInitiativeId || "all"} onValueChange={(value) => selectInitiative(value === "all" ? undefined : value)}>
                 <SelectTrigger className="w-full sm:w-[280px]">
                   <SelectValue placeholder="Select initiative" />
                 </SelectTrigger>
