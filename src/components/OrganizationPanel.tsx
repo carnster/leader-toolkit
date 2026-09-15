@@ -19,7 +19,11 @@ import {
   OrgInitiative,
   WHOLE_NETWORK_VALUE,
   DISTRICT_ITSELF_VALUE,
+  orgBrandColor,
 } from "@/hooks/useOrganization";
+
+/** Falls back to the app's own accent when a school has set no color. */
+const DEFAULT_BRAND_COLOR = "#3b82f6";
 
 const JOB_ROLE_LABELS: Record<string, string> = {
   teacher: "Teacher",
@@ -456,6 +460,7 @@ export function OrganizationPanel() {
               orgId={org.id}
               membershipId={membership?.id || ""}
               logoUrl={org.logo_url}
+              brandColor={orgBrandColor(org)}
               isNetworkLeader={isNetworkLeader}
             />
           ) : selectedOrgId === WHOLE_NETWORK_VALUE ? (
@@ -640,6 +645,7 @@ export function OrganizationPanel() {
               orgId={org.id}
               membershipId={membership?.id || ""}
               logoUrl={org.logo_url}
+              brandColor={orgBrandColor(org)}
               isNetworkLeader={isNetworkLeader}
             />
           ) : null}
@@ -758,6 +764,7 @@ export function OrganizationPanel() {
               orgId={org.id}
               membershipId={membership.id}
               logoUrl={org.logo_url}
+              brandColor={orgBrandColor(org)}
               isNetworkLeader={isNetworkLeader}
             />
             <div className="border-t pt-4">
@@ -786,11 +793,13 @@ function AdminRoster({
   orgId,
   membershipId,
   logoUrl,
+  brandColor,
   isNetworkLeader,
 }: {
   orgId: string;
   membershipId: string;
   logoUrl: string | null;
+  brandColor: string | null;
   isNetworkLeader: boolean;
 }) {
   const {
@@ -807,6 +816,8 @@ function AdminRoster({
     isUploadingLogo,
     removeLogo,
     isRemovingLogo,
+    setBrandColor,
+    isSavingBrandColor,
   } = useOrgRoster(orgId);
   const jobRoleOptions = isNetworkLeader
     ? [...JOB_ROLE_OPTIONS, ...NETWORK_ONLY_JOB_ROLE_OPTIONS]
@@ -814,6 +825,13 @@ function AdminRoster({
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<OrgRole>("member");
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [draftColor, setDraftColor] = useState(brandColor || DEFAULT_BRAND_COLOR);
+
+  // Keep the picker in step when the saved color changes (including switching
+  // which school is being administered).
+  useEffect(() => {
+    setDraftColor(brandColor || DEFAULT_BRAND_COLOR);
+  }, [brandColor]);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -893,6 +911,45 @@ function AdminRoster({
           className="hidden"
           onChange={handleLogoChange}
         />
+      </div>
+
+      {/* Brand color: carried into exported PDFs so a board packet reads as the
+          school's own document rather than a generic one. */}
+      <div className="space-y-2 border-t pt-4">
+        <h3 className="text-sm font-medium">Brand color</h3>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="color"
+            aria-label="Brand color"
+            value={draftColor}
+            onChange={(e) => setDraftColor(e.target.value)}
+            className="h-9 w-14 cursor-pointer rounded border bg-background p-1"
+          />
+          <span className="font-mono text-xs text-muted-foreground">{draftColor}</span>
+          <Button
+            size="sm"
+            onClick={() => setBrandColor(draftColor)}
+            disabled={isSavingBrandColor || draftColor.toLowerCase() === (brandColor || "").toLowerCase()}
+          >
+            {isSavingBrandColor ? "Saving..." : "Save color"}
+          </Button>
+          {brandColor && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDraftColor(DEFAULT_BRAND_COLOR);
+                setBrandColor(null);
+              }}
+              disabled={isSavingBrandColor}
+            >
+              Reset to default
+            </Button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Used on exported reports, alongside your logo. Leave it unset to use the default.
+        </p>
       </div>
 
       <div className="space-y-2 border-t pt-4">

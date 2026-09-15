@@ -80,19 +80,19 @@ export function PDSACycleAssistant({ initiativeId }: PDSACycleAssistantProps) {
           <h4 className="font-semibold">PDSA Cycle Framework:</h4>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <strong className="text-primary">Plan:</strong>
+              <strong className="text-primary">What we'll try (Plan):</strong>
               <p className="text-muted-foreground">What are we trying to accomplish? What change can we test?</p>
             </div>
             <div>
-              <strong className="text-secondary">Do:</strong>
+              <strong className="text-secondary">Try it (Do):</strong>
               <p className="text-muted-foreground">Carry out the test. Collect data on what happens.</p>
             </div>
             <div>
-              <strong className="text-accent">Study:</strong>
+              <strong className="text-accent">What happened (Study):</strong>
               <p className="text-muted-foreground">Analyze the data. What did we learn?</p>
             </div>
             <div>
-              <strong className="text-success">Act:</strong>
+              <strong className="text-success">Keep, tweak, or drop (Act):</strong>
               <p className="text-muted-foreground">Adopt, adapt, or abandon the change.</p>
             </div>
           </div>

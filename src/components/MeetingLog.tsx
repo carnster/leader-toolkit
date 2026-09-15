@@ -81,7 +81,7 @@ export function MeetingLog({ initiativeId, rosterNames }: MeetingLogProps) {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" aria-hidden="true" />
-            <CardTitle>Meeting Log</CardTitle>
+            <CardTitle>What we decided before</CardTitle>
           </div>
           <Button size="sm" onClick={() => setOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />

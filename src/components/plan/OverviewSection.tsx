@@ -1,11 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, Sparkles, Loader2 } from "lucide-react";
 import { ReadinessChecklist } from "@/components/ReadinessChecklist";
-import { useNavigate } from "react-router-dom";
 import { ImplementationPlanExport } from "@/components/ImplementationPlanExport";
 import { CalendarTaskExport } from "@/components/CalendarTaskExport";
+import { PlanReadinessGate } from "@/components/plan/PlanReadinessGate";
+import { getPlanProgress, type PlanCounts, type PlanStepId } from "@/lib/planSteps";
 
 interface OverviewSectionProps {
   activeIngredientsCount: number;
@@ -16,7 +17,8 @@ interface OverviewSectionProps {
   pdActivitiesCount: number;
   onGenerateFullPlan: () => void;
   isGenerating: boolean;
-  nextStep: string;
+  counts: PlanCounts;
+  onGoToStep: (id: PlanStepId) => void;
   initiativeId: string;
   initiativeTitle: string;
   activeIngredients: any[];
@@ -42,7 +44,8 @@ export function OverviewSection({
   pdActivitiesCount,
   onGenerateFullPlan,
   isGenerating,
-  nextStep,
+  counts,
+  onGoToStep,
   initiativeId,
   initiativeTitle,
   activeIngredients,
@@ -58,19 +61,9 @@ export function OverviewSection({
   observationSchedules = [],
   decisionBrief = null,
 }: OverviewSectionProps) {
-  const navigate = useNavigate();
-  const totalRequired = 6;
-  const completed = [
-    activeIngredientsCount,
-    strategiesCount,
-    teamMembersCount,
-    milestonesCount,
-    risksCount,
-    pdActivitiesCount,
-  ].filter((count) => count > 0).length;
-
-  const completionPercentage = Math.round((completed / totalRequired) * 100);
-  const isReady = completionPercentage === 100;
+  const progress = getPlanProgress(counts);
+  const completionPercentage = progress.percent;
+  const isReady = progress.isReady;
 
   return (
     <div className="space-y-6">
@@ -113,7 +106,9 @@ export function OverviewSection({
           {/* Progress Bar */}
           <div className="space-y-2 mb-6">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Overall Progress</span>
+              <span className="text-muted-foreground">
+                {progress.completedSteps} of {progress.totalSteps} steps · {progress.requiredDone} of {progress.requiredTotal} required
+              </span>
               <span className="font-medium">{completionPercentage}%</span>
             </div>
             <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -127,14 +122,21 @@ export function OverviewSection({
           </div>
 
           {/* Next Step Guidance */}
-          {!isReady && (
+          {!isReady && progress.nextStep && (
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-sm mb-1">Next Step</p>
-                  <p className="text-sm text-muted-foreground">{nextStep}</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-sm mb-1">
+                      Next step: {progress.nextStep.number}. {progress.nextStep.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{progress.nextStep.why}</p>
+                  </div>
                 </div>
+                <Button onClick={() => onGoToStep(progress.nextStep!.id)} className="gap-2">
+                  Go to step {progress.nextStep.number}
+                </Button>
               </div>
             </div>
           )}
@@ -194,6 +196,8 @@ export function OverviewSection({
                 milestones={milestones}
                 risks={risks}
                 pdActivities={pdActivities}
+                fidelityChecklists={fidelityChecklists}
+                observationSchedules={observationSchedules}
               />
             </div>
           </CardContent>
@@ -216,29 +220,7 @@ export function OverviewSection({
         </CardContent>
       </Card>
 
-      {/* Complete Planning Button */}
-      {isReady && (
-        <Card className="border-primary bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg mb-1">Ready to Move to Implementation</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your comprehensive implementation plan is complete. You can now begin the Implement stage.
-                </p>
-              </div>
-              <Button
-                size="lg"
-                onClick={() => navigate(`/implement?initiative=${initiativeId}`)}
-                className="gap-2"
-              >
-                Move to Implement Stage
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <PlanReadinessGate initiativeId={initiativeId} counts={counts} onGoToStep={onGoToStep} />
     </div>
   );
 }

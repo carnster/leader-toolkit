@@ -18,6 +18,8 @@ interface ImplementationPlanExportProps {
   milestones: any[];
   risks: any[];
   pdActivities: any[];
+  fidelityChecklists?: any[];
+  observationSchedules?: any[];
 }
 
 export function ImplementationPlanExport({
@@ -30,6 +32,8 @@ export function ImplementationPlanExport({
   milestones,
   risks,
   pdActivities,
+  fidelityChecklists = [],
+  observationSchedules = [],
 }: ImplementationPlanExportProps) {
   const { toast } = useToast();
 
@@ -305,6 +309,69 @@ export function ImplementationPlanExport({
         doc.setFontSize(10);
         doc.setFont("helvetica", "italic");
         doc.text("No professional development activities planned.", 14, yPos);
+        yPos += 8;
+      }
+
+      // Section 6: Fidelity Monitoring. The plan is not finished until it says
+      // how you will know the practice is actually happening.
+      if (yPos > 240) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("6. Fidelity Monitoring", 14, yPos);
+      yPos += 8;
+
+      doc.setFontSize(12);
+      doc.text("Fidelity Checklists", 14, yPos);
+      yPos += 5;
+      if (fidelityChecklists.length > 0) {
+        autoTable(doc, {
+          startY: yPos,
+          head: [["Checklist", "Items"]],
+          body: fidelityChecklists.map((checklist) => [
+            checklist.name,
+            String(Array.isArray(checklist.checklist_items) ? checklist.checklist_items.length : 0),
+          ]),
+          theme: "grid",
+          headStyles: { fillColor: [59, 130, 246] },
+          margin: { left: 14 },
+        });
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+      } else {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.text("No fidelity checklists defined.", 14, yPos);
+        yPos += 8;
+      }
+
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Observation Schedule", 14, yPos);
+      yPos += 5;
+      if (observationSchedules.length > 0) {
+        autoTable(doc, {
+          startY: yPos,
+          head: [["Date", "Type", "Status"]],
+          body: observationSchedules.map((obs) => [
+            obs.scheduled_date ? format(parseDateOnly(obs.scheduled_date), "PP") : "TBD",
+            obs.observation_type,
+            String(obs.status || "").replace("_", " ").toUpperCase(),
+          ]),
+          theme: "grid",
+          headStyles: { fillColor: [59, 130, 246] },
+          margin: { left: 14 },
+        });
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+      } else {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "italic");
+        doc.text("No observations scheduled.", 14, yPos);
         yPos += 8;
       }
 

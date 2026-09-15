@@ -148,7 +148,7 @@ export function MeetingBrief({ initiativeId }: { initiativeId: string | undefine
           <div>
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" aria-hidden="true" />
-              Meeting brief
+              This week&apos;s meeting, drafted for you
             </CardTitle>
             <CardDescription className="mt-1">
               Auto-assembled from this week's data. Walk in prepared without opening five pages.

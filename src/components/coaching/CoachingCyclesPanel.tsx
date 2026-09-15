@@ -129,7 +129,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
           <div>
             <CardTitle className="flex items-center gap-2">
               <Repeat className="h-5 w-5 text-primary" aria-hidden="true" />
-              Coaching cycles
+              Turning learning into practice
             </CardTitle>
             <CardDescription className="mt-1">
               Observe, give feedback, agree one next step, follow up. This is what turns professional development into practice.

@@ -42,7 +42,7 @@ export function useInitiatives() {
   // sees zero change.
   const { actingOrgId } = useOrganization();
 
-  const { data: initiatives, isLoading, error } = useQuery({
+  const { data: initiatives, isLoading, isFetching, error, refetch } = useQuery({
     queryKey: actingOrgId ? ["initiatives", actingOrgId] : ["initiatives"],
     queryFn: async () => {
       let query = supabase
@@ -189,7 +189,9 @@ export function useInitiatives() {
   return {
     initiatives: initiatives || [],
     isLoading,
+    isFetching,
     error,
+    refetch,
     createInitiative: createInitiative.mutate,
     updateInitiative: updateInitiative.mutate,
     deleteInitiative: deleteInitiative.mutate,

@@ -8,17 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GraduationCap, Sparkles, Loader2, CalendarDays, BookOpen, Users, Compass, Download } from "lucide-react";
 import { useInitiatives } from "@/hooks/useInitiatives";
-import { useLearningPlans, type LearningPlan } from "@/hooks/useLearningPlans";
+import { useLearningPlans, type LearningPlan, type LearningPlanData } from "@/hooks/useLearningPlans";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { CoachingCyclesPanel } from "@/components/coaching/CoachingCyclesPanel";
 import { CombinedCalendar } from "@/components/learning/CombinedCalendar";
+import { LearningThread } from "@/components/learning/LearningThread";
+import { SessionEditDialog } from "@/components/learning/SessionEditDialog";
 import { exportLearningPlanPdf } from "@/components/learning/exportLearningPlanPdf";
 
 const YEAR_OPTIONS = ["July 2026", "August 2026", "September 2026", "January 2027", "August 2027"];
 
 export default function Learning() {
   const { initiatives, isLoading: loadingInitiatives } = useInitiatives();
-  const { plans, generate, isGenerating } = useLearningPlans();
+  const { plans, generate, isGenerating, updatePlan, isUpdating } = useLearningPlans();
   const { initiativeId: contextInitiativeId } = useInitiativeContext();
 
   const active = useMemo(
@@ -48,12 +50,20 @@ export default function Learning() {
   const handleGenerate = async () => {
     try {
       const ids = selectedInitiatives.map((i) => i.id);
-      const plan = await generate({ scope, initiativeIds: ids, schoolYearStart });
+      const plan = await generate({ scope, initiativeIds: ids, schoolYearStart, previousPlanData: displayedPlan?.plan_data });
       setDisplayedPlan(plan);
     } catch {
       /* surfaced by the hook's toast */
     }
   };
+
+  const handleUpdatePlan = async (next: LearningPlanData) => {
+    if (!displayedPlan) return;
+    await updatePlan({ id: displayedPlan.id, plan_data: next });
+    setDisplayedPlan((prev) => (prev ? { ...prev, plan_data: next } : prev));
+  };
+
+  const currentInitiativeTitle = initiatives.find((i) => i.id === contextInitiativeId)?.title;
 
   if (!loadingInitiatives && active.length === 0) {
     return (
@@ -99,7 +109,7 @@ export default function Learning() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Scope</Label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <Button variant={scope === "all" ? "default" : "outline"} size="sm" onClick={() => setScope("all")} className="flex-1">
                   <Users className="mr-2 h-4 w-4" /> All active ({active.length})
                 </Button>
@@ -159,20 +169,28 @@ export default function Learning() {
         </CardContent>
       </Card>
 
+      <LearningThread initiativeId={scope === "single" ? singleId : (contextInitiativeId || undefined)} />
+
       {/* Coaching cycles: the bridge from PD to changed classroom practice.
-          Scoped to the header's current initiative. */}
-      <CoachingCyclesPanel initiativeId={contextInitiativeId || undefined} />
+          Scoped to the leader's current selection: the single chosen initiative,
+          or (when viewing all) the header's current initiative. */}
+      {scope === "all" && (
+        <p className="text-sm text-muted-foreground">
+          Coaching cycles are per initiative. Showing {currentInitiativeTitle || "your current initiative"}.
+        </p>
+      )}
+      <CoachingCyclesPanel initiativeId={scope === "single" ? singleId : (contextInitiativeId || undefined)} />
 
       {/* Plan + Calendar */}
       <Tabs defaultValue="plan" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="plan"><BookOpen className="h-4 w-4 mr-2" /> Learning Plan</TabsTrigger>
-          <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> Calendar</TabsTrigger>
+          <TabsTrigger value="calendar"><CalendarDays className="h-4 w-4 mr-2" /> When it all happens</TabsTrigger>
         </TabsList>
 
         <TabsContent value="plan" className="mt-4">
           {displayedPlan ? (
-            <PlanView plan={displayedPlan} />
+            <PlanView plan={displayedPlan} onUpdatePlan={handleUpdatePlan} isUpdating={isUpdating} />
           ) : (
             <Card>
               <CardContent className="pt-6 text-center space-y-2">
@@ -191,11 +209,20 @@ export default function Learning() {
   );
 }
 
-function PlanView({ plan }: { plan: LearningPlan }) {
+function PlanView({
+  plan,
+  onUpdatePlan,
+  isUpdating,
+}: {
+  plan: LearningPlan;
+  onUpdatePlan: (next: LearningPlanData) => Promise<void> | void;
+  isUpdating?: boolean;
+}) {
   const d = plan.plan_data || ({} as LearningPlan["plan_data"]);
   const periods = Array.isArray(d.periods) ? d.periods : [];
   const themes = Array.isArray(d.themes) ? d.themes : [];
   const coordinationNotes = Array.isArray(d.coordination_notes) ? d.coordination_notes : [];
+  const [editing, setEditing] = useState<{ periodIndex: number; sessionIndex: number } | null>(null);
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -257,9 +284,15 @@ function PlanView({ plan }: { plan: LearningPlan }) {
             <CardContent className="space-y-3">
               {(Array.isArray(p.sessions) ? p.sessions : []).map((s, j) => (
                 <div key={j} className="rounded-lg border p-3 space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="font-medium text-sm">{s.title}</h4>
-                    {s.modality && <Badge variant="outline" className="text-xs">{s.modality}</Badge>}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-medium text-sm">{s.title}</h4>
+                      {s.modality && <Badge variant="outline" className="text-xs">{s.modality}</Badge>}
+                      {s.locked && <Badge variant="outline" className="text-xs">Kept on rebuild</Badge>}
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setEditing({ periodIndex: i, sessionIndex: j })}>
+                      Edit
+                    </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     <span className="font-medium text-foreground">Builds:</span> {s.capability}
@@ -282,6 +315,18 @@ function PlanView({ plan }: { plan: LearningPlan }) {
           </Card>
         ))}
       </div>
+
+      {editing && (
+        <SessionEditDialog
+          open={!!editing}
+          onOpenChange={(o) => !o && setEditing(null)}
+          plan={d}
+          periodIndex={editing.periodIndex}
+          sessionIndex={editing.sessionIndex}
+          onSave={onUpdatePlan}
+          saving={isUpdating}
+        />
+      )}
     </div>
   );
 }

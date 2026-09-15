@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Info, ChevronUp, ArrowRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, Info, ChevronUp, ArrowRight, Circle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -20,6 +21,8 @@ interface ReadinessChecklistProps {
   observationSchedulesCount?: number;
   activeIngredients?: any[];
   decisionBrief?: any;
+  /** Condensed rail version shown alongside a step, rather than the full card. */
+  compact?: boolean;
 }
 
 export function ReadinessChecklist({
@@ -35,6 +38,7 @@ export function ReadinessChecklist({
   observationSchedulesCount = 0,
   activeIngredients = [],
   decisionBrief = null,
+  compact = false,
 }: ReadinessChecklistProps) {
   const [checkedItems, setCheckedItems] = useState<{ [key: string]: boolean }>({});
   const [expandedItems, setExpandedItems] = useState<{ [key: string]: boolean }>({});
@@ -225,6 +229,53 @@ export function ReadinessChecklist({
   const completionPercentage = Math.round((completedRequired / totalRequired) * 100);
 
   const isReady = completionPercentage === 100;
+
+  // Condensed rail: pinned beside a step so the checklist is always visible and
+  // self-updating, instead of a card the user has to go find.
+  if (compact) {
+    const autoRequiredDone = requiredItems.filter((i) => i.autoCheck).length;
+    const pct = totalRequired ? Math.round((autoRequiredDone / totalRequired) * 100) : 0;
+    return (
+      <Card className="p-4">
+        <div className="flex items-baseline justify-between gap-2 mb-2">
+          <h3 className="text-sm font-semibold">Readiness checklist</h3>
+          <span className="text-xs text-muted-foreground">
+            {autoRequiredDone} of {totalRequired} required
+          </span>
+        </div>
+        <Progress value={pct} className="h-1.5 mb-3" />
+        <ul className="space-y-1.5">
+          {checklistItems.map((item) => (
+            <li key={item.id}>
+              <Link
+                to={item.actionLink}
+                title={item.label}
+                className={`flex items-start gap-2 rounded-md border p-2 text-left transition-colors hover:bg-muted/50 ${
+                  item.autoCheck ? "border-green-200 bg-green-50/60 dark:border-green-900 dark:bg-green-950/20" : ""
+                }`}
+              >
+                {item.autoCheck ? (
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                ) : (
+                  <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-medium leading-tight">{item.section}</span>
+                  <span className="block text-[11px] text-muted-foreground">
+                    {item.required ? "Required" : "Optional"}
+                  </span>
+                </span>
+                <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 border-t pt-2 text-[11px] text-muted-foreground">
+          Checks update as you add to each step. Click a row to go there.
+        </p>
+      </Card>
+    );
+  }
 
   return (
     <Card>

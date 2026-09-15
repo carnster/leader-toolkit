@@ -18,7 +18,12 @@ export function NoIngredientsNotice({ stage = "this stage" }: { stage?: string }
         <div className="space-y-1.5">
           <h3 className="font-semibold">No active ingredients yet</h3>
           <p className="text-sm text-muted-foreground">
-            This initiative has no active ingredients, so fidelity monitoring, the adaptation protocol,
+            Active ingredients are the specific practices that make an initiative work: core ones are
+            non-negotiable (keeping them in place is what fidelity means), and adaptable ones can flex
+            to your context.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            This initiative has none yet, so fidelity monitoring, the adaptation protocol,
             and the staff pulse have nothing specific to point at in {stage}.
           </p>
           <p className="text-sm text-muted-foreground">
