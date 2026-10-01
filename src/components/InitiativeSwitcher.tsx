@@ -7,7 +7,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useToast } from "@/hooks/use-toast";
 import { Briefcase } from "lucide-react";
 
-const STAGE_ROUTES = ["/decide", "/plan", "/implement", "/monitor", "/sustain", "/team", "/learning"];
+const STAGE_ROUTES = ["/fast-track", "/decide", "/plan", "/implement", "/monitor", "/sustain", "/team", "/learning"];
 
 interface InitiativeSwitcherProps {
   /** "desktop" (header, hidden on mobile) or "mobile" (full-width, always available). */
@@ -24,7 +24,7 @@ export function InitiativeSwitcher({ variant = "desktop" }: InitiativeSwitcherPr
   const location = useLocation();
   const { initiatives, isLoading, isFetching, refetch } = useInitiatives();
   const { initiativeId, setInitiativeId } = useInitiativeContext();
-  const { actingOrgId, membership, allOrgs } = useOrganization();
+  const { actingOrgId, membership, allOrgs, isLoading: orgLoading } = useOrganization();
   const { toast } = useToast();
   const isMobile = variant === "mobile";
   // The id we have already refetched for once; an id that is still unknown after
@@ -75,7 +75,7 @@ export function InitiativeSwitcher({ variant = "desktop" }: InitiativeSwitcherPr
   // unknown, refetch once before deciding (an initiative created seconds ago is
   // not in the cached list yet).
   useEffect(() => {
-    if (isLoading || isFetching || !initiatives || initiatives.length === 0) return;
+    if (isLoading || isFetching || orgLoading || !initiatives || initiatives.length === 0) return;
     if (!initiativeId) {
       setInitiativeId(defaultInitiative().id);
       return;
@@ -97,7 +97,7 @@ export function InitiativeSwitcher({ variant = "desktop" }: InitiativeSwitcherPr
     });
     setInitiativeId(fallback.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isFetching, initiatives, initiativeId, refetch, setInitiativeId, toast, homeOrgId]);
+  }, [isLoading, isFetching, orgLoading, initiatives, initiativeId, refetch, setInitiativeId, toast, homeOrgId]);
 
   if (initiatives.length === 0) return null;
   // Desktop switcher only appears on the stage/hub pages; the mobile menu shows

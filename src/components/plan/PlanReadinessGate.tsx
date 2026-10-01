@@ -25,10 +25,12 @@ export function PlanReadinessGate({ initiativeId, counts, onGoToStep }: PlanRead
   const moveToImplement = async () => {
     if (!initiativeId || !progress.isReady) return;
     setMoving(true);
-    const { error } = await supabase.from("initiatives").update({ stage: "implement" }).eq("id", initiativeId);
+    // RLS refuses a write it does not allow by matching zero rows, not by
+    // erroring, so read the row back: an empty result means nothing moved.
+    const { data: moved, error } = await supabase.from("initiatives").update({ stage: "implement" }).eq("id", initiativeId).select("id");
     setMoving(false);
-    if (error) {
-      toast({ title: "Couldn't update the stage", description: error.message, variant: "destructive" });
+    if (error || !moved?.length) {
+      toast({ title: "Couldn't update the stage", description: error?.message || "Only the initiative owner or a school admin can move it to the next stage. Ask them to make the move.", variant: "destructive" });
       return;
     }
     await Promise.all([

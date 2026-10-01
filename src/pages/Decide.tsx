@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText, Calendar, Flag } from "lucide-react";
+import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText, Calendar, Flag, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -92,7 +92,7 @@ export default function Decide() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createInitiative, isCreating } = useInitiatives();
+  const { createInitiative, isCreating, initiatives: allInitiatives } = useInitiatives();
   
   // Get initiative ID (URL is canonical; see useInitiativeContext)
   const { initiativeId: effectiveInitiativeId, setInitiativeId } = useInitiativeContext();
@@ -640,15 +640,17 @@ export default function Decide() {
     }
     
     // Update initiative stage to plan
-    const { error } = await supabase
+    // An update RLS does not allow matches zero rows instead of erroring.
+    const { data: moved, error } = await supabase
       .from("initiatives")
       .update({ stage: "plan" })
-      .eq("id", effectiveInitiativeId);
+      .eq("id", effectiveInitiativeId)
+      .select("id");
     
-    if (error) {
+    if (error || !moved?.length) {
       toast({
-        title: "Couldn’t save",
-        description: "Failed to update initiative stage.",
+        title: "Couldn’t move to Plan & Prepare",
+        description: error?.message || "Only the initiative owner or a school admin can move it to the next stage. Ask them to make the move.",
         variant: "destructive",
       });
       return;
@@ -767,32 +769,6 @@ export default function Decide() {
         });
       }
 
-      // Seed the timeline with the template's milestone backbone, if it has
-      // one. Guarded on zero existing milestones so re-adopting (or a second
-      // template) never duplicates rows. Any failure here is swallowed:
-      // a missing milestone seed should never block adopting the template.
-      const milestonesTemplate = templateData?.milestones_template;
-      if (Array.isArray(milestonesTemplate) && milestonesTemplate.length > 0) {
-        try {
-          const { count } = await (supabase.from("timeline_milestones") as any)
-            .select("id", { count: "exact", head: true })
-            .eq("initiative_id", initiativeId);
-          if (!count) {
-            const today = new Date().toISOString().slice(0, 10);
-            const rows = milestonesTemplate.map((item: any) => ({
-              initiative_id: initiativeId,
-              phase: item.phase,
-              milestone: item.milestone,
-              notes: item.notes ?? null,
-              status: "pending",
-              target_date: today,
-            }));
-            await (supabase.from("timeline_milestones") as any).insert(rows);
-          }
-        } catch (milestoneError) {
-          console.error("Error seeding milestones from template:", milestoneError);
-        }
-      }
 
       toast({
         title: "Template loaded",
@@ -868,6 +844,22 @@ export default function Decide() {
     <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
       {/* Main Content */}
       <div className="flex-1 min-w-0 space-y-8">
+      {/* A district already decided a Fast Track initiative; choosing again here
+          would ask the school to re-litigate a mandate. Point back to Fast Track. */}
+      {allInitiatives.find((i) => i.id === effectiveInitiativeId)?.mode === "fast_track" && (
+        <Card className="border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardContent className="pt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm">
+              <span className="font-medium">This is a district initiative on Fast Track.</span>{" "}
+              The district already made this decision, so you can skip this stage and work from its core practices.
+            </p>
+            <Button size="sm" onClick={() => navigate(`/fast-track?initiative=${effectiveInitiativeId}`)}>
+              <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+              Open Fast Track
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

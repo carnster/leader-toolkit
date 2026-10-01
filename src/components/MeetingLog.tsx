@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateOnly } from "@/lib/dates";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +32,7 @@ export function MeetingLog({ initiativeId, rosterNames }: MeetingLogProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    meeting_date: new Date().toISOString().slice(0, 10),
+    meeting_date: formatDateOnly(new Date()),
     attendees: rosterNames.join(", "),
     engage_notes: "",
     unite_notes: "",

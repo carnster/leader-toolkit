@@ -52,6 +52,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
+  const [dashTab, setDashTab] = useState("overview");
+  // The initiative list lives in the second tab, so a plain anchor link to it
+  // did nothing. Switch tabs first, then scroll once it has rendered.
+  const showInitiativeList = () => {
+    setDashTab("initiatives");
+    requestAnimationFrame(() =>
+      document.getElementById("initiative-list")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+  };
   const [mandateOpen, setMandateOpen] = useState(false);
 
   // If the initiative currently selected in the switcher gets deleted (or
@@ -118,7 +127,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Implementation Dashboard</h1>
           <p className="text-muted-foreground">
@@ -133,7 +142,7 @@ export default function Dashboard() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {initiatives.length > 0 && (
             <>
               <Select value={selectedInitiativeId || "all"} onValueChange={(value) => selectInitiative(value === "all" ? undefined : value)}>
@@ -189,7 +198,7 @@ export default function Dashboard() {
       ) : (
         <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <a href="#initiative-list" title="Every initiative you own. Click to jump to the list below." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button type="button" onClick={showInitiativeList} title="Every initiative you own. Click to see the list." className="block w-full text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Initiatives</CardTitle>
@@ -204,7 +213,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        </a>
+        </button>
         <Link to={selectedInitiativeId ? "/monitor?initiative=" + selectedInitiativeId : "/monitor"} title="Average observation rating. Click to open the Monitoring Hub." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -255,7 +264,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={dashTab} onValueChange={setDashTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="initiatives">Initiatives</TabsTrigger>

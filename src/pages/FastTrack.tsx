@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Zap, CalendarClock, ShieldCheck, ArrowRight, ListChecks, Plus } from "lucide-react";
+import { Zap, CalendarClock, ShieldCheck, ArrowRight, ListChecks, Plus, Eye } from "lucide-react";
 import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { useInitiatives } from "@/hooks/useInitiatives";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
+import { parseDateOnly } from "@/lib/dates";
+import { ConductObservationDialog } from "@/components/ConductObservationDialog";
 import { MandateBriefDialog } from "@/components/MandateBriefDialog";
 import { AddCorePracticeDialog } from "@/components/AddCorePracticeDialog";
 
@@ -32,6 +34,7 @@ export default function FastTrack() {
   const { activeIngredients, isLoading } = useActiveIngredients(initiativeId || undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [observeIngredientId, setObserveIngredientId] = useState<string | null>(null);
 
   const initiative = initiatives.find((i) => i.id === initiativeId);
   const coreIngredients = (activeIngredients || []).filter((i) => i.is_core);
@@ -117,7 +120,7 @@ export default function FastTrack() {
             {initiative.target_end_date && (
               <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
                 <CalendarClock className="h-4 w-4" aria-hidden="true" />
-                Due {initiative.target_end_date}
+                Due {parseDateOnly(initiative.target_end_date).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -215,15 +218,19 @@ export default function FastTrack() {
                     <CardDescription>{ing.description}</CardDescription>
                   )}
                 </CardHeader>
-                {ing.look_fors && ing.look_fors.length > 0 && (
-                  <CardContent className="pt-0">
+                <CardContent className="pt-0 space-y-3">
+                  {ing.look_fors && ing.look_fors.length > 0 && (
                     <ul className="space-y-1">
                       {ing.look_fors.map((lf, i) => (
                         <LookFor key={i} text={lf} />
                       ))}
                     </ul>
-                  </CardContent>
-                )}
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setObserveIngredientId(ing.id)}>
+                    <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Check these look-fors
+                  </Button>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -253,6 +260,13 @@ export default function FastTrack() {
         initiativeId={initiative.id}
         open={addOpen}
         onOpenChange={setAddOpen}
+      />
+
+      <ConductObservationDialog
+        open={!!observeIngredientId}
+        onOpenChange={(open) => !open && setObserveIngredientId(null)}
+        initiativeId={initiative.id}
+        defaultIngredientId={observeIngredientId ?? undefined}
       />
     </div>
   );

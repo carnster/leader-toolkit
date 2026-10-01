@@ -101,10 +101,12 @@ export default function Implement() {
   const moveToSustain = async () => {
     if (!effectiveInitiativeId || !progress.isReady) return;
     setMoving(true);
-    const { error } = await supabase.from("initiatives").update({ stage: "sustain" }).eq("id", effectiveInitiativeId);
+    // RLS refuses a write it does not allow by matching zero rows, not by
+    // erroring, so read the row back: an empty result means nothing moved.
+    const { data: moved, error } = await supabase.from("initiatives").update({ stage: "sustain" }).eq("id", effectiveInitiativeId).select("id");
     setMoving(false);
-    if (error) {
-      toast({ title: "Couldn't update the stage", description: error.message, variant: "destructive" });
+    if (error || !moved?.length) {
+      toast({ title: "Couldn't update the stage", description: error?.message || "Only the initiative owner or a school admin can move it to the next stage. Ask them to make the move.", variant: "destructive" });
       return;
     }
     await Promise.all([
@@ -303,56 +305,24 @@ export default function Implement() {
                       Quick observation of core components
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Ingredient being observed</Label>
-                        <select className="w-full rounded-md border px-3 py-2">
-                          {coreIngredients.length > 0 ? (
-                            coreIngredients.map((ingredient: any) => (
-                              <option key={ingredient.id} value={ingredient.id}>
-                                {ingredient.name}
-                              </option>
-                            ))
-                          ) : (
-                            <option value="" disabled>No core active ingredients defined yet</option>
-                          )}
-                        </select>
-                        <p className="text-xs text-muted-foreground">
-                          {coreIngredients.length > 0
-                            ? "Select from your core active ingredients defined in Plan & Prepare"
-                            : "Define active ingredients in Plan & Prepare to track them here"}
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Fidelity Rating</Label>
-                        <div className="flex gap-2">
-                          {[1, 2, 3, 4, 5].map((rating) => (
-                            <button
-                              key={rating}
-                              className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-muted hover:border-primary hover:bg-primary/5 transition-colors font-semibold"
-                            >
-                              {rating}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          1 = Not implemented, 5 = Fully implemented as planned
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Quick Notes</Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="Any observations, barriers, or adjustments needed..."
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-
-                    <Button className="w-full">Save Fidelity Log</Button>
+                  <CardContent className="space-y-4">
+                    {/* This used to be a form with no state and no save handler: a
+                        leader could rate a visit, type notes, click Save, and nothing
+                        was stored. The working quick-observation dialog lives on
+                        this page already, so open that instead. */}
+                    {coreIngredients.length > 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Pick one core ingredient, rate what you saw, add a note. It takes about a minute
+                        and goes straight into the fidelity record.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Define your core active ingredients in Plan &amp; Prepare first, then log visits against them here.
+                      </p>
+                    )}
+                    <Button className="w-full" disabled={coreIngredients.length === 0} onClick={() => setObservationMode("quick")}>
+                      Log a 60-second check
+                    </Button>
                   </CardContent>
                 </Card>
               </TabsContent>

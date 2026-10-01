@@ -45,6 +45,8 @@ interface ConductObservationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initiativeId: string;
+  /** Pre-select this active ingredient when there is no schedule (e.g. from Fast Track). */
+  defaultIngredientId?: string;
 }
 
 // A legacy log rates each item 1-5. A two-dimension log rates each item on
@@ -56,14 +58,14 @@ interface ChecklistResponse {
   [itemId: string]: ChecklistResponseValue;
 }
 
-export function ConductObservationDialog({ schedule, open, onOpenChange, initiativeId }: ConductObservationDialogProps) {
+export function ConductObservationDialog({ schedule, open, onOpenChange, initiativeId, defaultIngredientId }: ConductObservationDialogProps) {
   const { createLog, isCreating } = useFidelityLogs(initiativeId);
   const { checklists } = useFidelityChecklists(initiativeId);
   const { updateSchedule } = useObservationSchedules(initiativeId);
   const { activeIngredients } = useActiveIngredients(initiativeId);
   const { toast } = useToast();
 
-  const [selectedIngredientId, setSelectedIngredientId] = useState(schedule?.active_ingredient_id || "");
+  const [selectedIngredientId, setSelectedIngredientId] = useState(schedule?.active_ingredient_id || defaultIngredientId || "");
   const [selectedChecklistId, setSelectedChecklistId] = useState("");
   const [rating, setRating] = useState(3);
   const [checklistResponses, setChecklistResponses] = useState<ChecklistResponse>({});
@@ -79,7 +81,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
 
   useEffect(() => {
     if (open) {
-      setSelectedIngredientId(schedule?.active_ingredient_id || "");
+      setSelectedIngredientId(schedule?.active_ingredient_id || defaultIngredientId || "");
       setSelectedChecklistId("");
       setRating(3);
       setChecklistResponses({});
@@ -87,7 +89,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
       setBarrierDomain(NO_BARRIER);
       setStudentGroup(DEFAULT_STUDENT_GROUP);
     }
-  }, [open, schedule]);
+  }, [open, schedule, defaultIngredientId]);
 
   useEffect(() => {
     // Auto-select checklist if ingredient changes
@@ -296,7 +298,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
                           <SelectContent>
                             {TWO_DIM_CODES.map((code) => (
                               <SelectItem key={code} value={code}>
-                                {code} — {levelLabel(code)}
+                                {code}: {levelLabel(code)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -314,7 +316,7 @@ export function ConductObservationDialog({ schedule, open, onOpenChange, initiat
                           <SelectContent>
                             {TWO_DIM_CODES.map((code) => (
                               <SelectItem key={code} value={code}>
-                                {code} — {levelLabel(code)}
+                                {code}: {levelLabel(code)}
                               </SelectItem>
                             ))}
                           </SelectContent>

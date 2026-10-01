@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateOnly } from "@/lib/dates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,7 @@ export function CoachingCyclesPanel({ initiativeId }: { initiativeId: string | u
     setSaving(true);
     try {
       if (advancing.stage === "observation") {
-        await updateAsync({ id: advancing.id, stage: "feedback", observation_notes: notes.trim() || null, observed_at: new Date().toISOString().slice(0, 10) });
+        await updateAsync({ id: advancing.id, stage: "feedback", observation_notes: notes.trim() || null, observed_at: formatDateOnly(new Date()) });
       } else if (advancing.stage === "feedback") {
         let commitmentId: string | null = null;
         if (nextStep.trim()) {

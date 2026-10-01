@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import { brandedHeader, brandedFooter } from "@/lib/pdfBrand";
 import autoTable from "jspdf-autotable";
-import { parseDateOnly } from "@/lib/dates";
+import { parseDateOnly, formatDateOnly } from "@/lib/dates";
 import { DashboardStats } from "@/hooks/useDashboardAnalytics";
 import { Initiative } from "@/hooks/useInitiatives";
 import { FidelityTrendData } from "@/hooks/useFidelityTrends";
@@ -226,7 +226,7 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId, 
 
       const fileName = selectedInitiative
         ? `dashboard-report-${selectedInitiative.title.replace(/\s+/g, "-")}.pdf`
-        : `dashboard-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+        : `dashboard-report-${formatDateOnly(new Date())}.pdf`;
 
       brandedFooter(doc);
       doc.save(fileName);

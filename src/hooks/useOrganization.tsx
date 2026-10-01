@@ -415,7 +415,6 @@ const LOGO_MIME_EXT: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
-  "image/svg+xml": "svg",
 };
 const MAX_LOGO_BYTES = 1024 * 1024;
 
@@ -583,7 +582,7 @@ export function useOrgRoster(orgId: string | undefined) {
     mutationFn: async (file: File) => {
       const ext = LOGO_MIME_EXT[file.type];
       if (!ext) {
-        throw new Error("Please choose a PNG, JPG, WebP, or SVG image.");
+        throw new Error("Please choose a PNG, JPG, or WebP image.");
       }
       if (file.size > MAX_LOGO_BYTES) {
         throw new Error("That image is larger than 1MB. Please choose a smaller file.");
