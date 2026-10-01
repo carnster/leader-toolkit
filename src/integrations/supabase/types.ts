@@ -60,6 +60,7 @@ export type Database = {
       }
       adaptation_requests: {
         Row: {
+          adaptation_scope: string | null
           created_at: string
           decided_at: string | null
           decision: string
@@ -73,6 +74,7 @@ export type Database = {
           touches_core: boolean
         }
         Insert: {
+          adaptation_scope?: string | null
           created_at?: string
           decided_at?: string | null
           decision?: string
@@ -86,6 +88,7 @@ export type Database = {
           touches_core?: boolean
         }
         Update: {
+          adaptation_scope?: string | null
           created_at?: string
           decided_at?: string | null
           decision?: string
@@ -250,6 +253,196 @@ export type Database = {
           },
         ]
       }
+      calendar_feeds: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          initiative_id: string
+          last_fetched: string | null
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          initiative_id: string
+          last_fetched?: string | null
+          revoked?: boolean
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          initiative_id?: string
+          last_fetched?: string | null
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_cycles: {
+        Row: {
+          closed_at: string | null
+          commitment_id: string | null
+          created_at: string
+          created_by: string
+          feedback_notes: string | null
+          focus_ingredient_id: string | null
+          follow_up_date: string | null
+          id: string
+          initiative_id: string
+          member_id: string | null
+          member_name: string
+          next_step: string | null
+          observation_notes: string | null
+          observed_at: string | null
+          outcome: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          commitment_id?: string | null
+          created_at?: string
+          created_by?: string
+          feedback_notes?: string | null
+          focus_ingredient_id?: string | null
+          follow_up_date?: string | null
+          id?: string
+          initiative_id: string
+          member_id?: string | null
+          member_name: string
+          next_step?: string | null
+          observation_notes?: string | null
+          observed_at?: string | null
+          outcome?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          commitment_id?: string | null
+          created_at?: string
+          created_by?: string
+          feedback_notes?: string | null
+          focus_ingredient_id?: string | null
+          follow_up_date?: string | null
+          id?: string
+          initiative_id?: string
+          member_id?: string | null
+          member_name?: string
+          next_step?: string | null
+          observation_notes?: string | null
+          observed_at?: string | null
+          outcome?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_cycles_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: false
+            referencedRelation: "commitments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_cycles_focus_ingredient_id_fkey"
+            columns: ["focus_ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "active_ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_cycles_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_cycles_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commitments: {
+        Row: {
+          created_at: string
+          created_by: string
+          details: string | null
+          due_date: string | null
+          id: string
+          initiative_id: string
+          owner_member_id: string | null
+          owner_name: string | null
+          resolved_at: string | null
+          source: string
+          source_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          details?: string | null
+          due_date?: string | null
+          id?: string
+          initiative_id: string
+          owner_member_id?: string | null
+          owner_name?: string | null
+          resolved_at?: string | null
+          source?: string
+          source_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          details?: string | null
+          due_date?: string | null
+          id?: string
+          initiative_id?: string
+          owner_member_id?: string | null
+          owner_name?: string | null
+          resolved_at?: string | null
+          source?: string
+          source_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commitments_initiative_id_fkey"
+            columns: ["initiative_id"]
+            isOneToOne: false
+            referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitments_owner_member_id_fkey"
+            columns: ["owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "initiative_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       communication_activities: {
         Row: {
           activity_type: string
@@ -332,6 +525,7 @@ export type Database = {
           leading_indicators: string[] | null
           measurement_timeline: string[] | null
           problem_statement: string
+          readiness_signals: Json | null
           root_causes: string[] | null
           stakeholder_input: string | null
           target_group: string
@@ -355,6 +549,7 @@ export type Database = {
           leading_indicators?: string[] | null
           measurement_timeline?: string[] | null
           problem_statement: string
+          readiness_signals?: Json | null
           root_causes?: string[] | null
           stakeholder_input?: string | null
           target_group: string
@@ -378,6 +573,7 @@ export type Database = {
           leading_indicators?: string[] | null
           measurement_timeline?: string[] | null
           problem_statement?: string
+          readiness_signals?: Json | null
           root_causes?: string[] | null
           stakeholder_input?: string | null
           target_group?: string
@@ -446,6 +642,7 @@ export type Database = {
       }
       fidelity_logs: {
         Row: {
+          barrier_domain: string | null
           checklist_id: string | null
           checklist_responses: Json | null
           component_id: string | null
@@ -461,10 +658,11 @@ export type Database = {
           observed_at: string
           observer_id: string
           participants: Json | null
-          rating: number
+          rating: number | null
           schedule_id: string | null
         }
         Insert: {
+          barrier_domain?: string | null
           checklist_id?: string | null
           checklist_responses?: Json | null
           component_id?: string | null
@@ -480,10 +678,11 @@ export type Database = {
           observed_at?: string
           observer_id: string
           participants?: Json | null
-          rating: number
+          rating?: number | null
           schedule_id?: string | null
         }
         Update: {
+          barrier_domain?: string | null
           checklist_id?: string | null
           checklist_responses?: Json | null
           component_id?: string | null
@@ -499,7 +698,7 @@ export type Database = {
           observed_at?: string
           observer_id?: string
           participants?: Json | null
-          rating?: number
+          rating?: number | null
           schedule_id?: string | null
         }
         Relationships: [
@@ -742,6 +941,7 @@ export type Database = {
         Row: {
           id: string
           initiative_id: string
+          invited_email: string | null
           joined_at: string
           name: string | null
           responsibilities: string[] | null
@@ -751,6 +951,7 @@ export type Database = {
         Insert: {
           id?: string
           initiative_id: string
+          invited_email?: string | null
           joined_at?: string
           name?: string | null
           responsibilities?: string[] | null
@@ -760,6 +961,7 @@ export type Database = {
         Update: {
           id?: string
           initiative_id?: string
+          invited_email?: string | null
           joined_at?: string
           name?: string | null
           responsibilities?: string[] | null
@@ -834,6 +1036,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          mandate: Json | null
+          mode: string
+          organization_id: string | null
           owner_id: string
           stage: Database["public"]["Enums"]["initiative_stage"]
           start_date: string | null
@@ -847,6 +1052,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mandate?: Json | null
+          mode?: string
+          organization_id?: string | null
           owner_id: string
           stage?: Database["public"]["Enums"]["initiative_stage"]
           start_date?: string | null
@@ -860,6 +1068,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          mandate?: Json | null
+          mode?: string
+          organization_id?: string | null
           owner_id?: string
           stage?: Database["public"]["Enums"]["initiative_stage"]
           start_date?: string | null
@@ -869,6 +1080,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "initiatives_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "initiatives_owner_id_fkey"
             columns: ["owner_id"]
@@ -1026,6 +1244,104 @@ export type Database = {
             columns: ["initiative_id"]
             isOneToOne: false
             referencedRelation: "initiatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_email: string | null
+          organization_id: string
+          role: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          organization_id: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_email?: string | null
+          organization_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          brand: Json | null
+          created_at: string
+          created_by: string
+          email_domain: string | null
+          id: string
+          is_district: boolean
+          logo_url: string | null
+          name: string
+          parent_id: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: Json | null
+          created_at?: string
+          created_by?: string
+          email_domain?: string | null
+          id?: string
+          is_district?: boolean
+          logo_url?: string | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: Json | null
+          created_at?: string
+          created_by?: string
+          email_domain?: string | null
+          id?: string
+          is_district?: boolean
+          logo_url?: string | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1382,6 +1698,7 @@ export type Database = {
           initiative_id: string
           next_steps: string | null
           onboarding_resources: Json | null
+          psat_domains: Json | null
           resource_protections: Json | null
           scale_readiness_score: number | null
           updated_at: string
@@ -1393,6 +1710,7 @@ export type Database = {
           initiative_id: string
           next_steps?: string | null
           onboarding_resources?: Json | null
+          psat_domains?: Json | null
           resource_protections?: Json | null
           scale_readiness_score?: number | null
           updated_at?: string
@@ -1404,6 +1722,7 @@ export type Database = {
           initiative_id?: string
           next_steps?: string | null
           onboarding_resources?: Json | null
+          psat_domains?: Json | null
           resource_protections?: Json | null
           scale_readiness_score?: number | null
           updated_at?: string
@@ -1572,6 +1891,24 @@ export type Database = {
           },
         ]
       }
+      user_notification_prefs: {
+        Row: {
+          enabled: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          type: string
+          user_id?: string
+        }
+        Update: {
+          enabled?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string
@@ -1601,9 +1938,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_initiative: {
+        Args: { _initiative: string; _user: string }
+        Returns: boolean
+      }
       create_milestone_notifications: { Args: never; Returns: undefined }
       create_observation_notifications: { Args: never; Returns: undefined }
+      create_overdue_commitment_notifications: {
+        Args: never
+        Returns: undefined
+      }
+      create_overdue_milestone_notifications: {
+        Args: never
+        Returns: undefined
+      }
       create_pd_notifications: { Args: never; Returns: undefined }
+      create_pulse_drift_notifications: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1615,6 +1965,26 @@ export type Database = {
         Args: { _initiative_id: string; _user_id: string }
         Returns: boolean
       }
+      is_network_leader: { Args: never; Returns: boolean }
+      is_org_admin: { Args: { _org: string; _user: string }; Returns: boolean }
+      is_org_admin_cascade: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
+      }
+      is_org_member: { Args: { _org: string; _user: string }; Returns: boolean }
+      link_org_invites: { Args: never; Returns: number }
+      link_team_invites: { Args: never; Returns: number }
+      network_directory: {
+        Args: never
+        Returns: {
+          email: string
+          member_role: string
+          member_status: string
+          school: string
+          signed_in: boolean
+        }[]
+      }
+      request_to_join_org: { Args: { _slug: string }; Returns: string }
     }
     Enums: {
       app_role:
@@ -1624,6 +1994,8 @@ export type Database = {
         | "teacher"
         | "data_manager"
         | "governor"
+        | "superadmin"
+        | "admin_lead"
       indicator_type: "leading" | "lagging"
       initiative_stage: "decide" | "plan" | "implement" | "monitor" | "sustain"
       initiative_status: "active" | "on_hold" | "completed" | "archived"
@@ -1643,12 +2015,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1672,11 +2044,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1697,11 +2069,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1722,11 +2094,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1739,11 +2111,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1762,6 +2134,8 @@ export const Constants = {
         "teacher",
         "data_manager",
         "governor",
+        "superadmin",
+        "admin_lead",
       ],
       indicator_type: ["leading", "lagging"],
       initiative_stage: ["decide", "plan", "implement", "monitor", "sustain"],

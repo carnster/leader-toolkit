@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router-dom";
+import { formatDateOnly } from "@/lib/dates";
 import { useEffect, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import { useActiveIngredients } from "@/hooks/useActiveIngredients";
@@ -318,7 +319,7 @@ export default function Plan() {
           createMilestone({
             milestone: m.milestone,
             phase: m.phase,
-            target_date: targetDate.toISOString().split('T')[0],
+            target_date: formatDateOnly(targetDate),
             notes: m.notes,
             status: 'pending'
           });

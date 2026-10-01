@@ -41,7 +41,7 @@ export function useDecisionBrief(initiativeId: string | undefined) {
         .maybeSingle();
 
       if (error) throw error;
-      return data as DecisionBrief | null;
+      return data as unknown as DecisionBrief | null;
     },
     enabled: !!initiativeId,
   });

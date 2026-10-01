@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDateOnly } from "@/lib/dates";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ function useBriefData(initiativeId: string | undefined) {
     queryKey: ["meeting-brief", initiativeId],
     enabled: !!initiativeId,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = formatDateOnly(new Date());
       const [milestones, adaptations, pd] = await Promise.all([
         supabase.from("timeline_milestones").select("milestone, target_date, status").eq("initiative_id", initiativeId!),
         supabase.from("adaptation_requests").select("id, decision").eq("initiative_id", initiativeId!),
@@ -71,7 +72,7 @@ export function MeetingBrief({ initiativeId }: { initiativeId: string | undefine
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = formatDateOnly(new Date());
   const weekOf = currentWeekOf();
 
   const pulse = useMemo(() => {

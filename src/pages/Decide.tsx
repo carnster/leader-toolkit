@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText, Calendar, Flag } from "lucide-react";
+import { Search, Users, Target, Lightbulb, Plus, CheckCircle2, TrendingUp, BarChart, AlertCircle, FileText, Calendar, Flag, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { InitiativeTemplateSelector } from "@/components/InitiativeTemplateSelector";
@@ -38,6 +39,8 @@ import { AutoSaveIndicator } from "@/components/AutoSaveIndicator";
 import { DecideStepperNav } from "@/components/DecideStepperNav";
 import { MultiItemInput } from "@/components/MultiItemInput";
 import { TimelineItemInput } from "@/components/TimelineItemInput";
+import { DECIDE_STEPS } from "@/lib/stageSteps";
+import { StageProgressHeader } from "@/components/StageProgressHeader";
 
 const exploreChecklist = [
   { id: "identified-need", text: "Problem & target students defined", required: true },
@@ -89,7 +92,7 @@ export default function Decide() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { createInitiative, isCreating } = useInitiatives();
+  const { createInitiative, isCreating, initiatives: allInitiatives } = useInitiatives();
   
   // Get initiative ID (URL is canonical; see useInitiativeContext)
   const { initiativeId: effectiveInitiativeId, setInitiativeId } = useInitiativeContext();
@@ -291,16 +294,27 @@ export default function Decide() {
   const isStep5Complete = stakeholderInput && equityAddressed && calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0; // Readiness & Feasibility
   const isStep6Complete = leadingIndicators.length > 0 && laggingIndicators.length > 0 && measurementTimeline.length > 0; // Success Metrics
   
+  const DECIDE_STEP_COMPLETE: Record<number, boolean> = {
+    1: !!isStep1Complete,
+    2: !!isStep2Complete,
+    3: !!isStep3Complete,
+    4: !!isStep4Complete,
+    5: !!isStep5Complete,
+    6: !!isStep6Complete,
+  };
+
   const autoCheckedItems = {
     "identified-need": !!isStep1Complete,
     "team-assembled": !!isStep2Complete,
     "goals-defined": !!isStep3Complete,
     "evidence-approach": !!isStep4Complete,
-    "barriers-enablers": !!isStep5Complete,
-    "feasibility": !!isStep5Complete,
+    "barriers-enablers": !!(stakeholderInput && equityAddressed),
+    "feasibility": calculatedFeasibilityScore !== null && calculatedFeasibilityScore > 0,
+    "success-metrics": !!isStep6Complete,
   };
-  
-  const completionRate = (Object.values(autoCheckedItems).filter(Boolean).length / 6) * 100;
+
+  const completionRate =
+    (Object.values(autoCheckedItems).filter(Boolean).length / Object.keys(autoCheckedItems).length) * 100;
   
   // Auto-save functionality with debounce
   const handleSaveProgress = useCallback(async (): Promise<boolean> => {
@@ -577,15 +591,7 @@ export default function Decide() {
   };
   
   const getStepName = (stepNumber: number): string => {
-    switch(stepNumber) {
-      case 1: return "Problem Definition";
-      case 2: return "Team Assembly";
-      case 3: return "Goal Development";
-      case 4: return "Solution Selection";
-      case 5: return "Readiness & Feasibility";
-      case 6: return "Success Metrics";
-      default: return "Unknown Step";
-    }
+    return DECIDE_STEPS.find((s) => s.number === stepNumber)?.title ?? "";
   };
   
   const handleNextStep = () => {
@@ -634,15 +640,17 @@ export default function Decide() {
     }
     
     // Update initiative stage to plan
-    const { error } = await supabase
+    // An update RLS does not allow matches zero rows instead of erroring.
+    const { data: moved, error } = await supabase
       .from("initiatives")
       .update({ stage: "plan" })
-      .eq("id", effectiveInitiativeId);
+      .eq("id", effectiveInitiativeId)
+      .select("id");
     
-    if (error) {
+    if (error || !moved?.length) {
       toast({
-        title: "Couldn’t save",
-        description: "Failed to update initiative stage.",
+        title: "Couldn’t move to Plan & Prepare",
+        description: error?.message || "Only the initiative owner or a school admin can move it to the next stage. Ask them to make the move.",
         variant: "destructive",
       });
       return;
@@ -761,6 +769,7 @@ export default function Decide() {
         });
       }
 
+
       toast({
         title: "Template loaded",
         description: "Decision brief pre-filled and saved. Customize it to your context as you go.",
@@ -835,6 +844,22 @@ export default function Decide() {
     <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
       {/* Main Content */}
       <div className="flex-1 min-w-0 space-y-8">
+      {/* A district already decided a Fast Track initiative; choosing again here
+          would ask the school to re-litigate a mandate. Point back to Fast Track. */}
+      {allInitiatives.find((i) => i.id === effectiveInitiativeId)?.mode === "fast_track" && (
+        <Card className="border-amber-500/40 bg-amber-50/50 dark:bg-amber-950/20">
+          <CardContent className="pt-6 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm">
+              <span className="font-medium">This is a district initiative on Fast Track.</span>{" "}
+              The district already made this decision, so you can skip this stage and work from its core practices.
+            </p>
+            <Button size="sm" onClick={() => navigate(`/fast-track?initiative=${effectiveInitiativeId}`)}>
+              <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
+              Open Fast Track
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -909,8 +934,8 @@ export default function Decide() {
         </div>
       </div>
 
-      {/* IMPACT Framework Guidance */}
-      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+      {/* Framework Guidance */}
+      <Card className="border-primary/30 bg-secondary/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-primary" />
@@ -938,16 +963,32 @@ export default function Decide() {
       </Card>
 
       {/* Step Navigation */}
+      <StageProgressHeader
+        stageName="Decide"
+        steps={DECIDE_STEPS}
+        done={{
+          problem: !!isStep1Complete,
+          team: !!isStep2Complete,
+          goals: !!isStep3Complete,
+          solution: !!isStep4Complete,
+          feasibility: !!isStep5Complete,
+          metrics: !!isStep6Complete,
+        }}
+        onGoToStep={(id) => {
+          const target = DECIDE_STEPS.find((s) => s.id === id);
+          if (target) handleStepClick(target.number);
+        }}
+        finalLabel="Complete & Move to Plan"
+        onFinal={handleAdoptInitiative}
+      />
+
       <DecideStepperNav
         currentStep={step}
-        steps={[
-          { number: 1, title: "Problem", completed: !!isStep1Complete },
-          { number: 2, title: "Team", completed: !!isStep2Complete },
-          { number: 3, title: "Goals", completed: !!isStep3Complete },
-          { number: 4, title: "Solution", completed: !!isStep4Complete },
-          { number: 5, title: "Feasibility", completed: !!isStep5Complete },
-          { number: 6, title: "Metrics", completed: !!isStep6Complete },
-        ]}
+        steps={DECIDE_STEPS.map((s) => ({
+          number: s.number,
+          title: s.title,
+          completed: !!DECIDE_STEP_COMPLETE[s.number],
+        }))}
         onStepClick={handleStepClick}
       />
 
@@ -957,10 +998,10 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              <CardTitle>Step 1: Define the Priority Problem</CardTitle>
+              <CardTitle>Step 1: What's the problem</CardTitle>
             </div>
             <CardDescription>
-              What specific challenge are you addressing? Who are the target students?
+              Problem Definition. What specific challenge are you addressing? Who are the target students?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1063,7 +1104,7 @@ export default function Decide() {
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
               <Button onClick={handleNextStep}>
-                Continue to Team →
+                Continue: {DECIDE_STEPS[step]?.title}
               </Button>
             </div>
           </CardContent>
@@ -1076,10 +1117,10 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              <CardTitle>Step 2: Assemble Your Implementation Team</CardTitle>
+              <CardTitle>Step 2: Who decides and does the work</CardTitle>
             </div>
             <CardDescription>
-              Include diverse stakeholders with expertise. Who needs to be involved from the start?
+              Team Assembly. Include diverse stakeholders with expertise. Who needs to be involved from the start?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1190,7 +1231,7 @@ export default function Decide() {
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
               <Button onClick={handleNextStep}>
-                Continue to Goals →
+                Continue: {DECIDE_STEPS[step]?.title}
               </Button>
             </div>
           </CardContent>
@@ -1203,10 +1244,10 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              <CardTitle>Step 3: Develop Clear Goals</CardTitle>
+              <CardTitle>Step 3: What success looks like</CardTitle>
             </div>
             <CardDescription>
-              Create measurable, time-bound objectives. What will success look like?
+              Goal Development. Create measurable, time-bound objectives. What will success look like?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1363,7 +1404,7 @@ export default function Decide() {
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
               <Button onClick={handleNextStep}>
-                Continue to Solution →
+                Continue: {DECIDE_STEPS[step]?.title}
               </Button>
             </div>
           </CardContent>
@@ -1377,10 +1418,10 @@ export default function Decide() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-primary" />
-                <CardTitle>Step 4: Solution Selection</CardTitle>
+                <CardTitle>Step 4: What we'll try</CardTitle>
               </div>
               <CardDescription>
-                Have we selected an evidence-informed approach that meets student needs and is suitable for our setting?
+                Solution Selection. Have we selected an evidence-informed approach that meets student needs and is suitable for our setting?
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -1453,7 +1494,7 @@ export default function Decide() {
                   {isSaving ? "Saving..." : "Save Progress"}
                 </Button>
                 <Button onClick={handleNextStep}>
-                  Continue to Feasibility →
+                  Continue: {DECIDE_STEPS[step]?.title}
                 </Button>
               </div>
             </CardContent>
@@ -1493,10 +1534,10 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              <CardTitle>Step 5: Assess Organizational Readiness & Feasibility</CardTitle>
+              <CardTitle>Step 5: Can we pull it off</CardTitle>
             </div>
             <CardDescription>
-              Evaluate resources, climate, support systems, and whether the approach fits your context
+              Readiness & Feasibility. Evaluate resources, climate, support systems, and whether the approach fits your context
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1690,7 +1731,7 @@ export default function Decide() {
                 {isSaving ? "Saving..." : "Save Progress"}
               </Button>
               <Button onClick={handleNextStep}>
-                Continue to Metrics →
+                Continue: {DECIDE_STEPS[step]?.title}
               </Button>
             </div>
           </CardContent>
@@ -1703,10 +1744,10 @@ export default function Decide() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
-              <CardTitle>Step 6: Success Metrics & Measurement Plan</CardTitle>
+              <CardTitle>Step 6: How we'll measure it</CardTitle>
             </div>
             <CardDescription>
-              How will you know if it's working? Define leading and lagging indicators.
+              Success Metrics. How will you know if it's working? Define leading and lagging indicators.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -1988,9 +2029,6 @@ export default function Decide() {
         />
       )}
 
-      {/* Master Checklist - Decide stage */}
-      <MasterChecklist stage="decide" initiativeId={effectiveInitiativeId} autoCheckedItems={autoCheckedItems} />
-      
       {/* Next Stage Preview */}
       <Card className="border-secondary/30 bg-secondary/5">
         <CardHeader>
@@ -2069,11 +2107,7 @@ export default function Decide() {
           </Button>
           {step < 6 ? (
             <Button onClick={handleNextStep} size="lg" className="min-w-[200px]">
-              {step === 1 && "Continue to Team →"}
-              {step === 2 && "Continue to Goals →"}
-              {step === 3 && "Continue to Solution →"}
-              {step === 4 && "Continue to Feasibility →"}
-              {step === 5 && "Continue to Metrics →"}
+              Continue: {DECIDE_STEPS[step]?.title}
             </Button>
           ) : (
             <Button 
@@ -2096,20 +2130,31 @@ export default function Decide() {
       />
       </div>
       
-      {/* Sidebar Navigation */}
-      <div className="w-full lg:w-64 lg:flex-shrink-0">
-        <DecideQuickNav
-          currentStep={step}
-          onStepChange={setStep}
-          completionStatus={{
-            1: !!isStep1Complete,
-            2: !!isStep2Complete,
-            3: !!isStep3Complete,
-            4: !!isStep4Complete,
-            5: !!isStep5Complete,
-            6: !!isStep6Complete,
-          }}
-        />
+      {/* Sidebar: navigation and the stage checklist, pinned together */}
+      <div className="w-full lg:w-80 lg:flex-shrink-0">
+        <div className="space-y-4 lg:sticky lg:top-4">
+          <DecideQuickNav
+            currentStep={step}
+            onStepChange={setStep}
+            completionStatus={{
+              1: !!isStep1Complete,
+              2: !!isStep2Complete,
+              3: !!isStep3Complete,
+              4: !!isStep4Complete,
+              5: !!isStep5Complete,
+              6: !!isStep6Complete,
+            }}
+          />
+          <MasterChecklist
+            stage="decide"
+            initiativeId={effectiveInitiativeId}
+            autoCheckedItems={autoCheckedItems}
+            compact
+            onItemClick={(item) => {
+              if (item.step) setStep(item.step);
+            }}
+          />
+        </div>
       </div>
     </div>
   );

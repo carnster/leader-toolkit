@@ -249,7 +249,7 @@ export function MandateBriefDialog({ open, onOpenChange }: MandateBriefDialogPro
                 ))}
                 <SelectGroup>
                   <SelectLabel>Not in the library</SelectLabel>
-                  <SelectItem value={OTHER}>Other — not in the library</SelectItem>
+                  <SelectItem value={OTHER}>Other: not in the library</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

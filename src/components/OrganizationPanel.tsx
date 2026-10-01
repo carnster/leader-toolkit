@@ -900,14 +900,14 @@ function AdminRoster({
               {isUploadingLogo ? "Uploading..." : "Upload logo"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Shown on your school's workspace and reports. PNG, JPG, WebP, or SVG, up to 1MB.
+              Shown on your school's workspace and reports. PNG, JPG, or WebP, up to 1MB.
             </p>
           </div>
         )}
         <input
           ref={logoInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          accept="image/png,image/jpeg,image/webp"
           className="hidden"
           onChange={handleLogoChange}
         />

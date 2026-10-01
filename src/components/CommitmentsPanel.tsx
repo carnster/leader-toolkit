@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDateOnly } from "@/lib/dates";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ const SOURCE_LABEL: Record<Commitment["source"], string> = {
 };
 
 function isOverdue(c: Commitment): boolean {
-  return !!c.due_date && c.status === "open" && c.due_date < new Date().toISOString().slice(0, 10);
+  return !!c.due_date && c.status === "open" && c.due_date < formatDateOnly(new Date());
 }
 
 export function CommitmentsPanel({ initiativeId }: { initiativeId: string | undefined }) {

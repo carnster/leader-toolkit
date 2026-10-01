@@ -28,18 +28,39 @@ import { useFidelityTrends } from "@/hooks/useFidelityTrends";
 import { useBudgetTracking } from "@/hooks/useBudgetTracking";
 import { FirstRunWelcome } from "@/components/dashboard/FirstRunWelcome";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useInitiativeContext } from "@/hooks/useInitiativeContext";
 import { MandateBriefDialog } from "@/components/MandateBriefDialog";
 
 export default function Dashboard() {
   const { initiatives, isLoading, error: initiativesError, deleteInitiative, isDeleting } = useInitiatives();
   const { org } = useOrganization();
+  // The stage pages (Decide, Plan, Implement...) read the initiative from the
+  // shared context, not from this page's local selection. Without the sync
+  // below, picking an initiative here and then clicking Decide opened whatever
+  // the context happened to be holding, which on a network-wide view is often
+  // another school's work.
+  const { setInitiativeId } = useInitiativeContext();
   const [selectedInitiativeId, setSelectedInitiativeId] = useState<string | undefined>(undefined);
+
+  const selectInitiative = (id: string | undefined) => {
+    setSelectedInitiativeId(id);
+    if (id) setInitiativeId(id);
+  };
   const { data: analytics, isLoading: analyticsLoading } = useDashboardAnalytics(selectedInitiativeId);
   const { data: fidelityTrends } = useFidelityTrends(30, selectedInitiativeId);
   const { data: budgetData } = useBudgetTracking(selectedInitiativeId);
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [initiativeToDelete, setInitiativeToDelete] = useState<string | null>(null);
+  const [dashTab, setDashTab] = useState("overview");
+  // The initiative list lives in the second tab, so a plain anchor link to it
+  // did nothing. Switch tabs first, then scroll once it has rendered.
+  const showInitiativeList = () => {
+    setDashTab("initiatives");
+    requestAnimationFrame(() =>
+      document.getElementById("initiative-list")?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+  };
   const [mandateOpen, setMandateOpen] = useState(false);
 
   // If the initiative currently selected in the switcher gets deleted (or
@@ -106,7 +127,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Implementation Dashboard</h1>
           <p className="text-muted-foreground">
@@ -121,10 +142,10 @@ export default function Dashboard() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
           {initiatives.length > 0 && (
             <>
-              <Select value={selectedInitiativeId || "all"} onValueChange={(value) => setSelectedInitiativeId(value === "all" ? undefined : value)}>
+              <Select value={selectedInitiativeId || "all"} onValueChange={(value) => selectInitiative(value === "all" ? undefined : value)}>
                 <SelectTrigger className="w-full sm:w-[280px]">
                   <SelectValue placeholder="Select initiative" />
                 </SelectTrigger>
@@ -177,7 +198,7 @@ export default function Dashboard() {
       ) : (
         <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <a href="#initiative-list" title="Every initiative you own. Click to jump to the list below." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <button type="button" onClick={showInitiativeList} title="Every initiative you own. Click to see the list." className="block w-full text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Initiatives</CardTitle>
@@ -192,7 +213,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        </a>
+        </button>
         <Link to={selectedInitiativeId ? "/monitor?initiative=" + selectedInitiativeId : "/monitor"} title="Average observation rating. Click to open the Monitoring Hub." className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
         <Card className="h-full transition-colors hover:border-primary/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -243,7 +264,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={dashTab} onValueChange={setDashTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="initiatives">Initiatives</TabsTrigger>
@@ -278,12 +299,15 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {initiatives.map((initiative) => {
+                  // The same four stages as the nav. Monitoring runs alongside
+                  // Implement rather than as its own stage, so a legacy
+                  // "monitor" value reads as Implement.
+                  const s = initiative.stage === "monitor" ? "implement" : initiative.stage;
                   const stages = [
-                    { id: "decide", name: "Decide", completed: initiative.stage !== "decide", current: initiative.stage === "decide" },
-                    { id: "plan", name: "Plan", completed: ["implement", "monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "plan" },
-                    { id: "implement", name: "Implement", completed: ["monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "implement" },
-                    { id: "monitor", name: "Monitor", completed: initiative.stage === "sustain", current: initiative.stage === "monitor" },
-                    { id: "sustain", name: "Sustain", completed: false, current: initiative.stage === "sustain" },
+                    { id: "decide", name: "Decide", completed: s !== "decide", current: s === "decide" },
+                    { id: "plan", name: "Plan & Prepare", completed: ["implement", "sustain"].includes(s), current: s === "plan" },
+                    { id: "implement", name: "Implement", completed: s === "sustain", current: s === "implement" },
+                    { id: "sustain", name: "Spread & Sustain", completed: false, current: s === "sustain" },
                   ];
 
                   return (
@@ -318,8 +342,8 @@ export default function Dashboard() {
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="sm" aria-label={`More actions for ${initiative.title}`}>
+                                <MoreVertical className="h-4 w-4" aria-hidden="true" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">

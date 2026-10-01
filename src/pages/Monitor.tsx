@@ -29,6 +29,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { MasterChecklist } from "@/components/MasterChecklist";
 import { IndicatorImportBanner } from "@/components/IndicatorImportBanner";
+import { WeeklyRead } from "@/components/monitor/WeeklyRead";
 import { EditIndicatorDialog } from "@/components/EditIndicatorDialog";
 import { useSearchParams , Link as RouterLink} from "react-router-dom";
 import { useMemo, useState } from "react";
@@ -214,12 +215,24 @@ export default function Monitor() {
           />
         </div>
 
+        {/* The one question this hub answers first: what does this week say? */}
+        {effectiveInitiativeId && (
+          <div className="mt-4">
+            <WeeklyRead
+              initiativeId={effectiveInitiativeId}
+              onRecordValues={() =>
+                document.getElementById("indicators")?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+            />
+          </div>
+        )}
+
         <div className="mt-4">
           <CalendarSubscribePanel initiativeId={effectiveInitiativeId} />
         </div>
         
         {/* Indicator Import Banner */}
-        <div className="mt-4">
+        <div className="mt-4" id="indicators">
           <IndicatorImportBanner initiativeId={effectiveInitiativeId} />
         </div>
         
@@ -301,7 +314,7 @@ export default function Monitor() {
             
             <div className="pt-2 border-t">
               <p className="text-sm text-muted-foreground">
-                Set phases in your <a href="/plan?section=timeline" className="underline hover:text-foreground">Implementation Timeline</a> to track progress
+                Set phases in your <RouterLink to={`/plan?section=timeline&initiative=${effectiveInitiativeId}`} className="underline hover:text-foreground">Implementation Timeline</RouterLink> to track progress
               </p>
             </div>
           </CardContent>
@@ -497,12 +510,12 @@ export default function Monitor() {
         </div>
       )}
 
-      {/* Implementation Dashboard */}
+      {/* How the numbers are moving */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Implementation Dashboard</CardTitle>
+              <CardTitle>How the numbers are moving</CardTitle>
               <CardDescription>
                 Recorded indicator values over time
               </CardDescription>
@@ -640,7 +653,7 @@ export default function Monitor() {
       {/* Data Entry */}
       <Card>
         <CardHeader>
-          <CardTitle>Update Indicators</CardTitle>
+          <CardTitle>Record this week's values</CardTitle>
           <CardDescription>
             Log new data points for leading and lagging measures
           </CardDescription>
@@ -657,12 +670,6 @@ export default function Monitor() {
                 Jump to the observation tools above
               </span>
             </Button>
-            <div className="rounded-md border border-dashed p-4 text-left">
-              <span className="font-semibold mb-1 block text-muted-foreground">Import Assessment Data</span>
-              <span className="text-sm text-muted-foreground">
-                CSV import from your SIS or LMS is on the roadmap. For now, record values on each indicator above.
-              </span>
-            </div>
           </div>
         </CardContent>
       </Card>

@@ -14,7 +14,7 @@ import {
   Sun,
   Moon,
   Users,
-  Settings as SettingsIcon, GraduationCap } from "lucide-react";
+  Settings as SettingsIcon, GraduationCap, Zap } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { InitiativeSwitcher } from "@/components/InitiativeSwitcher";
+import { useInitiatives } from "@/hooks/useInitiatives";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import impactLogo from "@/assets/impact-logo.png";
 import { stageColorFor } from "@/lib/stageColors";
@@ -52,6 +53,12 @@ const hubs = [
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Fast Track only earns a nav slot once a district-directed initiative exists;
+  // before that it was reachable only from a single Dashboard button.
+  const { initiatives } = useInitiatives();
+  const navItems = initiatives.some((i) => i.mode === "fast_track")
+    ? [navigation[0], { name: "Fast Track", href: "/fast-track", icon: Zap }, ...navigation.slice(1)]
+    : navigation;
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const { initiativeId } = useInitiativeContext();
@@ -79,7 +86,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex min-h-16 flex-wrap items-center justify-between gap-y-1 py-1">
           <div className="flex shrink-0 items-center gap-4 xl:gap-8">
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex shrink-0 items-center space-x-3">
               <img
                 src={impactLogo}
                 alt="IMPACT"
@@ -92,7 +99,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex shrink-0 items-center space-x-1">
-              {navigation.filter((item) => item.href !== "/").map((item) => {
+              {navItems.filter((item) => item.href !== "/").map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);
                 return (
@@ -101,7 +108,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     to={item.href}
                     title={remainingFor(item.href)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                      "flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
                         ? "text-primary-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -145,13 +152,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 );
               })}
               {/* Cross-cutting hubs: continuous companions, not stages */}
-              <div className="mx-2 h-6 w-px bg-border" aria-hidden="true" />
+              <div className="mx-2 h-6 w-px bg-border shrink-0" aria-hidden="true" />
               {hubs.map((hub) => (
                 <Link
                   key={hub.name}
                   to={hub.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium rounded-md border border-dashed transition-colors",
                     location.pathname === hub.href
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-muted-foreground/40 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -208,6 +215,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Mobile theme toggle & menu button */}
           <div className="flex items-center gap-1 lg:hidden">
+          <NotificationsPanel />
           <Button
             variant="ghost"
             size="icon"
@@ -259,7 +267,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="px-3 pb-1">
                 <InitiativeSwitcher variant="mobile" />
               </div>
-              {navigation.map((item) => {
+              {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 const stageColor = stageColorFor(item.href);
                 return (
