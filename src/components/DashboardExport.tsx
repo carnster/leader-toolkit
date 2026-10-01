@@ -183,8 +183,8 @@ export function DashboardExport({ analytics, initiatives, selectedInitiativeId, 
         yPos += 5;
 
         const stageMap: Record<string, string> = {
-          decide: "Decide", plan: "Plan", implement: "Implement",
-          monitor: "Monitor", sustain: "Sustain",
+          decide: "Decide", plan: "Plan & Prepare", implement: "Implement",
+          monitor: "Implement", sustain: "Spread & Sustain",
         };
 
         const filteredInitiatives = selectedInitiativeId

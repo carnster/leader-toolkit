@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useToast } from "@/hooks/use-toast";
 import { getActingOrgId, useOrganization } from "@/hooks/useOrganization";
 
@@ -90,7 +91,7 @@ export function useInitiatives() {
           // deployment that has not run the fast-track paste yet never sees an
           // unknown column in the insert.
           ...(initiative.mode ? { mode: initiative.mode } : {}),
-          ...(initiative.mandate ? { mandate: initiative.mandate } : {}),
+          ...(initiative.mandate ? { mandate: initiative.mandate as unknown as Json } : {}),
         }])
         .select()
         .single();

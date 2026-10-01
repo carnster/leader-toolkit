@@ -22,10 +22,10 @@ const CRIMSON: [number, number, number] = [168, 0, 0];
 
 const STAGE_LABEL: Record<string, string> = {
   decide: "Decide",
-  plan: "Plan",
+  plan: "Plan & Prepare",
   implement: "Implement",
-  monitor: "Monitor",
-  sustain: "Sustain",
+  monitor: "Implement",
+  sustain: "Spread & Sustain",
 };
 
 const STATUS_LABEL: Record<string, string> = {

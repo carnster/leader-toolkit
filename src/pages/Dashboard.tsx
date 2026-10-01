@@ -299,12 +299,15 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {initiatives.map((initiative) => {
+                  // The same four stages as the nav. Monitoring runs alongside
+                  // Implement rather than as its own stage, so a legacy
+                  // "monitor" value reads as Implement.
+                  const s = initiative.stage === "monitor" ? "implement" : initiative.stage;
                   const stages = [
-                    { id: "decide", name: "Decide", completed: initiative.stage !== "decide", current: initiative.stage === "decide" },
-                    { id: "plan", name: "Plan", completed: ["implement", "monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "plan" },
-                    { id: "implement", name: "Implement", completed: ["monitor", "sustain"].includes(initiative.stage), current: initiative.stage === "implement" },
-                    { id: "monitor", name: "Monitor", completed: initiative.stage === "sustain", current: initiative.stage === "monitor" },
-                    { id: "sustain", name: "Sustain", completed: false, current: initiative.stage === "sustain" },
+                    { id: "decide", name: "Decide", completed: s !== "decide", current: s === "decide" },
+                    { id: "plan", name: "Plan & Prepare", completed: ["implement", "sustain"].includes(s), current: s === "plan" },
+                    { id: "implement", name: "Implement", completed: s === "sustain", current: s === "implement" },
+                    { id: "sustain", name: "Spread & Sustain", completed: false, current: s === "sustain" },
                   ];
 
                   return (
@@ -339,8 +342,8 @@ export default function Dashboard() {
                           </Button>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="sm" aria-label={`More actions for ${initiative.title}`}>
+                                <MoreVertical className="h-4 w-4" aria-hidden="true" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
